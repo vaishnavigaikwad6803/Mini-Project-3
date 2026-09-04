@@ -1,0 +1,20 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.envnode_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+node_modules/
+
+# Generated files
+backend/uploads/
+backend/test_temp_images/
+frontend/dist/
+*.timestamp-*.mjs
+
+backend/roadguard.db
+backend/yolov8n.pt
