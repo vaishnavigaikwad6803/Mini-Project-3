@@ -33,7 +33,9 @@ import {
   AlertCircle,
   Camera,
   Info,
-  Map as MapIcon
+  Map as MapIcon,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   ROAD_DIVISIONS, 
@@ -155,42 +157,32 @@ const CitizenDashboard = () => {
     runLocationDetection();
   }, []);
 
-  // Handle clicking anywhere on the map to open damage reporting form with automated road type detection
-  const handleMapClick = async (lat, lng) => {
-    const geoInfo = await reverseGeocodeCoords(lat, lng);
-    const closestDist = getClosestMaharashtraDistrict(lat, lng);
-    const districtName = geoInfo?.district || closestDist.name;
-    const roadName = geoInfo?.roadName || `${districtName} Road Damage`;
-    const autoRoadType = geoInfo?.roadType || 'State Highway';
-    const autoRoadTypeInfo = geoInfo?.roadTypeInfo || null;
-
-    setReportFormData({
-      road_name: roadName,
-      road_type: autoRoadType,
-      road_type_info: autoRoadTypeInfo,
-      damage_type: 'Pothole',
-      priority: 'Medium',
-      description: `Reported road damage at coordinates ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-      landmark: '',
-      latitude: lat,
-      longitude: lng,
-      district: districtName,
-      state: 'Maharashtra'
-    });
-    setCapturedImage(null);
-    setReportError('');
-    setMapReportModalOpen(true);
-  };
-
   // Open reporting modal for current live GPS location with automated road type detection
   const handleReportAtCurrentLocation = async () => {
-    const lat = userLocation.latitude;
-    const lng = userLocation.longitude;
+    let lat = userLocation.latitude;
+    let lng = userLocation.longitude;
+    let dist = userLocation.district;
+    let road = userLocation.road_name;
+    let rType = userLocation.road_type;
+    let rInfo = null;
+
+    if (userLocation.isLocating || userLocation.accuracy === null) {
+      const loc = await detectCurrentLocation();
+      if (loc.success) {
+        lat = loc.latitude;
+        lng = loc.longitude;
+        dist = loc.district;
+        road = loc.road_name;
+        rType = loc.roadType || 'Municipal/City Road';
+        rInfo = loc.roadTypeInfo || null;
+      }
+    }
+
     const geoInfo = await reverseGeocodeCoords(lat, lng);
-    const districtName = geoInfo?.district || userLocation.district;
-    const roadName = geoInfo?.roadName || userLocation.road_name || `${districtName} Main Road`;
-    const autoRoadType = geoInfo?.roadType || userLocation.road_type || 'Municipal/City Road';
-    const autoRoadTypeInfo = geoInfo?.roadTypeInfo || null;
+    const districtName = geoInfo?.district || dist;
+    const roadName = geoInfo?.roadName || road || `${districtName} Main Road`;
+    const autoRoadType = geoInfo?.roadType || rType || 'Municipal/City Road';
+    const autoRoadTypeInfo = geoInfo?.roadTypeInfo || rInfo || null;
 
     setReportFormData({
       road_name: roadName,
@@ -203,7 +195,9 @@ const CitizenDashboard = () => {
       latitude: lat,
       longitude: lng,
       district: districtName,
-      state: 'Maharashtra'
+      state: 'Maharashtra',
+      accuracy: userLocation.accuracy,
+      accuracyLevel: userLocation.accuracyLevel
     });
     setCapturedImage(null);
     setReportError('');
@@ -375,10 +369,10 @@ const CitizenDashboard = () => {
               <Shield className="h-3.5 w-3.5" /> Maharashtra Road Defect Grievance Center
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold text-white font-['Outfit'] tracking-tight">
-              Interactive Map Damage Reporting
+              Auto-Detected Damage Reporting
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              Click anywhere on the Maharashtra interactive road map to report potholes, surface damage, and cracks. Your damage report is automatically assigned to the responsible authority (**NHAI**, **State PWD**, **PMGSY Rural**, or **Municipal Corporation**).
+              Report potholes, surface defects, and road hazards with verified device GPS. Defect locations are auto-detected to ensure authenticity and routed immediately to the responsible authority (**NHAI**, **State PWD**, **PMGSY Rural**, or **Municipal Corporation**).
             </p>
           </div>
 
@@ -393,10 +387,10 @@ const CitizenDashboard = () => {
               </div>
               <div className="text-left">
                 <span className="block text-xs uppercase tracking-wider font-mono font-bold text-slate-900">
-                  Instant Map Report
+                  On-Site GPS Report
                 </span>
                 <span className="text-base font-extrabold">
-                  📍 Click Map to Report Damage
+                  📍 Report Defect at Live Location
                 </span>
               </div>
             </button>
@@ -513,7 +507,7 @@ const CitizenDashboard = () => {
         />
       </div>
 
-      {/* 5. INTERACTIVE MAHARASHTRA GIS MAP (CLICK TO REPORT) */}
+      {/* 5. INTERACTIVE MAHARASHTRA GIS MAP */}
       <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -522,12 +516,12 @@ const CitizenDashboard = () => {
                 <MapPin className="h-4 w-4 text-amber-400" />
                 Maharashtra State Road Defect Map
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-bold border border-amber-500/30 flex items-center gap-1">
-                📍 Click anywhere on map to report
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 flex items-center gap-1">
+                📍 Live Defect Spatial View
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Click on any road location to open the damage report form, or click on status pins to view details.
+              View active damage reports, road defect categories, and repair progress across Maharashtra. Click on any marker to view complaint details.
             </p>
           </div>
           <Link
@@ -543,7 +537,6 @@ const CitizenDashboard = () => {
           height="h-[440px]" 
           showFilters={true}
           initialRoadDivision={activeDivision}
-          onMapClick={handleMapClick}
           onViewDetails={handleOpenDetails}
         />
       </div>
@@ -680,10 +673,10 @@ const CitizenDashboard = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-white font-['Outfit']">
-                    Report Road Damage at Selected Location
+                    Report Road Damage (Auto-Detected GPS)
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Location selected on map • Authority assigned automatically
+                    Location auto-detected via device GPS • Authority assigned automatically
                   </p>
                 </div>
               </div>
@@ -705,19 +698,22 @@ const CitizenDashboard = () => {
 
             <form onSubmit={handleSubmitDamageReport} className="space-y-4">
               
-              {/* 1. Selected Map Pin & Coordinates Display (Read-Only) */}
+              {/* 1. Auto-Detected GPS Location Display (Locked) */}
               <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-amber-400 shrink-0" />
                   <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Selected Map Pin</span>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold flex items-center gap-1">
+                      <Lock className="h-3 w-3 text-amber-400" /> Auto-Detected Location (Locked)
+                    </span>
                     <strong className="text-white">
-                      {reportFormData.district}, Maharashtra ({reportFormData.latitude.toFixed(4)}, {reportFormData.longitude.toFixed(4)})
+                      {reportFormData.district}, Maharashtra ({reportFormData.latitude.toFixed(4)}° N, {reportFormData.longitude.toFixed(4)}° E)
                     </strong>
                   </div>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                  Maharashtra GIS
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                  GPS Verified
                 </span>
               </div>
 
@@ -871,7 +867,7 @@ const CitizenDashboard = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={submittingReport || Boolean(imageValidationError)}
+                  disabled={submittingReport || Boolean(imageValidationError) || userLocation.isLocating || (!reportFormData.latitude)}
                   className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm shadow-xl shadow-amber-500/25 transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submittingReport ? (
@@ -879,6 +875,10 @@ const CitizenDashboard = () => {
                       <Loader text="" />
                       <span>Submitting Damage Report & Routing...</span>
                     </>
+                  ) : userLocation.isLocating ? (
+                    <span>Acquiring Device GPS Location...</span>
+                  ) : !reportFormData.latitude ? (
+                    <span>GPS Location Required</span>
                   ) : (
                     <>
                       <Check className="h-4 w-4" />

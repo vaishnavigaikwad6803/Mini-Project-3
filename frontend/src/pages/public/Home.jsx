@@ -118,7 +118,7 @@ const Home = () => {
             </div>
             <h3 className="text-sm font-bold text-white">Citizen Report & GPS</h3>
             <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              Citizens capture road defects, specify road type, and pinpoint exact coordinates on an interactive Leaflet map.
+              Citizens capture road defects with auto-detected device GPS coordinates and automated neural road classification.
             </p>
           </div>
 

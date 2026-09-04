@@ -17,7 +17,9 @@ import {
   Shield, 
   Check,
   Camera,
-  Info
+  Info,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   ROAD_DIVISIONS, 
@@ -66,6 +68,8 @@ const SubmitComplaint = () => {
   const [imageValidationError, setImageValidationError] = useState('');
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState('');
+  const [gpsSuccess, setGpsSuccess] = useState(false);
+  const [gpsError, setGpsError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -76,9 +80,21 @@ const SubmitComplaint = () => {
 
   const handleAutoDetectGPS = async () => {
     setIsLocating(true);
+    setGpsError('');
     setLocationStatus('Acquiring high-accuracy device GPS coordinates...');
     const result = await detectCurrentLocation();
     
+    if (!result.success) {
+      setGpsSuccess(false);
+      setGpsError(result.accuracyMessage || 'GPS location could not be acquired. Location permissions are required to report defects.');
+      setLocationStatus(result.message || 'GPS acquisition failed.');
+      setIsLocating(false);
+      return;
+    }
+
+    setGpsSuccess(true);
+    setGpsError('');
+
     const geoInfo = await reverseGeocodeCoords(result.latitude, result.longitude);
     const autoRoadType = geoInfo?.roadType || result.roadType || 'Municipal/City Road';
 
@@ -102,27 +118,6 @@ const SubmitComplaint = () => {
     setIsLocating(false);
   };
 
-  const handleLocationSelect = async (lat, lng, districtName) => {
-    const geoInfo = await reverseGeocodeCoords(lat, lng);
-    const resolvedDistrict = geoInfo?.district || districtName || formData.district;
-    const resolvedRoad = geoInfo?.roadName || `${resolvedDistrict} Road Damage`;
-    const autoRoadType = geoInfo?.roadType || 'State Highway';
-
-    setFormData((prev) => ({
-      ...prev,
-      latitude: lat,
-      longitude: lng,
-      village: geoInfo?.village || null,
-      taluka: geoInfo?.taluka || null,
-      district: resolvedDistrict,
-      road_name: resolvedRoad,
-      road_type: autoRoadType,
-      road_type_info: geoInfo?.roadTypeInfo || null,
-      displayName: geoInfo?.displayName || `${resolvedDistrict}, Maharashtra`,
-      state: 'Maharashtra'
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.road_name || !formData.road_name.trim()) {
@@ -132,6 +127,11 @@ const SubmitComplaint = () => {
 
     if (imageValidationError) {
       setError(imageValidationError);
+      return;
+    }
+
+    if (!gpsSuccess && formData.accuracy === null) {
+      setError('Live device GPS coordinates are required to submit a complaint. Please ensure device location is allowed and click "Refresh GPS".');
       return;
     }
 
@@ -174,13 +174,13 @@ const SubmitComplaint = () => {
           <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1">
             <Shield className="h-3 w-3" /> Maharashtra Grievance Portal
           </span>
-          <span className="text-xs text-slate-400">Map Location Reporting</span>
+          <span className="text-xs text-slate-400">Verified On-Site Reporting</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
           Report Road Damage
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Click the defect location on the map. The road type and responsible authority are determined automatically. Use your device camera to capture real-time photo evidence.
+          Your defect location is automatically detected via device GPS. Manual location selection is disabled to ensure report authenticity. Road type and responsible authorities are classified automatically.
         </p>
       </div>
 
@@ -193,42 +193,72 @@ const SubmitComplaint = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* 1. MAP LOCATION SELECTION */}
+        {/* 1. AUTO-DETECTED DEFECT LOCATION */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-bold text-white font-['Outfit'] flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-amber-400" />
-                1. Select Damage Location on Maharashtra Map *
+                1. Defect Location (Auto-Detected via Live GPS) *
               </h3>
               <p className="text-xs text-slate-400">
-                Click anywhere on the map or use live GPS to pin the defect location
+                Your device GPS coordinates are automatically locked. Citizens cannot manually alter the report location.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleAutoDetectGPS}
-              disabled={isLocating}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold border border-slate-700 transition-colors disabled:opacity-50"
-            >
-              <Navigation className={`h-3.5 w-3.5 ${isLocating ? 'animate-spin' : ''}`} />
-              {isLocating ? 'Locating...' : 'Use My GPS'}
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-xl bg-slate-800 text-amber-300 font-medium text-[11px] border border-slate-700 flex items-center gap-1.5 shadow-sm">
+                <Lock className="h-3 w-3 text-amber-400" />
+                <span>Auto-Locked</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleAutoDetectGPS}
+                disabled={isLocating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Navigation className={`h-3.5 w-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+                {isLocating ? 'Locating...' : 'Refresh GPS'}
+              </button>
+            </div>
           </div>
+
+          {gpsError && (
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-300">
+              <AlertCircle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold">GPS Location Permission Required</p>
+                <p className="text-slate-300">{gpsError}</p>
+                <button
+                  type="button"
+                  onClick={handleAutoDetectGPS}
+                  className="mt-1 text-xs font-bold text-amber-400 underline hover:text-amber-300"
+                >
+                  Click here to re-attempt GPS detection
+                </button>
+              </div>
+            </div>
+          )}
 
           <MapPicker
             initialLat={formData.latitude}
             initialLng={formData.longitude}
-            onLocationSelect={handleLocationSelect}
+            readOnly={true}
+            isLocating={isLocating}
+            onRefreshGps={handleAutoDetectGPS}
+            accuracy={formData.accuracy}
+            accuracyLevel={formData.accuracyLevel}
+            locationStatus={locationStatus}
+            districtName={formData.district}
           />
 
           <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1.5 text-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-slate-300">
-                Selected Location: <strong className="text-white">{formData.displayName || `${formData.district}, Maharashtra`}</strong>
+                Auto-Detected Location: <strong className="text-white">{formData.displayName || `${formData.district}, Maharashtra`}</strong>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                Within Maharashtra State
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                Live GPS Verified
               </span>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
@@ -237,13 +267,14 @@ const SubmitComplaint = () => {
               </span>
               {formData.accuracy !== null && (
                 <span className="text-slate-400">
-                  GPS Accuracy: <strong className="text-emerald-400">±{formData.accuracy}m</strong>
+                  GPS Accuracy: <strong className={formData.accuracyLevel === 'poor' ? 'text-rose-400' : 'text-emerald-400'}>±{formData.accuracy}m</strong>
                 </span>
               )}
             </div>
             {formData.accuracyLevel === 'poor' && (
               <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium pt-1">
-                <span>⚠️ Your location accuracy is low. Please wait for a better GPS signal or try again.</span>
+                <AlertCircle className="h-3 w-3 text-amber-400 shrink-0" />
+                <span>Your location accuracy is low. Please ensure GPS/satellite signal is clear.</span>
               </p>
             )}
           </div>
@@ -402,11 +433,15 @@ const SubmitComplaint = () => {
         <div className="pt-2">
           <button
             type="submit"
-            disabled={loading || Boolean(imageValidationError)}
+            disabled={loading || Boolean(imageValidationError) || isLocating || (!gpsSuccess && formData.accuracy === null)}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm shadow-xl shadow-amber-500/25 transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span>Submitting Damage Report & Routing to Authority...</span>
+            ) : isLocating ? (
+              <span>Acquiring Device GPS Location...</span>
+            ) : (!gpsSuccess && formData.accuracy === null) ? (
+              <span>GPS Location Required to Submit Report</span>
             ) : (
               <>
                 <CheckCircle2 className="h-5 w-5" />

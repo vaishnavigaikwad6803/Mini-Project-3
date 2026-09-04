@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polygon, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { MapPin, Navigation, Compass, Shield, ChevronDown, Globe2 } from 'lucide-react';
+import { MapPin, Navigation, Compass, Shield, Lock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { 
   INDIA_CENTER,
   INDIA_DEFAULT_ZOOM,
@@ -28,24 +28,47 @@ const customMarkerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// Component to handle map clicks strictly inside Maharashtra
-const LocationMarker = ({ position, setPosition, onLocationSelect }) => {
+// Component to handle marker and accuracy radius
+const LocationMarker = ({ position, readOnly, accuracy, accuracyLevel, setPosition, onLocationSelect }) => {
   useMapEvents({
     click(e) {
+      if (readOnly) {
+        // Location cannot be manually chosen
+        return;
+      }
       const { lat, lng } = e.latlng;
       const newPos = [parseFloat(lat.toFixed(6)), parseFloat(lng.toFixed(6))];
-      
-      const insideMH = isWithinMaharashtra(newPos[0], newPos[1]);
       const districtInfo = getClosestMaharashtraDistrict(newPos[0], newPos[1]);
 
-      setPosition(newPos);
+      if (setPosition) setPosition(newPos);
       if (onLocationSelect) {
         onLocationSelect(newPos[0], newPos[1], districtInfo.name);
       }
     },
   });
 
-  return position ? <Marker position={position} icon={customMarkerIcon} /> : null;
+  if (!position || position[0] == null || position[1] == null) return null;
+
+  const circleColor = accuracyLevel === 'poor' ? '#f43f5e' : (accuracyLevel === 'fair' ? '#f59e0b' : '#10b981');
+
+  return (
+    <>
+      <Marker position={position} icon={customMarkerIcon} />
+      {accuracy && accuracy > 0 && (
+        <Circle
+          center={position}
+          radius={Math.min(accuracy, 300)}
+          pathOptions={{
+            color: circleColor,
+            fillColor: circleColor,
+            fillOpacity: 0.12,
+            weight: 1.5,
+            dashArray: '3, 4'
+          }}
+        />
+      )}
+    </>
+  );
 };
 
 // Component to smoothly fly/pan map view
@@ -63,58 +86,79 @@ const MapPicker = ({
   initialLat = DEFAULT_MUMBAI_CENTER[0], 
   initialLng = DEFAULT_MUMBAI_CENTER[1], 
   onLocationSelect,
-  autoDetect = false
+  autoDetect = false,
+  readOnly = true,
+  isLocating = false,
+  onRefreshGps = null,
+  accuracy = null,
+  accuracyLevel = 'good',
+  locationStatus = '',
+  districtName = ''
 }) => {
   const [position, setPosition] = useState([initialLat, initialLng]);
-  const [zoomLevel, setZoomLevel] = useState(13);
-  const [isLocating, setIsLocating] = useState(false);
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [locationStatus, setLocationStatus] = useState('');
+  const [zoomLevel, setZoomLevel] = useState(15);
+  const [internalLocating, setInternalLocating] = useState(false);
+  const [selectedDistrict, setSelectedDistrict] = useState(districtName || '');
+  const [statusMessage, setStatusMessage] = useState(locationStatus || '');
+
+  const locating = isLocating || internalLocating;
 
   // Sync position state if parent coordinates change
   useEffect(() => {
     if (initialLat != null && initialLng != null) {
       setPosition([initialLat, initialLng]);
-      const dist = getClosestMaharashtraDistrict(initialLat, initialLng);
-      setSelectedDistrict(dist.name);
+      const dist = districtName || getClosestMaharashtraDistrict(initialLat, initialLng).name;
+      setSelectedDistrict(dist);
     }
-  }, [initialLat, initialLng]);
+  }, [initialLat, initialLng, districtName]);
+
+  // Sync status message if parent passes it
+  useEffect(() => {
+    if (locationStatus) {
+      setStatusMessage(locationStatus);
+    }
+  }, [locationStatus]);
 
   // Auto-detect GPS location on mount if autoDetect is enabled
   useEffect(() => {
     if (autoDetect) {
       handleAutoLocate();
-    } else {
+    } else if (!districtName) {
       const dist = getClosestMaharashtraDistrict(initialLat, initialLng);
       setSelectedDistrict(dist.name);
     }
   }, []);
 
   const handleAutoLocate = async () => {
-    setIsLocating(true);
-    setLocationStatus('Acquiring high-accuracy device GPS...');
+    if (onRefreshGps) {
+      onRefreshGps();
+      return;
+    }
+    setInternalLocating(true);
+    setStatusMessage('Acquiring high-accuracy device GPS...');
     const result = await detectCurrentLocation();
     
     const newPos = [result.latitude, result.longitude];
     setPosition(newPos);
     setZoomLevel(15);
     setSelectedDistrict(result.district);
-    setLocationStatus(result.message);
-    setIsLocating(false);
+    setStatusMessage(result.message);
+    setInternalLocating(false);
 
     if (onLocationSelect) {
       onLocationSelect(result.latitude, result.longitude, result.district);
     }
   };
 
-  const handleDistrictChange = (districtName) => {
-    const found = MAHARASHTRA_DISTRICTS.find((d) => d.name === districtName);
+  const handleDistrictChange = (dName) => {
+    if (readOnly) return; // Disabled in readOnly mode
+    const found = MAHARASHTRA_DISTRICTS.find((d) => d.name === dName);
     if (found) {
       const newPos = [found.lat, found.lng];
       setPosition(newPos);
       setZoomLevel(13);
       setSelectedDistrict(found.name);
-      setLocationStatus(`Jumped to ${found.name} District (${found.division} Division)`);
+      setStatusMessage(`Selected ${found.name} District (${found.division} Division)`);
       if (onLocationSelect) {
         onLocationSelect(found.lat, found.lng, found.name);
       }
@@ -130,41 +174,67 @@ const MapPicker = ({
             <Shield className="h-3 w-3" /> Maharashtra GIS
           </span>
           <span className="text-slate-300 hidden sm:inline">
-            Coordinates: <strong className="text-amber-400 font-mono">{typeof position[0] === 'number' ? position[0].toFixed(6) : position[0]}, {typeof position[1] === 'number' ? position[1].toFixed(6) : position[1]}</strong>
+            Coordinates: <strong className="text-amber-400 font-mono">{typeof position[0] === 'number' ? position[0].toFixed(6) : position[0]}° N, {typeof position[1] === 'number' ? position[1].toFixed(6) : position[1]}° E</strong>
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Quick Maharashtra District Selector */}
-          <select
-            value={selectedDistrict}
-            onChange={(e) => handleDistrictChange(e.target.value)}
-            className="px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500"
-          >
-            <option value="" disabled>Jump to District</option>
-            {MAHARASHTRA_DISTRICTS.map((d) => (
-              <option key={d.name} value={d.name}>
-                📍 {d.name} ({d.division})
-              </option>
-            ))}
-          </select>
+          {readOnly ? (
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-xl bg-slate-800/90 text-amber-300 font-medium text-[11px] border border-slate-700 flex items-center gap-1.5 shadow-sm">
+                <Lock className="h-3 w-3 text-amber-400" />
+                <span>GPS Auto-Locked</span>
+              </span>
 
-          {/* Auto-Locate Button */}
-          <button
-            type="button"
-            onClick={handleAutoLocate}
-            disabled={isLocating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
-          >
-            <Navigation className={`h-3.5 w-3.5 ${isLocating ? 'animate-spin' : ''}`} />
-            {isLocating ? 'Locating...' : 'Auto-Detect GPS'}
-          </button>
+              {(onRefreshGps || autoDetect) && (
+                <button
+                  type="button"
+                  onClick={onRefreshGps || handleAutoLocate}
+                  disabled={locating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
+                  title="Re-query device GPS coordinates"
+                >
+                  <Navigation className={`h-3.5 w-3.5 ${locating ? 'animate-spin' : ''}`} />
+                  {locating ? 'Acquiring...' : 'Refresh GPS'}
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Manual District Selector (only visible if not readOnly) */}
+              <select
+                value={selectedDistrict}
+                onChange={(e) => handleDistrictChange(e.target.value)}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500"
+              >
+                <option value="" disabled>Jump to District</option>
+                {MAHARASHTRA_DISTRICTS.map((d) => (
+                  <option key={d.name} value={d.name}>
+                    📍 {d.name} ({d.division})
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={handleAutoLocate}
+                disabled={locating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Navigation className={`h-3.5 w-3.5 ${locating ? 'animate-spin' : ''}`} />
+                {locating ? 'Locating...' : 'Auto-Detect GPS'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {locationStatus && (
+      {statusMessage && (
         <div className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-amber-300/90 flex items-center justify-between">
-          <span>📍 {locationStatus}</span>
+          <span className="flex items-center gap-1.5">
+            <Navigation className="h-3 w-3 text-amber-400 shrink-0" />
+            {statusMessage}
+          </span>
           {selectedDistrict && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
               District: <strong>{selectedDistrict}</strong>
@@ -203,6 +273,9 @@ const MapPicker = ({
           />
           <LocationMarker 
             position={position} 
+            readOnly={readOnly}
+            accuracy={accuracy}
+            accuracyLevel={accuracyLevel}
             setPosition={setPosition} 
             onLocationSelect={onLocationSelect} 
           />
@@ -210,10 +283,17 @@ const MapPicker = ({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-        <p className="flex items-center gap-1">
-          <Compass className="h-3 w-3 text-amber-500" />
-          Click or tap anywhere on Maharashtra's road network to pin exact coordinates.
-        </p>
+        {readOnly ? (
+          <p className="flex items-center gap-1.5 text-slate-300 font-medium">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+            <span>Defect location is strictly auto-detected via device GPS. Manual location selection is disabled.</span>
+          </p>
+        ) : (
+          <p className="flex items-center gap-1">
+            <Compass className="h-3 w-3 text-amber-500" />
+            <span>Click or tap anywhere on Maharashtra's road network to pin exact coordinates.</span>
+          </p>
+        )}
         <span className="text-slate-500 text-[10px]">
           Boundaries locked to Maharashtra State (15.6°N - 22.1°N, 72.6°E - 80.9°E)
         </span>
@@ -223,3 +303,4 @@ const MapPicker = ({
 };
 
 export default MapPicker;
+
