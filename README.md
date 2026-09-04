@@ -1,5 +1,5 @@
 # 🛣️ RoadGuard AI
-### AI-Based Road Damage Detection and Multi-Authority Road Governance System
+### AI-Based Road Damage Detection and Multi-Authority Road Governance Systems
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/Frontend-React_18_%2B_Vite-61DAFB?style=flat&logo=react)](https://react.dev/)
