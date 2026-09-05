@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  PlusCircle, 
   MapPin, 
   Building2, 
   ArrowRight, 
@@ -46,32 +45,24 @@ const Home = () => {
             Report road hazards with instant GPS geolocation. Our neural computer vision engine detects potholes and cracks, auto-assigns the responsible highway or municipal authority, and tracks field repairs from inspection to verified closure.
           </p>
 
-          {/* Quick Track & Report Bar */}
-          <div className="mt-10 max-w-xl mx-auto flex flex-col sm:flex-row gap-3">
-            <form onSubmit={handleTrackSubmit} className="flex-1 flex items-center rounded-2xl bg-slate-900/90 border border-slate-700 p-1.5 focus-within:border-amber-500 transition-colors shadow-2xl">
+          {/* Quick Track Bar */}
+          <div className="mt-10 max-w-lg mx-auto">
+            <form onSubmit={handleTrackSubmit} className="flex items-center rounded-2xl bg-slate-900/90 border border-slate-700 p-1.5 focus-within:border-amber-500 transition-colors shadow-2xl">
               <Search className="h-5 w-5 text-slate-400 ml-3" />
               <input
                 type="text"
                 placeholder="Enter Complaint ID (e.g. RGD-2026-1001)"
                 value={complaintIdInput}
                 onChange={(e) => setComplaintIdInput(e.target.value)}
-                className="w-full bg-transparent px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
+                className="w-full bg-transparent px-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs transition-colors shrink-0"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md transition-all shrink-0"
               >
-                Track
+                Track Status
               </button>
             </form>
-
-            <Link
-              to="/citizen/report"
-              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-xl shadow-amber-500/25 transition-all hover:scale-105 shrink-0"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Report Road Defect
-            </Link>
           </div>
 
           {/* Live Metrics Strip */}
@@ -234,17 +225,10 @@ const Home = () => {
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
-              to="/citizen/report"
+              to="/map"
               className="px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shadow-xl shadow-amber-500/30 transition-all hover:scale-105 flex items-center gap-2"
             >
-              <PlusCircle className="h-4 w-4" />
-              Report Road Defect Now
-            </Link>
-            <Link
-              to="/map"
-              className="px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm border border-slate-700 transition-colors flex items-center gap-2"
-            >
-              <MapPin className="h-4 w-4 text-amber-400" />
+              <MapPin className="h-4 w-4" />
               Explore GIS Road Map
             </Link>
           </div>

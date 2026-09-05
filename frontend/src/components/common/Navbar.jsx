@@ -16,6 +16,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, isCitizen, isAuthority, isEngineer, isAdmin } = useAuth();
@@ -121,8 +122,11 @@ const Navbar = () => {
           </div>
 
           {/* Right Action Icons & Auth Profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             
+            {/* Dark / Light Theme Toggle */}
+            <ThemeToggle />
+
             {/* Quick Report CTA Button */}
             <Link 
               to="/citizen/report" 
@@ -329,6 +333,10 @@ const Navbar = () => {
               My Dashboard
             </Link>
           )}
+          <div className="flex items-center justify-between px-3 py-2 border-t border-slate-800/80 pt-3 mt-1">
+            <span className="text-xs text-slate-300 font-medium">Appearance</span>
+            <ThemeToggle />
+          </div>
           <Link
             to="/citizen/report"
             onClick={() => setMobileMenuOpen(false)}

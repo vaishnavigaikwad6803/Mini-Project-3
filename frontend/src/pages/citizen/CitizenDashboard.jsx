@@ -4,7 +4,6 @@ import { complaintService } from '../../services/complaintService';
 import StatsCard from '../../components/common/StatsCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
-import CameraCapture from '../../components/common/CameraCapture';
 import ComplaintMap from '../../components/map/ComplaintMap';
 import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Loader from '../../components/common/Loader';
@@ -31,7 +30,6 @@ import {
   Phone,
   Calendar,
   AlertCircle,
-  Camera,
   Info,
   Map as MapIcon,
   Lock,
@@ -46,16 +44,6 @@ import {
   getClosestMaharashtraDistrict,
   MAHARASHTRA_DISTRICTS
 } from '../../utils/geoUtils';
-
-const DAMAGE_TYPES = [
-  'Pothole',
-  'Severe Crack / Fissure',
-  'Surface Erosion / Cavity',
-  'Alligator Cracking',
-  'Edge Break / Shoulder Damage',
-  'Waterlogging & Rutting Depression',
-  'Manhole / Pavement Depression'
-];
 
 const CitizenDashboard = () => {
   const navigate = useNavigate();
@@ -78,36 +66,13 @@ const CitizenDashboard = () => {
     road_type: 'Municipal/City Road',
     accuracy: null,
     accuracyLevel: 'good',
-    accuracyMessage: '',
-    isLocating: true,
-    message: 'Auto-detecting your live device GPS location...'
+    accuracyMessage: 'Standard location',
+    isLocating: false,
+    message: ''
   });
 
   // Road Division Filter state
   const [activeDivision, setActiveDivision] = useState('ALL');
-
-  // Map-Click Damage Report Modal State
-  const [mapReportModalOpen, setMapReportModalOpen] = useState(false);
-  const [reportFormData, setReportFormData] = useState({
-    road_name: '',
-    road_type: 'National Highway',
-    road_type_info: null,
-    damage_type: 'Pothole',
-    priority: 'Medium',
-    description: '',
-    landmark: '',
-    latitude: DEFAULT_MUMBAI_CENTER[0],
-    longitude: DEFAULT_MUMBAI_CENTER[1],
-    village: null,
-    taluka: null,
-    district: 'Mumbai Suburban',
-    state: 'Maharashtra',
-    displayName: 'Mumbai Suburban, Maharashtra'
-  });
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [imageValidationError, setImageValidationError] = useState('');
-  const [submittingReport, setSubmittingReport] = useState(false);
-  const [reportError, setReportError] = useState('');
 
   // View Details Modal State
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -156,106 +121,6 @@ const CitizenDashboard = () => {
     loadData();
     runLocationDetection();
   }, []);
-
-  // Open reporting modal for current live GPS location with automated road type detection
-  const handleReportAtCurrentLocation = async () => {
-    let lat = userLocation.latitude;
-    let lng = userLocation.longitude;
-    let dist = userLocation.district;
-    let road = userLocation.road_name;
-    let rType = userLocation.road_type;
-    let rInfo = null;
-
-    if (userLocation.isLocating || userLocation.accuracy === null) {
-      const loc = await detectCurrentLocation();
-      if (loc.success) {
-        lat = loc.latitude;
-        lng = loc.longitude;
-        dist = loc.district;
-        road = loc.road_name;
-        rType = loc.roadType || 'Municipal/City Road';
-        rInfo = loc.roadTypeInfo || null;
-      }
-    }
-
-    const geoInfo = await reverseGeocodeCoords(lat, lng);
-    const districtName = geoInfo?.district || dist;
-    const roadName = geoInfo?.roadName || road || `${districtName} Main Road`;
-    const autoRoadType = geoInfo?.roadType || rType || 'Municipal/City Road';
-    const autoRoadTypeInfo = geoInfo?.roadTypeInfo || rInfo || null;
-
-    setReportFormData({
-      road_name: roadName,
-      road_type: autoRoadType,
-      road_type_info: autoRoadTypeInfo,
-      damage_type: 'Pothole',
-      priority: 'Medium',
-      description: `Reported damage at live location in ${districtName}`,
-      landmark: '',
-      latitude: lat,
-      longitude: lng,
-      district: districtName,
-      state: 'Maharashtra',
-      accuracy: userLocation.accuracy,
-      accuracyLevel: userLocation.accuracyLevel
-    });
-    setCapturedImage(null);
-    setReportError('');
-    setMapReportModalOpen(true);
-  };
-
-  // Submit Map-Click Damage Report with Captured Camera Photo
-  const handleSubmitDamageReport = async (e) => {
-    e.preventDefault();
-    if (!reportFormData.road_name || !reportFormData.road_name.trim()) {
-      setReportError('Please enter the road or street name.');
-      return;
-    }
-
-    if (imageValidationError) {
-      setReportError(imageValidationError);
-      return;
-    }
-
-    setSubmittingReport(true);
-    setReportError('');
-
-    try {
-      const data = new FormData();
-      data.append('road_name', reportFormData.road_name.trim());
-      data.append('road_type', reportFormData.road_type);
-      data.append('damage_type', reportFormData.damage_type);
-      data.append('priority', reportFormData.priority);
-      data.append('description', reportFormData.description || `${reportFormData.damage_type} reported on ${reportFormData.road_name}`);
-      data.append('latitude', reportFormData.latitude);
-      data.append('longitude', reportFormData.longitude);
-      data.append('district', reportFormData.district);
-      data.append('state', 'Maharashtra');
-      if (reportFormData.landmark) {
-        data.append('landmark', reportFormData.landmark.trim());
-      }
-      // Attach captured camera image
-      if (capturedImage) {
-        data.append('road_image', capturedImage, capturedImage.name || 'road_damage_camera.jpg');
-      }
-
-      const response = await complaintService.submitComplaint(data);
-      showToast(`Damage report #${response.id} submitted & routed to authority!`, 'success');
-      setMapReportModalOpen(false);
-      setCapturedImage(null);
-      setImageValidationError('');
-      
-      // Reload dashboard complaints & stats
-      await loadData();
-
-      // Navigate to View Details for the newly created complaint
-      navigate(`/complaints/${response.id}`);
-    } catch (err) {
-      setReportError(err.response?.data?.detail || 'Failed to submit report. Please try again.');
-    } finally {
-      setSubmittingReport(false);
-    }
-  };
 
   // Handle View Details Modal Trigger
   const handleOpenDetails = async (complaintItem) => {
@@ -346,55 +211,9 @@ const CitizenDashboard = () => {
             disabled={userLocation.isLocating}
             className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5"
           >
-            <Navigation className="h-3.5 w-3.5 text-amber-400" />
+            <Navigation className={`h-3.5 w-3.5 text-amber-400 ${userLocation.isLocating ? 'animate-spin' : ''}`} />
             {userLocation.isLocating ? 'Detecting...' : 'Refresh GPS'}
           </button>
-
-          <button
-            type="button"
-            onClick={handleReportAtCurrentLocation}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all hover:scale-105 flex items-center gap-2"
-          >
-            <MapPin className="h-4 w-4" />
-            Report at My Location
-          </button>
-        </div>
-      </div>
-
-      {/* 2. TOP HERO / MAP REPORTING HUB */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/40 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
-          <div className="max-w-xl space-y-2">
-            <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 inline-flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5" /> Maharashtra Road Defect Grievance Center
-            </span>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white font-['Outfit'] tracking-tight">
-              Auto-Detected Damage Reporting
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              Report potholes, surface defects, and road hazards with verified device GPS. Defect locations are auto-detected to ensure authenticity and routed immediately to the responsible authority (**NHAI**, **State PWD**, **PMGSY Rural**, or **Municipal Corporation**).
-            </p>
-          </div>
-
-          <div className="w-full sm:w-auto flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={handleReportAtCurrentLocation}
-              className="p-5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-extrabold text-sm shadow-xl shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 group border-2 border-amber-300"
-            >
-              <div className="p-2.5 rounded-xl bg-slate-950 text-amber-400 group-hover:scale-110 transition-transform">
-                <MapPin className="h-6 w-6" />
-              </div>
-              <div className="text-left">
-                <span className="block text-xs uppercase tracking-wider font-mono font-bold text-slate-900">
-                  On-Site GPS Report
-                </span>
-                <span className="text-base font-extrabold">
-                  📍 Report Defect at Live Location
-                </span>
-              </div>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -586,16 +405,9 @@ const CitizenDashboard = () => {
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
               {activeDivision !== 'ALL' 
                 ? `You haven't submitted any reports for ${activeDivision} roads yet.`
-                : 'Help improve road safety in your area by reporting potholes, cracks, and surface damage directly on the map.'
+                : 'No road damage complaints found. You can report road defects using the "Report Damage" button in the top navigation bar.'
               }
             </p>
-            <button
-              type="button"
-              onClick={handleReportAtCurrentLocation}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs"
-            >
-              <MapPin className="h-3.5 w-3.5" /> Report Road Damage on Map
-            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -657,242 +469,6 @@ const CitizenDashboard = () => {
           </div>
         )}
       </div>
-
-      {/* ========================================================================= */}
-      {/* 7. MAP-CLICK DAMAGE REPORTING MODAL */}
-      {/* ========================================================================= */}
-      {mapReportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-white font-['Outfit']">
-                    Report Road Damage (Auto-Detected GPS)
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Location auto-detected via device GPS • Authority assigned automatically
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMapReportModalOpen(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {reportError && (
-              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-                <span>{reportError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitDamageReport} className="space-y-4">
-              
-              {/* 1. Auto-Detected GPS Location Display (Locked) */}
-              <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-amber-400 shrink-0" />
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3 text-amber-400" /> Auto-Detected Location (Locked)
-                    </span>
-                    <strong className="text-white">
-                      {reportFormData.district}, Maharashtra ({reportFormData.latitude.toFixed(4)}° N, {reportFormData.longitude.toFixed(4)}° E)
-                    </strong>
-                  </div>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                  GPS Verified
-                </span>
-              </div>
-
-              {/* 2. Automatically Determined Road Classification (READ-ONLY) */}
-              <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/30 shadow-inner space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="p-1 rounded-lg bg-amber-500/20 text-amber-400">
-                      <Layers className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="text-xs font-bold text-slate-200">
-                      Auto-Detected Road Classification
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                    🔒 Read-Only (GIS Verified)
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                  <RoadTypeBadge roadType={reportFormData.road_type} size="md" />
-                  <span className="text-xs font-semibold text-slate-300">
-                    🏛️ {reportFormData.road_type_info?.authority_name || (
-                      reportFormData.road_type === 'National Highway' ? 'National Highways Authority of India (NHAI)' :
-                      reportFormData.road_type === 'State Highway' ? 'Maharashtra Public Works Department (PWD)' :
-                      reportFormData.road_type === 'Rural/Village Road' ? 'Zilla Parishad & PMGSY Rural Roads' :
-                      'Municipal Corporation (Local Urban Body)'
-                    )}
-                  </span>
-                </div>
-
-                <p className="text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-start gap-1.5">
-                  <Info className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
-                  <span>
-                    {reportFormData.road_type_info?.reason || `Automatically determined as ${reportFormData.road_type} from map coordinates (${reportFormData.latitude.toFixed(4)}, ${reportFormData.longitude.toFixed(4)}) and territorial jurisdiction.`}
-                  </span>
-                </p>
-              </div>
-
-              {/* 3. Road Name Input */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Road / Street / Highway Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={reportFormData.road_name}
-                  onChange={(e) => setReportFormData({ ...reportFormData, road_name: e.target.value })}
-                  placeholder="e.g. Western Express Highway, SV Road, Pune-Solapur Highway"
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              {/* 4. Landmark Input */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Nearby Landmark (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={reportFormData.landmark}
-                  onChange={(e) => setReportFormData({ ...reportFormData, landmark: e.target.value })}
-                  placeholder="e.g. Near Metro Station, Opp. City Mall, Flyover Junction"
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              {/* 5. Device Camera Image Capture (Take Photo / Preview / Retake) */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Camera className="h-3.5 w-3.5 text-amber-400" />
-                    Capture Road Damage Photo (Camera Only)
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Direct Device Camera
-                  </span>
-                </label>
-                
-                <CameraCapture
-                  capturedImage={capturedImage}
-                  hideDeviceCameraFallback={true}
-                  onImageCapture={(file) => {
-                    setCapturedImage(file);
-                    setReportError('');
-                  }}
-                  onImageClear={() => {
-                    setCapturedImage(null);
-                    setImageValidationError('');
-                    setReportError('');
-                  }}
-                  onValidationChange={(isValid, errorMsg) => {
-                    setImageValidationError(isValid ? '' : (errorMsg || 'Invalid image'));
-                    if (!isValid) setReportError(errorMsg);
-                  }}
-                />
-              </div>
-
-              {/* 6. Damage Defect Type and Severity / Priority Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Damage Defect Type *
-                  </label>
-                  <select
-                    value={reportFormData.damage_type}
-                    onChange={(e) => setReportFormData({ ...reportFormData, damage_type: e.target.value })}
-                    className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-                  >
-                    {DAMAGE_TYPES.map((dt) => (
-                      <option key={dt} value={dt}>
-                        {dt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Assessed Severity / Priority *
-                  </label>
-                  <select
-                    value={reportFormData.priority}
-                    onChange={(e) => setReportFormData({ ...reportFormData, priority: e.target.value })}
-                    className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="Critical">Critical (Hazardous to traffic)</option>
-                    <option value="High">High (Major road defect)</option>
-                    <option value="Medium">Medium (Moderate road damage)</option>
-                    <option value="Low">Low (Minor surface defect)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* 7. Observations / Description Input */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Damage Description / Observations
-                </label>
-                <textarea
-                  rows={2}
-                  value={reportFormData.description}
-                  onChange={(e) => setReportFormData({ ...reportFormData, description: e.target.value })}
-                  placeholder="Describe the condition, depth, size, or hazard of the damage..."
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              {/* 8. Submit Button */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={submittingReport || Boolean(imageValidationError) || userLocation.isLocating || (!reportFormData.latitude)}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm shadow-xl shadow-amber-500/25 transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submittingReport ? (
-                    <>
-                      <Loader text="" />
-                      <span>Submitting Damage Report & Routing...</span>
-                    </>
-                  ) : userLocation.isLocating ? (
-                    <span>Acquiring Device GPS Location...</span>
-                  ) : !reportFormData.latitude ? (
-                    <span>GPS Location Required</span>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4" />
-                      <span>Submit Road Damage Report</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-            </form>
-
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* 8. COMPREHENSIVE VIEW DETAILS MODAL */}

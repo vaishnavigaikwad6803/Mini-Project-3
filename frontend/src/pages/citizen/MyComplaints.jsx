@@ -6,13 +6,12 @@ import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Loader from '../../components/common/Loader';
 import { 
   FileText, 
-  PlusCircle, 
   Search, 
   Filter, 
   Eye, 
   MapPin, 
-  Calendar,
-  AlertTriangle
+  Calendar, 
+  AlertTriangle 
 } from 'lucide-react';
 
 const MyComplaints = () => {
@@ -59,14 +58,6 @@ const MyComplaints = () => {
             Track status transitions, AI damage scores, and authority repair certifications.
           </p>
         </div>
-
-        <Link
-          to="/citizen/report"
-          className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-colors flex items-center gap-1.5"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Report New Defect
-        </Link>
       </div>
 
       {/* Filter Toolbar */}

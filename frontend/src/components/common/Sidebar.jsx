@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
-  PlusCircle,
   FileText,
   MapPin,
   Building2,
@@ -23,7 +22,6 @@ const Sidebar = () => {
 
   const citizenNav = [
     { to: '/citizen', icon: LayoutDashboard, label: 'Overview' },
-    { to: '/citizen/report', icon: PlusCircle, label: 'Report Road Defect' },
     { to: '/citizen/complaints', icon: FileText, label: 'My Complaints' },
     { to: '/map', icon: MapPin, label: 'Live Road Map' },
   ];
