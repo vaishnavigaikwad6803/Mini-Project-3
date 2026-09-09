@@ -6,15 +6,15 @@ import { authorityService } from '../../services/authorityService';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import { MAHARASHTRA_DISTRICTS } from '../../utils/geoUtils';
-import { 
-  HardHat, 
-  UserPlus, 
-  Search, 
-  Wrench, 
-  Mail, 
-  Phone, 
-  Building2, 
-  CheckCircle2, 
+import {
+  HardHat,
+  UserPlus,
+  Search,
+  Wrench,
+  Mail,
+  Phone,
+  Building2,
+  CheckCircle2,
   AlertCircle,
   PlusCircle,
   MapPin,
@@ -55,7 +55,7 @@ const AuthorityEngineers = () => {
       if (!authId && auths.length > 0) {
         authId = auths[0].id;
       }
-      
+
       if (authId) {
         setRegForm(prev => ({ ...prev, authority_id: authId }));
         const data = await engineerService.getEngineers({ authority_id: authId });
@@ -122,7 +122,7 @@ const AuthorityEngineers = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -236,7 +236,7 @@ const AuthorityEngineers = () => {
         title="Register New Field Maintenance Engineer"
       >
         <form onSubmit={handleRegisterSubmit} className="space-y-4 text-xs">
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Full Name *</label>

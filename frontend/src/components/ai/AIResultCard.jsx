@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  Cpu, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Layers, 
-  Clock, 
-  Sparkles, 
-  Maximize2, 
+import {
+  Cpu,
+  AlertTriangle,
+  CheckCircle2,
+  Layers,
+  Clock,
+  Sparkles,
+  Maximize2,
   Info,
   ShieldAlert
 } from 'lucide-react';
@@ -43,7 +43,7 @@ const AIResultCard = ({ aiResult, originalImageUrl }) => {
 
   return (
     <div className="rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
-      
+
       {/* Card Header with AI badge */}
       <div className="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60">
         <div className="flex items-center gap-2.5">
@@ -69,21 +69,19 @@ const AIResultCard = ({ aiResult, originalImageUrl }) => {
         <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('annotated')}
-            className={`px-3 py-1 rounded-lg transition-all ${
-              activeTab === 'annotated'
+            className={`px-3 py-1 rounded-lg transition-all ${activeTab === 'annotated'
                 ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'text-slate-400 hover:text-white'
-            }`}
+              }`}
           >
             AI Bounding Boxes
           </button>
           <button
             onClick={() => setActiveTab('original')}
-            className={`px-3 py-1 rounded-lg transition-all ${
-              activeTab === 'original'
+            className={`px-3 py-1 rounded-lg transition-all ${activeTab === 'original'
                 ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'text-slate-400 hover:text-white'
-            }`}
+              }`}
           >
             Original Photo
           </button>
@@ -92,7 +90,7 @@ const AIResultCard = ({ aiResult, originalImageUrl }) => {
 
       {/* Main Visual Display */}
       <div className="p-4 sm:p-6 space-y-6">
-        
+
         {/* Image Preview Container */}
         <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center max-h-[440px] shadow-inner">
           <img
@@ -110,7 +108,7 @@ const AIResultCard = ({ aiResult, originalImageUrl }) => {
 
         {/* AI Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          
+
           {/* Primary Defect */}
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">

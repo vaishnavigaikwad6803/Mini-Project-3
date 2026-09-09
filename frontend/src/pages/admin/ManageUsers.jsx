@@ -3,17 +3,17 @@ import { adminService } from '../../services/adminService';
 import { useNotifications } from '../../context/NotificationContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
-import { 
-  Users, 
-  Search, 
-  Shield, 
-  CheckCircle2, 
-  XCircle, 
-  Edit3, 
-  Mail, 
-  Phone, 
+import {
+  Users,
+  Search,
+  Shield,
+  CheckCircle2,
+  XCircle,
+  Edit3,
+  Mail,
+  Phone,
   MapPin,
-  AlertCircle 
+  AlertCircle
 } from 'lucide-react';
 
 const ROLES = ['CITIZEN', 'AUTHORITY', 'ENGINEER', 'ADMIN'];
@@ -95,7 +95,7 @@ const ManageUsers = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      
+
       {/* Header */}
       <div>
         <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30">
@@ -167,12 +167,11 @@ const ManageUsers = () => {
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                        u.role === 'ADMIN' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                        u.role === 'AUTHORITY' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
-                        u.role === 'ENGINEER' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
-                        'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                      }`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${u.role === 'ADMIN' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                          u.role === 'AUTHORITY' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
+                            u.role === 'ENGINEER' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                              'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                        }`}>
                         {u.role}
                       </span>
                     </td>
@@ -183,9 +182,8 @@ const ManageUsers = () => {
                       {u.district ? `📍 ${u.district}, ${u.state}` : '—'}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                        u.is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-                      }`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${u.is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                        }`}>
                         {u.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>

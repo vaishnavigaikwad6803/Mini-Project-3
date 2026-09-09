@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  ShieldAlert, 
-  User, 
-  Mail, 
-  Lock, 
-  Phone, 
-  MapPin, 
-  UserPlus, 
-  AlertCircle 
+import {
+  ShieldAlert,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  MapPin,
+  UserPlus,
+  AlertCircle
 } from 'lucide-react';
 
 const Register = () => {
@@ -70,7 +70,7 @@ const Register = () => {
   return (
     <div className="min-h-[calc(100vh-14rem)] flex items-center justify-center p-4 sm:p-6 py-12">
       <div className="w-full max-w-lg space-y-6">
-        
+
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 items-center justify-center text-amber-400 mb-2 shadow-lg shadow-amber-500/10">
@@ -86,7 +86,7 @@ const Register = () => {
 
         {/* Card */}
         <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">
-          
+
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-xs text-rose-300">
               <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
@@ -95,7 +95,7 @@ const Register = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            
+
             {/* Full Name */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name</label>

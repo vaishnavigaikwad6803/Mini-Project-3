@@ -7,13 +7,13 @@ import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
-import { 
-  FileText, 
-  Search, 
-  Filter, 
-  Eye, 
-  MapPin, 
-  Download, 
+import {
+  FileText,
+  Search,
+  Filter,
+  Eye,
+  MapPin,
+  Download,
   AlertCircle,
   HardHat,
   Trash2
@@ -126,7 +126,7 @@ const ManageComplaints = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -151,7 +151,7 @@ const ManageComplaints = () => {
 
       {/* Filter Bar */}
       <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-        
+
         {/* Search */}
         <div className="flex-1 min-w-[240px] relative">
           <Search className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />

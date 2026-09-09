@@ -70,7 +70,7 @@ const Sidebar = () => {
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 min-h-[calc(100vh-4rem)]">
-      
+
       {/* Portal Header */}
       <div className="p-4 border-b border-slate-800/80 bg-slate-950/40">
         <div className="flex items-center gap-3">
@@ -98,10 +98,9 @@ const Sidebar = () => {
               to={item.to}
               end={item.to === '/citizen' || item.to === '/authority' || item.to === '/engineer' || item.to === '/admin'}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${isActive
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                 }`
               }
             >

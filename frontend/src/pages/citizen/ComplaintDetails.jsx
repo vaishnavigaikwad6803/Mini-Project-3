@@ -12,18 +12,18 @@ import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import CameraCapture from '../../components/common/CameraCapture';
-import { 
-  MapPin, 
-  Building2, 
-  HardHat, 
-  Wrench, 
-  Calendar, 
-  ArrowLeft, 
-  CheckCircle2, 
-  AlertCircle, 
-  User, 
-  Phone, 
-  Mail, 
+import {
+  MapPin,
+  Building2,
+  HardHat,
+  Wrench,
+  Calendar,
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  User,
+  Phone,
+  Mail,
   FileText,
   Clock,
   ShieldCheck,
@@ -278,7 +278,7 @@ const ComplaintDetails = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      
+
       {/* Back Button & Top Meta */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <button
@@ -340,7 +340,7 @@ const ComplaintDetails = () => {
 
       {/* Main Header Info Card */}
       <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">
-        
+
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-800 pb-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -407,11 +407,10 @@ const ComplaintDetails = () => {
               Damage Priority & GPS
             </span>
             <div className="flex items-center gap-2 mt-1">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${
-                complaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
-                complaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
-                'bg-amber-500/20 text-amber-300 border-amber-500/40'
-              }`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${complaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
+                  complaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
+                    'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                }`}>
                 {complaint.priority} Priority
               </span>
             </div>
@@ -745,7 +744,7 @@ const ComplaintDetails = () => {
         title={`Road Repair Management: ${complaint.id}`}
       >
         <form onSubmit={handleEngineerSubmit} className="space-y-4 text-xs">
-          
+
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">Current Progress Stage *</label>
             <select
@@ -807,10 +806,10 @@ const ComplaintDetails = () => {
               <p className="text-[11px] text-slate-400 leading-relaxed">
                 When damage repair is completed, you must upload photographic evidence of the repaired road surface. The <strong>Resolved</strong> button will be displayed once the photo is attached.
               </p>
-              
+
               <div className="space-y-2">
                 {!completionImage && !imagePreview && (
-                  <CameraCapture 
+                  <CameraCapture
                     enableAiValidation={false}
                     title="Repaired Road Proof"
                     subtitle="Verify work completion"

@@ -9,12 +9,12 @@ import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import { useNotifications } from '../../context/NotificationContext';
-import { 
-  FileText, 
-  Clock, 
-  Wrench, 
-  CheckCircle2, 
-  Search, 
+import {
+  FileText,
+  Clock,
+  Wrench,
+  CheckCircle2,
+  Search,
   ArrowRight,
   MapPin,
   Eye,
@@ -35,9 +35,9 @@ import {
   Lock,
   ShieldCheck
 } from 'lucide-react';
-import { 
-  ROAD_DIVISIONS, 
-  detectCurrentLocation, 
+import {
+  ROAD_DIVISIONS,
+  detectCurrentLocation,
   reverseGeocodeCoords,
   detectRoadTypeFromLocation,
   DEFAULT_MUMBAI_CENTER,
@@ -244,17 +244,15 @@ const CitizenDashboard = () => {
               <div
                 key={div.key}
                 onClick={() => setActiveDivision(isSelected ? 'ALL' : div.key)}
-                className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${
-                  isSelected
+                className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${isSelected
                     ? `${div.activeClass} border-transparent scale-[1.02]`
                     : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-2xl">{div.icon}</span>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                    isSelected ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'
-                  }`}>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}>
                     {count} Reported
                   </span>
                 </div>
@@ -268,9 +266,8 @@ const CitizenDashboard = () => {
                       {div.value}
                     </h3>
                   </div>
-                  <p className={`text-[11px] mt-1 line-clamp-2 ${
-                    isSelected ? 'text-slate-900/80 font-medium' : 'text-slate-400'
-                  }`}>
+                  <p className={`text-[11px] mt-1 line-clamp-2 ${isSelected ? 'text-slate-900/80 font-medium' : 'text-slate-400'
+                    }`}>
                     {div.authority}
                   </p>
                 </div>
@@ -351,9 +348,9 @@ const CitizenDashboard = () => {
           </Link>
         </div>
 
-        <ComplaintMap 
-          complaints={recentComplaints} 
-          height="h-[440px]" 
+        <ComplaintMap
+          complaints={recentComplaints}
+          height="h-[440px]"
           showFilters={true}
           initialRoadDivision={activeDivision}
           onViewDetails={handleOpenDetails}
@@ -403,7 +400,7 @@ const CitizenDashboard = () => {
             <AlertTriangle className="h-10 w-10 text-slate-500 mx-auto" />
             <h3 className="text-sm font-semibold text-slate-300">No Complaints in this Division</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              {activeDivision !== 'ALL' 
+              {activeDivision !== 'ALL'
                 ? `You haven't submitted any reports for ${activeDivision} roads yet.`
                 : 'No road damage complaints found. You can report road defects using the "Report Damage" button in the top navigation bar.'
               }
@@ -440,11 +437,10 @@ const CitizenDashboard = () => {
                       <span className="text-slate-200 font-semibold block">
                         {c.primary_damage_type || c.damage_type || 'Road Defect'}
                       </span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' :
-                        c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
-                        'bg-amber-500/20 text-amber-300'
-                      }`}>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' :
+                          c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
+                            'bg-amber-500/20 text-amber-300'
+                        }`}>
                         {c.priority} Priority
                       </span>
                     </td>
@@ -476,7 +472,7 @@ const CitizenDashboard = () => {
       {detailsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
           <div className="relative w-full max-w-3xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200 my-8 max-h-[90vh] overflow-y-auto">
-            
+
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div>
@@ -509,7 +505,7 @@ const CitizenDashboard = () => {
 
                 {/* Location & Authority Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  
+
                   {/* Location Box */}
                   <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
                     <span className="text-slate-400 uppercase font-semibold text-[10px] block">Location Details</span>
@@ -541,11 +537,10 @@ const CitizenDashboard = () => {
                     <strong className="text-white block text-sm">
                       {selectedComplaint.primary_damage_type || selectedComplaint.damage_type || 'Road Defect'}
                     </strong>
-                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded border ${
-                      selectedComplaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
-                      selectedComplaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
-                      'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    }`}>
+                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded border ${selectedComplaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
+                        selectedComplaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
+                          'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      }`}>
                       {selectedComplaint.priority} Priority
                     </span>
                   </div>
@@ -669,9 +664,9 @@ const CitizenDashboard = () => {
                     <Clock className="h-3.5 w-3.5 text-amber-400" />
                     Status Timeline & History
                   </h4>
-                  <ComplaintTimeline 
-                    history={selectedComplaint.status_history || []} 
-                    currentStatus={selectedComplaint.status} 
+                  <ComplaintTimeline
+                    history={selectedComplaint.status_history || []}
+                    currentStatus={selectedComplaint.status}
                   />
                 </div>
 

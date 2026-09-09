@@ -6,13 +6,13 @@ import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import AIResultCard from '../../components/ai/AIResultCard';
 import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Loader from '../../components/common/Loader';
-import { 
-  Search, 
-  MapPin, 
-  Building2, 
-  HardHat, 
-  Calendar, 
-  CheckCircle2, 
+import {
+  Search,
+  MapPin,
+  Building2,
+  HardHat,
+  Calendar,
+  CheckCircle2,
   AlertCircle,
   Eye,
   FileText
@@ -59,7 +59,7 @@ const TrackComplaint = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      
+
       {/* Header & Search Bar */}
       <div className="text-center max-w-2xl mx-auto space-y-4">
         <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Public Status Portal</span>
@@ -111,10 +111,10 @@ const TrackComplaint = () => {
       {/* Complaint Detail Display */}
       {complaint && (
         <div className="space-y-8 animate-in fade-in duration-200">
-          
+
           {/* Main Info Header Card */}
           <div className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl space-y-6">
-            
+
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -192,7 +192,7 @@ const TrackComplaint = () => {
                 <HardHat className="h-5 w-5 text-amber-500" />
                 Field Inspection & Repair Status
               </h3>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
                 <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-800">
                   <span className="text-slate-400 block">Current Repair Stage</span>

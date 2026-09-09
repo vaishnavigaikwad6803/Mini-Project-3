@@ -42,11 +42,11 @@ const RoadTypeBadge = ({ roadType, size = 'sm', showDivisionTag = true }) => {
   };
 
   const config = getBadgeConfig(roadType);
-  const sizeClasses = size === 'xs' 
-    ? 'px-2 py-0.5 text-[10px]' 
-    : size === 'md' 
-    ? 'px-3 py-1 text-xs' 
-    : 'px-2.5 py-0.5 text-xs';
+  const sizeClasses = size === 'xs'
+    ? 'px-2 py-0.5 text-[10px]'
+    : size === 'md'
+      ? 'px-3 py-1 text-xs'
+      : 'px-2.5 py-0.5 text-xs';
 
   return (
     <span

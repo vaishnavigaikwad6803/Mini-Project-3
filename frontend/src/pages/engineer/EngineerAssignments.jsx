@@ -10,14 +10,14 @@ import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import CameraCapture from '../../components/common/CameraCapture';
 import { calculateDistance, detectCurrentLocation } from '../../utils/geoUtils';
-import { 
-  HardHat, 
-  Wrench, 
-  UploadCloud, 
-  Eye, 
-  MapPin, 
-  CheckCircle2, 
-  Clock, 
+import {
+  HardHat,
+  Wrench,
+  UploadCloud,
+  Eye,
+  MapPin,
+  CheckCircle2,
+  Clock,
   AlertCircle,
   FileText,
   DollarSign,
@@ -51,7 +51,7 @@ const EngineerAssignments = () => {
   const [completionImage, setCompletionImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  
+
   const [isValidatingGps, setIsValidatingGps] = useState(false);
   const [gpsError, setGpsError] = useState('');
   const [isAiValid, setIsAiValid] = useState(true);
@@ -148,7 +148,7 @@ const EngineerAssignments = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      
+
       {/* Header */}
       <div>
         <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
@@ -177,7 +177,7 @@ const EngineerAssignments = () => {
 
             return (
               <div key={c.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between">
-                
+
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20">
@@ -201,11 +201,10 @@ const EngineerAssignments = () => {
                     <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">
                       Defect: {c.primary_damage_type || 'Road Defect'}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded font-bold border ${
-                      c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                      c.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
-                      'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                    }`}>
+                    <span className={`text-xs px-2 py-0.5 rounded font-bold border ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                        c.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                          'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                      }`}>
                       {c.priority}
                     </span>
                   </div>
@@ -271,7 +270,7 @@ const EngineerAssignments = () => {
         title={`Road Repair Management: ${selectedComplaint?.id}`}
       >
         <form onSubmit={handleStageSubmit} className="space-y-4 text-xs">
-          
+
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">Current Progress Stage *</label>
             <select
@@ -333,10 +332,10 @@ const EngineerAssignments = () => {
               <p className="text-[11px] text-slate-400 leading-relaxed">
                 When damage repair is completed, you must upload photographic evidence of the repaired road surface. The <strong>Resolved</strong> button will be displayed once the photo is attached.
               </p>
-              
+
               <div className="space-y-2">
                 {!completionImage && !imagePreview && (
-                  <CameraCapture 
+                  <CameraCapture
                     enableAiValidation={true}
                     title="Repaired Road Proof"
                     subtitle="Verify work completion"
@@ -352,18 +351,18 @@ const EngineerAssignments = () => {
                       setIsAiValid(false); // disable submit until proven valid
                       setCompletionImage(file);
                       setImagePreview(URL.createObjectURL(file));
-                      
+
                       if (selectedComplaint?.latitude && selectedComplaint?.longitude) {
                         setIsValidatingGps(true);
                         setGpsError('');
-                        
+
                         const loc = await detectCurrentLocation();
                         if (loc.success) {
                           const dist = calculateDistance(
-                            loc.latitude, loc.longitude, 
+                            loc.latitude, loc.longitude,
                             selectedComplaint.latitude, selectedComplaint.longitude
                           );
-                          
+
                           if (dist !== null && dist > 50) {
                             setGpsError(`You are ${Math.round(dist)} meters away from the reported location. You must be within 50m.`);
                           }

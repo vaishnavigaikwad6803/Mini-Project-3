@@ -5,14 +5,14 @@ import { useNotifications } from '../../context/NotificationContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import { MAHARASHTRA_DISTRICTS } from '../../utils/geoUtils';
-import { 
-  HardHat, 
-  Building2, 
-  Search, 
-  Wrench, 
-  Mail, 
-  Phone, 
-  CheckCircle2, 
+import {
+  HardHat,
+  Building2,
+  Search,
+  Wrench,
+  Mail,
+  Phone,
+  CheckCircle2,
   Edit3,
   AlertCircle,
   UserPlus,
@@ -149,7 +149,7 @@ const ManageEngineers = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -207,7 +207,7 @@ const ManageEngineers = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((eng) => (
             <div key={eng.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between">
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20">
@@ -279,7 +279,7 @@ const ManageEngineers = () => {
         title="Register New Field Maintenance Engineer"
       >
         <form onSubmit={handleRegisterSubmit} className="space-y-4 text-xs">
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Full Name *</label>

@@ -10,13 +10,13 @@ import StatsCard from '../../components/common/StatsCard';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import CameraCapture from '../../components/common/CameraCapture';
-import { 
-  HardHat, 
-  Wrench, 
-  Clock, 
-  CheckCircle2, 
-  Eye, 
-  MapPin, 
+import {
+  HardHat,
+  Wrench,
+  Clock,
+  CheckCircle2,
+  Eye,
+  MapPin,
   ArrowRight,
   AlertCircle
 } from 'lucide-react';
@@ -139,7 +139,7 @@ const EngineerDashboard = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      
+
       {/* Top Banner */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-purple-950/50 border border-slate-800 shadow-2xl space-y-3">
         <div className="flex items-center gap-2">
@@ -252,11 +252,10 @@ const EngineerDashboard = () => {
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${
-                          c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                          c.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
-                          'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                            c.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                              'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                          }`}>
                           {c.priority || 'Medium'}
                         </span>
                       </td>
@@ -303,7 +302,7 @@ const EngineerDashboard = () => {
         title={`Road Repair Management: ${selectedComplaint?.id}`}
       >
         <form onSubmit={handleStageSubmit} className="space-y-4 text-xs">
-          
+
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">Current Progress Stage *</label>
             <select
@@ -365,10 +364,10 @@ const EngineerDashboard = () => {
               <p className="text-[11px] text-slate-400 leading-relaxed">
                 When damage repair is completed, you must upload photographic evidence of the repaired road surface. The <strong>Resolved</strong> button will be displayed once the photo is attached.
               </p>
-              
+
               <div className="space-y-2">
                 {!completionImage && !imagePreview && (
-                  <CameraCapture 
+                  <CameraCapture
                     enableAiValidation={false}
                     title="Repaired Road Proof"
                     subtitle="Verify work completion"

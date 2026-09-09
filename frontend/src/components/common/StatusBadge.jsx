@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  Clock, 
-  Cpu, 
-  Building2, 
-  HardHat, 
-  Search, 
-  Wrench, 
-  CheckCircle2, 
-  ShieldCheck, 
+import {
+  Clock,
+  Cpu,
+  Building2,
+  HardHat,
+  Search,
+  Wrench,
+  CheckCircle2,
+  ShieldCheck,
   XCircle,
   AlertCircle
 } from 'lucide-react';

@@ -6,27 +6,27 @@ import { complaintService } from '../../services/complaintService';
 import MapPicker from '../../components/map/MapPicker';
 import CameraCapture from '../../components/common/CameraCapture';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
-import { 
-  MapPin, 
-  FileText, 
-  Layers, 
-  AlertCircle, 
-  CheckCircle2, 
-  Compass, 
-  Navigation, 
-  Shield, 
+import {
+  MapPin,
+  FileText,
+  Layers,
+  AlertCircle,
+  CheckCircle2,
+  Compass,
+  Navigation,
+  Shield,
   Check,
   Camera,
   Info,
   Lock,
   ShieldCheck
 } from 'lucide-react';
-import { 
-  ROAD_DIVISIONS, 
-  DEFAULT_MUMBAI_CENTER, 
-  detectCurrentLocation, 
+import {
+  ROAD_DIVISIONS,
+  DEFAULT_MUMBAI_CENTER,
+  detectCurrentLocation,
   reverseGeocodeCoords,
-  getClosestMaharashtraDistrict 
+  getClosestMaharashtraDistrict
 } from '../../utils/geoUtils';
 
 const DAMAGE_TYPES = [
@@ -83,7 +83,7 @@ const SubmitComplaint = () => {
     setGpsError('');
     setLocationStatus('Acquiring high-accuracy device GPS coordinates...');
     const result = await detectCurrentLocation();
-    
+
     if (!result.success) {
       setGpsSuccess(false);
       setGpsError(result.accuracyMessage || 'GPS location could not be acquired. Location permissions are required to report defects.');
@@ -167,7 +167,7 @@ const SubmitComplaint = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
-      
+
       {/* Header */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/40 border border-slate-800 shadow-2xl">
         <div className="flex items-center gap-2 mb-1">
@@ -192,7 +192,7 @@ const SubmitComplaint = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
+
         {/* 1. AUTO-DETECTED DEFECT LOCATION */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -298,9 +298,9 @@ const SubmitComplaint = () => {
               <span className="text-xs font-semibold text-slate-300">
                 🏛️ {formData.road_type_info?.authority_name || (
                   formData.road_type === 'National Highway' ? 'National Highways Authority of India (NHAI)' :
-                  formData.road_type === 'State Highway' ? 'Maharashtra Public Works Department (PWD)' :
-                  formData.road_type === 'Rural/Village Road' ? 'Zilla Parishad & PMGSY Rural Roads' :
-                  'Municipal Corporation (Local Urban Body)'
+                    formData.road_type === 'State Highway' ? 'Maharashtra Public Works Department (PWD)' :
+                      formData.road_type === 'Rural/Village Road' ? 'Zilla Parishad & PMGSY Rural Roads' :
+                        'Municipal Corporation (Local Urban Body)'
                 )}
               </span>
             </div>

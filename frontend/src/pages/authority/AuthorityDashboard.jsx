@@ -11,16 +11,16 @@ import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Modal from '../../components/common/Modal';
 import ComplaintMap from '../../components/map/ComplaintMap';
 import Loader from '../../components/common/Loader';
-import { 
-  Building2, 
-  HardHat, 
-  FileText, 
-  Wrench, 
-  CheckCircle2, 
-  Clock, 
-  Search, 
-  Eye, 
-  MapPin, 
+import {
+  Building2,
+  HardHat,
+  FileText,
+  Wrench,
+  CheckCircle2,
+  Clock,
+  Search,
+  Eye,
+  MapPin,
   ShieldAlert,
   ArrowRight,
   AlertTriangle
@@ -116,7 +116,7 @@ const AuthorityDashboard = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      
+
       {/* Authority Header Card */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/50 border border-slate-800 shadow-2xl space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -239,11 +239,10 @@ const AuthorityDashboard = () => {
                       )}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${
-                        c.ai_severity === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                        c.ai_severity === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
-                        'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${c.ai_severity === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                          c.ai_severity === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                            'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                        }`}>
                         {c.ai_severity || 'Medium'}
                       </span>
                     </td>

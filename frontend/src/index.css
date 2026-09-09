@@ -14,13 +14,16 @@
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: #0f172a;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #334155;
     border-radius: 9999px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #f59e0b;
   }
@@ -62,9 +65,12 @@
 
 /* Pulse animation for markers and urgent alerts */
 @keyframes pulseGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
   }
+
   50% {
     box-shadow: 0 0 25px rgba(239, 68, 68, 0.9);
   }
@@ -85,9 +91,11 @@ html.light body {
 html.light ::-webkit-scrollbar-track {
   background: #f1f5f9;
 }
+
 html.light ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
 }
+
 html.light ::-webkit-scrollbar-thumb:hover {
   background: #f59e0b;
 }
@@ -96,6 +104,7 @@ html.light ::-webkit-scrollbar-thumb:hover {
 html.light .bg-slate-950 {
   background-color: #f8fafc !important;
 }
+
 html.light .bg-slate-950\/40,
 html.light .bg-slate-950\/60,
 html.light .bg-slate-950\/70,
@@ -108,6 +117,7 @@ html.light .bg-slate-950\/90 {
 html.light .bg-slate-900 {
   background-color: #ffffff !important;
 }
+
 html.light .bg-slate-900\/60,
 html.light .bg-slate-900\/80,
 html.light .bg-slate-900\/90 {
@@ -117,6 +127,7 @@ html.light .bg-slate-900\/90 {
 html.light .bg-slate-800 {
   background-color: #f1f5f9 !important;
 }
+
 html.light .bg-slate-800\/40,
 html.light .bg-slate-800\/50,
 html.light .bg-slate-800\/60,
@@ -154,8 +165,8 @@ html.light .border-slate-700 {
   border-color: #e2e8f0 !important;
 }
 
-html.light .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
-html.light .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+html.light .divide-slate-800\/60> :not([hidden])~ :not([hidden]),
+html.light .divide-slate-800> :not([hidden])~ :not([hidden]) {
   border-color: #e2e8f0 !important;
 }
 
@@ -163,18 +174,23 @@ html.light .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
 html.light .text-white {
   color: #0f172a !important;
 }
+
 html.light .text-slate-100 {
   color: #0f172a !important;
 }
+
 html.light .text-slate-200 {
   color: #1e293b !important;
 }
+
 html.light .text-slate-300 {
   color: #334155 !important;
 }
+
 html.light .text-slate-400 {
   color: #64748b !important;
 }
+
 html.light .text-slate-500 {
   color: #64748b !important;
 }
@@ -189,22 +205,27 @@ html.light .text-amber-400,
 html.light .text-amber-300 {
   color: #b45309 !important;
 }
+
 html.light .text-emerald-300,
 html.light .text-emerald-400 {
   color: #047857 !important;
 }
+
 html.light .text-rose-300,
 html.light .text-rose-400 {
   color: #be123c !important;
 }
+
 html.light .text-cyan-300,
 html.light .text-cyan-400 {
   color: #0e7490 !important;
 }
+
 html.light .text-indigo-300,
 html.light .text-indigo-400 {
   color: #4338ca !important;
 }
+
 html.light .text-orange-300,
 html.light .text-orange-400 {
   color: #c2410c !important;
@@ -215,6 +236,7 @@ html.light .glass-panel {
   background: rgba(255, 255, 255, 0.85) !important;
   border: 1px solid #e2e8f0 !important;
 }
+
 html.light .glass-card {
   background: rgba(255, 255, 255, 0.9) !important;
   border: 1px solid #e2e8f0 !important;
@@ -239,6 +261,7 @@ html.light .leaflet-popup-content-wrapper {
   border: 1px solid #e2e8f0 !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
 }
+
 html.light .leaflet-popup-tip {
   background: #ffffff !important;
 }
@@ -248,4 +271,3 @@ html.light .shadow-2xl,
 html.light .shadow-xl {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02) !important;
 }
-

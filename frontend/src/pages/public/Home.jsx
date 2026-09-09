@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  MapPin, 
-  Building2, 
-  ArrowRight, 
-  Sparkles, 
-  Search 
+import {
+  MapPin,
+  Building2,
+  ArrowRight,
+  Sparkles,
+  Search
 } from 'lucide-react';
 
 const Home = () => {
@@ -21,7 +21,7 @@ const Home = () => {
 
   return (
     <div className="space-y-20 pb-16">
-      
+
       {/* 1. HERO SECTION */}
       <section className="relative pt-12 pb-20 overflow-hidden">
         {/* Background glow accents */}
@@ -29,7 +29,7 @@ const Home = () => {
         <div className="absolute top-1/3 right-10 w-[300px] h-[250px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          
+
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-700 text-xs font-semibold text-amber-400 mb-6 shadow-xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Sparkles className="h-3.5 w-3.5 text-amber-400" />
@@ -101,7 +101,7 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          
+
           {/* Step 1 */}
           <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 relative group hover:border-amber-500/40 transition-all">
             <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 font-extrabold text-lg font-['Outfit']">
@@ -168,7 +168,7 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
+
             <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80">
               <div className="flex items-center gap-2.5 text-amber-400 font-bold text-xs uppercase mb-2">
                 <Building2 className="h-4 w-4" /> National Highway Authority

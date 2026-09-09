@@ -4,14 +4,14 @@ import { complaintService } from '../../services/complaintService';
 import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Loader from '../../components/common/Loader';
-import { 
-  FileText, 
-  Search, 
-  Filter, 
-  Eye, 
-  MapPin, 
-  Calendar, 
-  AlertTriangle 
+import {
+  FileText,
+  Search,
+  Filter,
+  Eye,
+  MapPin,
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 
 const MyComplaints = () => {
@@ -44,7 +44,7 @@ const MyComplaints = () => {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -62,7 +62,7 @@ const MyComplaints = () => {
 
       {/* Filter Toolbar */}
       <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-        
+
         {/* Search */}
         <div className="flex-1 min-w-[240px] relative">
           <Search className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
@@ -77,7 +77,7 @@ const MyComplaints = () => {
 
         {/* Dropdowns */}
         <div className="flex flex-wrap items-center gap-2">
-          
+
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -152,11 +152,10 @@ const MyComplaints = () => {
                       <span className="text-slate-200 font-semibold block">
                         {c.primary_damage_type || c.damage_type || 'Road Defect'}
                       </span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' :
-                        c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
-                        'bg-amber-500/20 text-amber-300'
-                      }`}>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' :
+                          c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
+                            'bg-amber-500/20 text-amber-300'
+                        }`}>
                         {c.priority} Priority
                       </span>
                     </td>

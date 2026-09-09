@@ -8,12 +8,12 @@ import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
-import { 
-  Building2, 
-  Search, 
-  Filter, 
-  Eye, 
-  MapPin, 
+import {
+  Building2,
+  Search,
+  Filter,
+  Eye,
+  MapPin,
   Calendar,
   AlertCircle,
   HardHat,
@@ -99,7 +99,7 @@ const AuthorityComplaints = () => {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header */}
       <div>
         <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold border border-indigo-500/30">

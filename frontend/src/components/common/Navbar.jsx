@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
-import { 
-  ShieldAlert, 
-  Bell, 
-  User, 
-  LogOut, 
-  MapPin, 
-  PlusCircle, 
-  LayoutDashboard, 
-  CheckCircle2, 
-  Clock, 
+import {
+  ShieldAlert,
+  Bell,
+  User,
+  LogOut,
+  MapPin,
+  PlusCircle,
+  LayoutDashboard,
+  CheckCircle2,
+  Clock,
   AlertTriangle,
   Menu,
   X
@@ -23,7 +23,7 @@ const Navbar = () => {
   const { notifications, unreadCount, markAsRead } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,7 +59,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          
+
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
@@ -77,43 +77,39 @@ const Navbar = () => {
 
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-1 lg:gap-2">
-            <Link 
-              to="/" 
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === '/' ? 'text-amber-400 bg-slate-800/60' : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
-              }`}
+            <Link
+              to="/"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/' ? 'text-amber-400 bg-slate-800/60' : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
+                }`}
             >
               Home
             </Link>
-            <Link 
-              to="/map" 
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                location.pathname === '/map' ? 'text-amber-400 bg-slate-800/60' : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
-              }`}
+            <Link
+              to="/map"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${location.pathname === '/map' ? 'text-amber-400 bg-slate-800/60' : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
+                }`}
             >
               <MapPin className="h-4 w-4 text-amber-500" />
               Live Map
             </Link>
-            <Link 
-              to="/track" 
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === '/track' ? 'text-amber-400 bg-slate-800/60' : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
-              }`}
+            <Link
+              to="/track"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/track' ? 'text-amber-400 bg-slate-800/60' : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
+                }`}
             >
               Track Complaint
             </Link>
-            
+
             {isAuthenticated && (
-              <Link 
-                to={getDashboardPath()} 
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                  location.pathname.startsWith('/citizen') || 
-                  location.pathname.startsWith('/authority') || 
-                  location.pathname.startsWith('/engineer') || 
-                  location.pathname.startsWith('/admin')
-                    ? 'text-amber-400 bg-slate-800/60' 
+              <Link
+                to={getDashboardPath()}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${location.pathname.startsWith('/citizen') ||
+                    location.pathname.startsWith('/authority') ||
+                    location.pathname.startsWith('/engineer') ||
+                    location.pathname.startsWith('/admin')
+                    ? 'text-amber-400 bg-slate-800/60'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
-                }`}
+                  }`}
               >
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
@@ -123,13 +119,13 @@ const Navbar = () => {
 
           {/* Right Action Icons & Auth Profile */}
           <div className="flex items-center gap-2 sm:gap-3">
-            
+
             {/* Dark / Light Theme Toggle */}
             <ThemeToggle />
 
             {/* Quick Report CTA Button */}
-            <Link 
-              to="/citizen/report" 
+            <Link
+              to="/citizen/report"
               className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-semibold text-xs shadow-md shadow-amber-500/20 hover:scale-[1.02] transition-all"
             >
               <PlusCircle className="h-4 w-4" />
@@ -186,7 +182,7 @@ const Navbar = () => {
                           </div>
                         ) : (
                           notifications.slice(0, 8).map((notif) => (
-                            <div 
+                            <div
                               key={notif.id}
                               onClick={() => {
                                 markAsRead([notif.id]);
@@ -195,9 +191,8 @@ const Navbar = () => {
                                   setShowNotifications(false);
                                 }
                               }}
-                              className={`p-3 text-left hover:bg-slate-800/60 cursor-pointer transition-colors ${
-                                !notif.is_read ? 'bg-amber-500/5' : ''
-                              }`}
+                              className={`p-3 text-left hover:bg-slate-800/60 cursor-pointer transition-colors ${!notif.is_read ? 'bg-amber-500/5' : ''
+                                }`}
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <span className={`text-xs font-semibold ${!notif.is_read ? 'text-amber-300' : 'text-slate-200'}`}>

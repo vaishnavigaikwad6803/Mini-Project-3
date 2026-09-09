@@ -52,7 +52,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      
+
       {/* Header */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-rose-950/40 border border-slate-800 shadow-2xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -128,7 +128,7 @@ const AdminDashboard = () => {
 
       {/* Primary Analytics Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         {/* 1. Road Type Distribution Donut Chart */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <div className="flex items-center justify-between">

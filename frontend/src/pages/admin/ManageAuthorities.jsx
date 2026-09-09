@@ -3,17 +3,17 @@ import { authorityService } from '../../services/authorityService';
 import { useNotifications } from '../../context/NotificationContext';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
-import { 
-  Building2, 
-  PlusCircle, 
-  Search, 
-  Edit3, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Layers, 
-  CheckCircle2, 
-  AlertCircle 
+import {
+  Building2,
+  PlusCircle,
+  Search,
+  Edit3,
+  Mail,
+  Phone,
+  MapPin,
+  Layers,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 
 const AUTHORITY_TYPES = [
@@ -141,7 +141,7 @@ const ManageAuthorities = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -196,7 +196,7 @@ const ManageAuthorities = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filtered.map((auth) => (
             <div key={auth.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between">
-              
+
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20">
@@ -262,7 +262,7 @@ const ManageAuthorities = () => {
         title={isEditing ? `Edit Authority: ${formData.code}` : 'Register New Road Authority'}
       >
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">Authority Code *</label>
