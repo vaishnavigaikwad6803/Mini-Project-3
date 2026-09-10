@@ -38,7 +38,7 @@ const Home = () => {
 
           {/* Main Title */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white font-['Outfit'] max-w-4xl mx-auto leading-tight">
-            Smarter Roads, Faster Repairs with <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500">YOLOv8 AI</span>
+            Smarter Roads  ,  Faster Repairs
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
