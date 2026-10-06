@@ -140,9 +140,9 @@ const Login = () => {
 
           {/* Quick Demo Credentials Fillers */}
           <div className="pt-4 border-t border-slate-800">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
-              ⚡ Quick 1-Click Demo Logins
-            </p>
+            {/* <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
+             Quick 1-Click Demo Logins
+            </p> */}
             <div className="grid grid-cols-3 gap-1.5">
               {demoUsers.map((d) => (
                 <button
