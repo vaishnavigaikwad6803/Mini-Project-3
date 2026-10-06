@@ -313,21 +313,20 @@ const SubmitComplaint = () => {
           </div>
         </div>
 
-        {/* 3. DEVICE CAMERA IMAGE CAPTURE (NO FILE UPLOAD) */}
+        {/* 3. ROAD DAMAGE PHOTO (LIVE CAMERA ONLY) */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white font-['Outfit'] flex items-center gap-2">
               <Camera className="h-4 w-4 text-amber-400" />
-              3. Take Photo of Road Damage (Camera Capture Only)
+              3. Take Photo of Road Damage (Live Camera Only) *
             </h3>
-            <span className="text-[10px] font-mono text-slate-400">
-              Device Camera Only
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Live Camera Only
             </span>
           </div>
 
           <CameraCapture
             capturedImage={capturedImage}
-            hideDeviceCameraFallback={true}
             onImageCapture={(file) => {
               setCapturedImage(file);
               setError('');
@@ -340,6 +339,7 @@ const SubmitComplaint = () => {
             onValidationChange={(isValid, errorMsg) => {
               setImageValidationError(isValid ? '' : (errorMsg || 'Invalid image'));
               if (!isValid) setError(errorMsg);
+              else setError('');
             }}
           />
         </div>

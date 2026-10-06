@@ -1,11 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, RefreshCw, X, Check, AlertTriangle, Eye, RotateCw, Sparkles, Video, Loader2, ShieldCheck, AlertOctagon } from 'lucide-react';
+import { 
+  Camera, 
+  RefreshCw, 
+  X, 
+  Check, 
+  AlertTriangle, 
+  RotateCw, 
+  Video, 
+  Loader2, 
+  ShieldCheck, 
+  AlertOctagon, 
+  CheckCircle2
+} from 'lucide-react';
 import { aiService } from '../../services/aiService';
 
 /**
  * CameraCapture Component for Citizen Dashboard
- * Exclusively provides device camera capture (No file upload/browse option).
- * Supports live WebRTC camera stream, photo capture, preview, retake, and AI road validation.
+ * Exclusively provides live WebRTC camera capture.
+ * Features: live camera stream, viewfinder crosshairs, flip camera, instant shutter capture, preview, retake, and AI road validation.
  */
 const CameraCapture = ({ 
   capturedImage, 
@@ -18,8 +30,7 @@ const CameraCapture = ({
   title = "Captured Road Damage Photo",
   subtitle = "Ready to attach with complaint report",
   capturePrompt = "Take Live Photo of Road Damage",
-  captureDescription = "Capture the pothole or road distress directly using your device camera for immediate inspection & AI analysis.",
-  hideDeviceCameraFallback = false
+  captureDescription = "Capture the road damage directly using your device camera for immediate AI inspection."
 }) => {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState('');
@@ -31,17 +42,18 @@ const CameraCapture = ({
   // AI Validation State
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState(null); // { is_valid: bool, error_message: str }
+  const [userConfirmedRoad, setUserConfirmedRoad] = useState(false);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
-  const fallbackInputRef = useRef(null);
 
   // Sync external capturedImage if provided or cleared
   useEffect(() => {
     if (!capturedImage) {
       setPreviewUrl(null);
       setValidationResult(null);
+      setUserConfirmedRoad(false);
     } else if (capturedImage instanceof Blob || capturedImage instanceof File) {
       const url = URL.createObjectURL(capturedImage);
       setPreviewUrl(url);
@@ -91,19 +103,36 @@ const CameraCapture = ({
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera stream not supported in this browser. Trying direct camera capture...');
+        throw new Error('Live camera is not supported or accessible in this browser. Please allow camera permissions.');
       }
 
-      const constraints = {
-        video: {
-          facingMode: { ideal: mode },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
-        audio: false
-      };
+      let stream = null;
+      // 1. Try preferred facing mode & HD resolution
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: mode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: false
+        });
+      } catch (err1) {
+        console.warn('Initial HD constraints failed, trying basic facingMode constraint:', err1);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: mode },
+            audio: false
+          });
+        } catch (err2) {
+          console.warn('facingMode failed, falling back to any video input:', err2);
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+          });
+        }
+      }
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
       if (videoRef.current) {
@@ -121,7 +150,7 @@ const CameraCapture = ({
       console.warn('Live getUserMedia camera error:', err);
       setCameraError(
         err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
-          ? 'Camera permission was denied. Please allow camera access in browser settings or use the capture button.'
+          ? 'Camera permission was denied. Please allow camera access in your browser settings.'
           : (err.message || 'Could not start device camera.')
       );
       setIsCameraActive(false);
@@ -145,6 +174,8 @@ const CameraCapture = ({
 
     setIsValidating(true);
     setValidationResult(null);
+    setUserConfirmedRoad(false);
+
     try {
       const res = await aiService.validateImage(file);
       console.log('================ [AI VALIDATION DEBUG] ================');
@@ -155,11 +186,11 @@ const CameraCapture = ({
       console.log('=======================================================');
 
       if (res.is_valid === false || res.road_validation_result === 'INVALID_NON_ROAD_IMAGE') {
-        const errorMsg = "This image does not appear to contain a road. Please capture a clear image of the road and the damaged area.";
+        const errorMsg = "This image does not appear to contain a road surface. Please capture a clear live photo of the road damage.";
         setValidationResult({
           is_valid: false,
           road_validation_result: 'INVALID_NON_ROAD_IMAGE',
-          error_title: 'Invalid Image',
+          error_title: 'Unverified Road Image',
           error_message: errorMsg,
           reason: res.reason
         });
@@ -176,17 +207,22 @@ const CameraCapture = ({
     } catch (err) {
       console.warn('AI validation check error:', err);
       const detail = err.response?.data?.detail;
-      const errorMsg = typeof detail === 'string' ? detail : "This image does not appear to contain a road. Please capture a clear image of the road and the damaged area.";
+      const errorMsg = typeof detail === 'string' ? detail : "This image does not appear to contain a road surface. Please capture a clear live photo of the road damage.";
       setValidationResult({
         is_valid: false,
         road_validation_result: 'INVALID_NON_ROAD_IMAGE',
-        error_title: 'Invalid Image',
+        error_title: 'Unverified Road Image',
         error_message: errorMsg
       });
       if (onValidationChange) onValidationChange(false, errorMsg);
     } finally {
       setIsValidating(false);
     }
+  };
+
+  const handleManualConfirmRoad = () => {
+    setUserConfirmedRoad(true);
+    if (onValidationChange) onValidationChange(true, null);
   };
 
   const capturePhoto = () => {
@@ -218,6 +254,7 @@ const CameraCapture = ({
         const objUrl = URL.createObjectURL(blob);
         
         setPreviewUrl(objUrl);
+        setCameraError('');
         stopCameraStream();
         if (onImageCapture) {
           onImageCapture(file, objUrl);
@@ -227,23 +264,10 @@ const CameraCapture = ({
     }, 'image/jpeg', 0.92);
   };
 
-  // Fallback native camera capture handler (strictly camera capture via capture="environment")
-  const handleFallbackCameraCapture = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      const objUrl = URL.createObjectURL(file);
-      setPreviewUrl(objUrl);
-      setCameraError('');
-      if (onImageCapture) {
-        onImageCapture(file, objUrl);
-      }
-      validatePhotoWithAI(file);
-    }
-  };
-
   const handleRetake = () => {
     setPreviewUrl(null);
     setValidationResult(null);
+    setUserConfirmedRoad(false);
     if (onValidationChange) onValidationChange(true, null);
     if (onImageClear) {
       onImageClear();
@@ -254,6 +278,7 @@ const CameraCapture = ({
   const handleClear = () => {
     setPreviewUrl(null);
     setValidationResult(null);
+    setUserConfirmedRoad(false);
     if (onValidationChange) onValidationChange(true, null);
     stopCameraStream();
     if (onImageClear) {
@@ -266,16 +291,6 @@ const CameraCapture = ({
       
       {/* Hidden canvas for taking snapshot */}
       <canvas ref={canvasRef} className="hidden" />
-
-      {/* Hidden input strictly for direct native device camera capture fallback */}
-      <input
-        ref={fallbackInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFallbackCameraCapture}
-      />
 
       {/* 1. STATE: IMAGE PREVIEW (AFTER PHOTO IS TAKEN) */}
       {previewUrl ? (
@@ -299,7 +314,7 @@ const CameraCapture = ({
               <button
                 type="button"
                 onClick={handleRetake}
-                className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition-all flex items-center gap-1.5 active:scale-95"
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition-all flex items-center gap-1.5 active:scale-95"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Retake Photo
@@ -317,19 +332,19 @@ const CameraCapture = ({
           </div>
 
           {/* Photo Preview Frame */}
-          <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-black max-h-64 flex items-center justify-center group">
+          <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-black max-h-72 flex items-center justify-center group">
             <img
               src={previewUrl}
               alt="Road Damage Preview"
-              className="w-full h-56 object-cover"
+              className="w-full h-64 object-contain bg-slate-950"
             />
             
-            <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-slate-950/80 backdrop-blur-md text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+            <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-slate-950/85 backdrop-blur-md text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
               <Camera className="h-3 w-3" />
-              <span>Camera Capture</span>
+              <span>Live Camera Capture</span>
             </div>
 
-            <div className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-slate-950/80 backdrop-blur-md text-[10px] text-slate-300 border border-slate-800">
+            <div className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-slate-950/85 backdrop-blur-md text-[10px] text-slate-300 border border-slate-800">
               {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
@@ -342,39 +357,49 @@ const CameraCapture = ({
             </div>
           )}
 
-          {validationResult && !validationResult.is_valid && !isValidating && (
-            <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-200 space-y-3 shadow-lg shadow-rose-950/40">
+          {validationResult && !validationResult.is_valid && !isValidating && !userConfirmedRoad && (
+            <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-200 space-y-3 shadow-lg shadow-amber-950/40">
               <div className="flex items-start gap-3">
-                <AlertOctagon className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+                <AlertOctagon className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <h4 className="font-extrabold text-rose-300 text-sm tracking-tight">Invalid Image</h4>
-                  <p className="text-xs text-rose-200/90 leading-relaxed font-medium">
-                    This image does not appear to contain a road. Please capture a clear image of the road and the damaged area.
+                  <h4 className="font-extrabold text-amber-300 text-sm tracking-tight">AI Notice: Road Surface Verification</h4>
+                  <p className="text-xs text-amber-100/90 leading-relaxed font-medium">
+                    {validationResult.error_message}
                   </p>
                   {validationResult.reason && (
-                    <p className="text-[10px] text-rose-400/80 font-mono mt-1 pt-1 border-t border-rose-500/20">
+                    <p className="text-[10px] text-amber-400/80 font-mono mt-1 pt-1 border-t border-amber-500/20">
                       Diagnostics: {validationResult.reason}
                     </p>
                   )}
                 </div>
               </div>
-              <div className="pt-2 flex items-center justify-between border-t border-rose-500/20">
-                <span className="text-[10px] text-rose-300/80 italic font-medium">
-                  Complaint submission is disabled until a valid road image is captured.
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-amber-500/20">
+                <span className="text-[10px] text-amber-300/80 italic font-medium">
+                  If this is a genuine road surface or defect photo, you can confirm below:
                 </span>
-                <button
-                  type="button"
-                  onClick={handleRetake}
-                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 active:scale-95"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Retake Photo
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleManualConfirmRoad}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs border border-emerald-500/40 transition-all flex items-center gap-1 active:scale-95"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                    Confirm & Proceed With Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRetake}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition-all flex items-center gap-1 active:scale-95"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Retake Live Photo
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {validationResult && validationResult.is_valid && !isValidating && (
+          {((validationResult && validationResult.is_valid) || userConfirmedRoad) && !isValidating && (
             <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
               <span>✓ Valid Road Surface Verified – Ready for complaint report submission.</span>
@@ -391,7 +416,7 @@ const CameraCapture = ({
               <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping"></span>
               <span className="text-xs font-bold text-white flex items-center gap-1.5">
                 <Video className="h-3.5 w-3.5 text-rose-400" />
-                Device Camera Live Viewfinder
+                Live Camera Viewfinder
               </span>
             </div>
 
@@ -432,8 +457,8 @@ const CameraCapture = ({
 
             {/* Viewfinder crosshairs & defect framing overlay */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="w-48 h-36 border-2 border-dashed border-amber-400/70 rounded-xl flex items-center justify-center">
-                <span className="text-[10px] font-mono text-amber-300 bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
+              <div className="w-56 h-40 border-2 border-dashed border-amber-400/70 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-[10px] font-mono text-amber-300 bg-black/70 px-2 py-0.5 rounded backdrop-blur-sm">
                   Align road damage here
                 </span>
               </div>
@@ -445,7 +470,7 @@ const CameraCapture = ({
           </div>
 
           {/* Shutter Capture Button */}
-          <div className="flex items-center justify-center gap-4 pt-1">
+          <div className="flex items-center justify-center gap-3 pt-1">
             <button
               type="button"
               onClick={capturePhoto}
@@ -469,66 +494,46 @@ const CameraCapture = ({
         </div>
       ) : (
 
-        /* 3. STATE: DEFAULT TAKE PHOTO / OPEN CAMERA BUTTON (NO FILE UPLOAD) */
-        <div className="rounded-2xl bg-slate-950/70 border border-slate-800 p-4 text-center space-y-3">
+        /* 3. STATE: DEFAULT SINGLE TAKE LIVE PHOTO INTERFACE */
+        <div className="rounded-2xl bg-slate-950/70 border border-slate-800 p-6 text-center space-y-4">
           
           {cameraError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-2 text-left mb-2">
-              <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-              <div>
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start gap-2 text-left mb-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
                 <span>{cameraError}</span>
-                <div className="mt-1.5">
-                  <button
-                    type="button"
-                    onClick={() => fallbackInputRef.current?.click()}
-                    className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[11px] font-bold border border-rose-500/40"
-                  >
-                    📸 Open Native Device Camera
-                  </button>
-                </div>
               </div>
             </div>
           )}
 
-          <div className="flex flex-col items-center justify-center py-2 space-y-2">
-            <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              <Camera className="h-6 w-6" />
+          <div className="flex flex-col items-center justify-center py-2 space-y-3">
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shadow-inner">
+              <Camera className="h-7 w-7" />
             </div>
             
             <div>
-              <h4 className="text-xs font-bold text-white">
+              <h4 className="text-sm font-bold text-white font-['Outfit']">
                 {capturePrompt}
               </h4>
-              <p className="text-[11px] text-slate-400 max-w-sm mt-0.5">
+              <p className="text-xs text-slate-400 max-w-md mt-1">
                 {captureDescription}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            {/* Action Button: ONLY Take Live Photo */}
+            <div className="pt-2">
               <button
                 type="button"
                 onClick={() => startCamera('environment')}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
               >
                 <Camera className="h-4 w-4" />
-                <span>Take Photo / Capture Image</span>
+                <span>Take Live Photo</span>
               </button>
-
-              {!hideDeviceCameraFallback && (
-                <button
-                  type="button"
-                  onClick={() => fallbackInputRef.current?.click()}
-                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs border border-slate-700 transition-colors flex items-center gap-1.5"
-                  title="Launch device native camera app"
-                >
-                  <Video className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Device Camera</span>
-                </button>
-              )}
             </div>
 
             <span className="text-[10px] text-slate-500 font-mono block pt-1">
-              Direct device camera capture only • No file upload allowed
+              Direct live camera capture • Verified on-site reporting
             </span>
           </div>
 

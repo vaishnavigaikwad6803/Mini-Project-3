@@ -408,8 +408,8 @@ const ComplaintDetails = () => {
             </span>
             <div className="flex items-center gap-2 mt-1">
               <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${complaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
-                  complaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
-                    'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                complaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
+                  'bg-amber-500/20 text-amber-300 border-amber-500/40'
                 }`}>
                 {complaint.priority} Priority
               </span>

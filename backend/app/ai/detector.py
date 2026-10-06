@@ -14,16 +14,18 @@ from app.models.ai_result import DamageClass, SeverityLevel
 
 logger = logging.getLogger(__name__)
 
-# COCO object classes that clearly indicate a non-road scene
+# COCO object classes that clearly indicate an indoor non-road scene
 NON_ROAD_COCO_CLASSES = {
-    'person', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
-    'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse',
-    'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator',
-    'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush',
-    'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'banana', 'apple', 'sandwich', 'orange',
-    'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'cup', 'fork', 'knife', 'spoon', 'bowl',
-    'bird', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove',
-    'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'airplane', 'boat', 'train'
+    'chair', 'couch', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse',
+    'remote', 'keyboard', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator',
+    'teddy bear', 'hair drier', 'toothbrush'
+}
+
+# ImageNet classes that road cracks, pavement joints, and road debris frequently mimic
+AMBIGUOUS_CRACK_MIMIC_CLASSES = {
+    'walking stick', 'stick insect', 'mantis', 'mantid', 'leafhopper',
+    'lacewing', 'dragonfly', 'damselfly', 'cockroach', 'nematode', 'flatworm',
+    'centipede', 'millipede', 'spider', 'tick', 'spider web', 'sea snake', 'vine snake'
 }
 
 # ImageNet keywords that represent valid road, vehicle, pavement, highway, transportation, or outdoor street scenes
@@ -218,31 +220,31 @@ class RoadDamageDetector:
                     top_name, top_prob, top_idx = top_predictions[0]
                     top_name_lower = top_name.lower()
                     
-                    # 1) If top-1 is an animal (indices 0 to 397 with prob >= 0.25)
-                    if top_idx < 398 and top_prob >= 0.25:
+                    # 1) If top-1 is an animal, ensure it's not a crack mimic class (like walking stick) and has high confidence
+                    if top_idx < 398 and top_prob >= 0.65 and top_name_lower not in AMBIGUOUS_CRACK_MIMIC_CLASSES:
                         is_classified_non_road = True
                         non_road_detected_label = f"Animal / Pet ({top_name}, {int(top_prob*100)}%)"
                         scene_conf = top_prob
 
-                    # 2) Check if top-1 prediction matches non-road categories
+                    # 2) Check if top-1 prediction matches non-road categories with confident threshold
                     if not is_classified_non_road:
                         for keyword in NON_ROAD_IMAGENET_KEYWORDS:
-                            if keyword in top_name_lower and top_prob >= 0.18:
+                            if keyword in top_name_lower and top_prob >= 0.35:
                                 is_classified_non_road = True
                                 non_road_detected_label = f"{top_name} ({int(top_prob*100)}%)"
                                 scene_conf = top_prob
                                 break
 
-                    # 3) Check if cumulative non-road probability of top-3 exceeds 0.45
+                    # 3) Check if cumulative non-road probability of top-3 exceeds 0.55 (matching non-road keywords)
                     if not is_classified_non_road and len(top_predictions) >= 3:
                         non_road_sum = 0.0
                         matched_cats = []
                         for cat, prob, idx in top_predictions[:3]:
                             c_lower = cat.lower()
-                            if idx < 398 or any(kw in c_lower for kw in NON_ROAD_IMAGENET_KEYWORDS):
+                            if any(kw in c_lower for kw in NON_ROAD_IMAGENET_KEYWORDS):
                                 non_road_sum += prob
                                 matched_cats.append(cat)
-                        if non_road_sum >= 0.45 and matched_cats:
+                        if non_road_sum >= 0.55 and matched_cats:
                             is_classified_non_road = True
                             non_road_detected_label = f"{matched_cats[0]} ({int(non_road_sum*100)}%)"
                             scene_conf = non_road_sum
@@ -283,6 +285,9 @@ class RoadDamageDetector:
                         if class_name in NON_ROAD_COCO_CLASSES:
                             if area_pct > 6.0 or conf > 0.45:
                                 detected_non_road_objects.append(f"{class_name} ({int(conf*100)}%)")
+                        elif class_name == 'person' and area_pct > 60.0:
+                            # Full-frame person selfie / portrait blocking road view
+                            detected_non_road_objects.append(f"person portrait ({int(conf*100)}%)")
 
                 if detected_non_road_objects:
                     items_str = ", ".join(detected_non_road_objects[:3])
