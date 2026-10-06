@@ -31,10 +31,9 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-700 text-xs font-semibold text-amber-400 mb-6 shadow-xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {/* <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-700 text-xs font-semibold text-amber-400 mb-6 shadow-xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            <span>AI-Driven Road Damage Detection & Multi-Authority Management</span>
-          </div>
+          </div> */}
 
           {/* Main Title */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white font-['Outfit'] max-w-4xl mx-auto leading-tight">
