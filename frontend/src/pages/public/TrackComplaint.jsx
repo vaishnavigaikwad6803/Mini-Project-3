@@ -70,24 +70,42 @@ const TrackComplaint = () => {
           Enter your unique Complaint Tracking ID (e.g. <code className="text-amber-400 font-bold">RGD-2026-1001</code>) to view real-time AI damage results and progress timeline.
         </p>
 
-        <form onSubmit={handleSearch} className="flex items-center rounded-2xl bg-slate-900 border border-slate-700 p-1.5 focus-within:border-amber-500 shadow-2xl transition-all">
-          <Search className="h-5 w-5 text-slate-400 ml-3" />
+        <form onSubmit={handleSearch} className="flex items-center rounded-2xl bg-slate-900 border border-slate-700/80 p-1.5 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 shadow-2xl transition-all">
+          <Search className="h-5 w-5 text-slate-400 ml-3 shrink-0" />
           <input
             type="text"
             required
             value={complaintId}
             onChange={(e) => setComplaintId(e.target.value)}
             placeholder="e.g. RGD-2026-1001"
-            className="w-full bg-transparent px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none uppercase font-mono"
+            className="w-full bg-transparent px-3 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none uppercase font-mono"
           />
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all shrink-0"
+            className="btn-primary py-2.5 px-5 font-bold text-xs shrink-0"
           >
             {loading ? 'Searching...' : 'Search'}
           </button>
         </form>
+
+        {/* Demo Quick ID pills */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-slate-400">
+          <span>Try Demo IDs:</span>
+          {['RGD-2026-1001', 'RGD-2026-1002', 'RGD-2026-1003'].map((demoId) => (
+            <button
+              key={demoId}
+              type="button"
+              onClick={() => {
+                setComplaintId(demoId);
+                fetchComplaint(demoId);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-amber-400 font-mono text-[11px] font-semibold transition-all hover:scale-105"
+            >
+              {demoId}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Loading state */}
@@ -101,10 +119,24 @@ const TrackComplaint = () => {
             <strong className="font-bold">Record Not Found:</strong>
             <p className="mt-0.5">{error}</p>
             <p className="mt-2 text-slate-400">
-              Try demo IDs: <button onClick={() => { setComplaintId('RGD-2026-1001'); fetchComplaint('RGD-2026-1001'); }} className="text-amber-400 underline mr-2">RGD-2026-1001</button>
-              <button onClick={() => { setComplaintId('RGD-2026-1003'); fetchComplaint('RGD-2026-1003'); }} className="text-amber-400 underline">RGD-2026-1003</button>
+              Please check the tracking ID or try one of the demo IDs above.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Initial state if no search attempted yet */}
+      {!complaint && !loading && !error && (
+        <div className="max-w-2xl mx-auto p-8 rounded-3xl bg-slate-900/60 border border-slate-800 text-center space-y-4">
+          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+            <FileText className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-white font-['Outfit']">
+            Search Any Public Road Damage Report
+          </h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+            Enter your 12-character Complaint ID to check real-time progress: computer vision severity score, assigned jurisdiction (NHAI / PWD / BMC / PMGSY), and engineer repair certifications.
+          </p>
         </div>
       )}
 

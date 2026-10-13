@@ -43,19 +43,19 @@ const RoadTypeBadge = ({ roadType, size = 'sm', showDivisionTag = true }) => {
 
   const config = getBadgeConfig(roadType);
   const sizeClasses = size === 'xs'
-    ? 'px-2 py-0.5 text-[10px]'
+    ? 'px-2 py-0.5 text-[10px] gap-1'
     : size === 'md'
-      ? 'px-3 py-1 text-xs'
-      : 'px-2.5 py-0.5 text-xs';
+      ? 'px-3 py-1 text-xs gap-2'
+      : 'px-2.5 py-1 text-xs gap-1.5';
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-lg font-semibold border transition-all ${config.classes} ${sizeClasses}`}
+      className={`inline-flex items-center rounded-lg font-semibold border shadow-sm backdrop-blur-sm transition-all whitespace-nowrap ${config.classes} ${sizeClasses}`}
       title={`${config.label} - Maharashtra Division`}
     >
-      <span>{config.icon}</span>
+      <span className="shrink-0">{config.icon}</span>
       {showDivisionTag && (
-        <span className="font-mono font-bold uppercase tracking-wider opacity-90 px-1 py-0.2 rounded bg-black/20 text-[10px]">
+        <span className="font-mono font-extrabold uppercase tracking-wider px-1 py-0.5 rounded bg-black/30 text-[9px] shrink-0">
           {config.tag}
         </span>
       )}

@@ -197,88 +197,138 @@ const ManageComplaints = () => {
 
       </div>
 
-      {/* Table */}
+      {/* Table & Mobile Cards */}
       {loading ? (
         <Loader text="Loading global complaints..." />
+      ) : filtered.length === 0 ? (
+        <div className="p-8 text-center bg-slate-900 rounded-3xl border border-slate-800 space-y-2">
+          <FileText className="h-10 w-10 text-slate-600 mx-auto" />
+          <h3 className="text-sm font-semibold text-slate-300">No matching complaints found</h3>
+          <p className="text-xs text-slate-500">Try adjusting your search criteria or clearing active filters.</p>
+          <button
+            onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); setRoadTypeFilter('ALL'); }}
+            className="mt-2 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+          >
+            Clear Filters
+          </button>
+        </div>
       ) : (
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">ID</th>
-                  <th className="py-3 px-4">Road Name</th>
-                  <th className="py-3 px-4">Road Type</th>
-                  <th className="py-3 px-4">AI Defect & Severity</th>
-                  <th className="py-3 px-4">Engineer Name</th>
-                  <th className="py-3 px-4">Assigned Authority</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                      <span className="text-[11px] text-slate-400">📍 {c.district}, {c.state}</span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <RoadTypeBadge roadType={c.road_type} />
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-semibold text-slate-200 block">{c.primary_damage_type || 'Road Defect'}</span>
-                      {c.ai_confidence && (
-                        <span className="text-[10px] text-cyan-400">
-                          AI: {Math.round(c.ai_confidence * 100)}% ({c.ai_severity || 'Medium'})
-                        </span>
-                      )}
-                    </td>
-                    {/* Engineer Name Column (Req 6) */}
-                    <td className="py-3.5 px-4 text-slate-300">
-                      {c.engineer_name ? (
-                        <span className="flex items-center gap-1.5 text-cyan-300 font-semibold">
-                          <HardHat className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-                          <span>{c.engineer_name}</span>
-                        </span>
-                      ) : (
-                        <span className="text-slate-500 italic">Unassigned</span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-300">
-                      {c.authority_name || 'Pending'}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-400">
-                      {new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          to={`/complaints/${c.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors"
-                        >
-                          <Eye className="h-3.5 w-3.5" /> Details
-                        </Link>
-                        {/* Delete with reason button (Req 5) */}
-                        <button
-                          type="button"
-                          onClick={() => openDeleteModal(c)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs border border-rose-500/30 transition-colors shadow-sm"
-                          title="Delete Complaint"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
+        <div className="space-y-4">
+          {/* Desktop Table View */}
+          <div className="hidden sm:block p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">ID</th>
+                    <th className="py-3 px-4">Road Name</th>
+                    <th className="py-3 px-4">Road Type</th>
+                    <th className="py-3 px-4">AI Defect & Severity</th>
+                    <th className="py-3 px-4">Engineer Name</th>
+                    <th className="py-3 px-4">Assigned Authority</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filtered.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
+                        <span className="text-[11px] text-slate-400">📍 {c.district}, {c.state}</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <RoadTypeBadge roadType={c.road_type} />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-semibold text-slate-200 block">{c.primary_damage_type || 'Road Defect'}</span>
+                        {c.ai_confidence && (
+                          <span className="text-[10px] text-cyan-400">
+                            AI: {Math.round(c.ai_confidence * 100)}% ({c.ai_severity || 'Medium'})
+                          </span>
+                        )}
+                      </td>
+                      {/* Engineer Name Column (Req 6) */}
+                      <td className="py-3.5 px-4 text-slate-300">
+                        {c.engineer_name ? (
+                          <span className="flex items-center gap-1.5 text-cyan-300 font-semibold">
+                            <HardHat className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                            <span>{c.engineer_name}</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 italic">Unassigned</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300 max-w-xs truncate">
+                        {c.authority_name || 'Pending'}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-400">
+                        {new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            to={`/complaints/${c.id}`}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> Details
+                          </Link>
+                          {/* Delete with reason button (Req 5) */}
+                          <button
+                            type="button"
+                            onClick={() => openDeleteModal(c)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs border border-rose-500/30 transition-colors shadow-sm"
+                            title="Delete Complaint"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View (sm:hidden) */}
+          <div className="sm:hidden space-y-3">
+            {filtered.map((c) => (
+              <div key={c.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-lg">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
+                  <StatusBadge status={c.status} size="xs" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
+                  <p className="text-xs text-slate-400 mt-0.5">📍 {c.district} • {c.primary_damage_type || 'Road Defect'}</p>
+                </div>
+                <div className="flex items-center justify-between gap-2 text-xs pt-1 border-t border-slate-800">
+                  <span className="text-slate-400">Engineer:</span>
+                  <span className="font-semibold text-cyan-300">{c.engineer_name || 'Unassigned'}</span>
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                  <Link
+                    to={`/complaints/${c.id}`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> View
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => openDeleteModal(c)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs border border-rose-500/30"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -310,7 +360,7 @@ const ManageComplaints = () => {
               value={deleteReason}
               onChange={(e) => setDeleteReason(e.target.value)}
               placeholder="e.g. Invalid/duplicate complaint report, out of jurisdictional bounds, or resolved offline..."
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+              className="input-field border-rose-500/50 focus:border-rose-500"
             />
           </div>
 

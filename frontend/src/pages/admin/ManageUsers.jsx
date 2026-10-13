@@ -3,6 +3,7 @@ import { adminService } from '../../services/adminService';
 import { useNotifications } from '../../context/NotificationContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
+import EmptyState from '../../components/common/EmptyState';
 import {
   Users,
   Search,
@@ -135,70 +136,135 @@ const ManageUsers = () => {
         </select>
       </div>
 
-      {/* Table */}
+      {/* Table & Mobile Cards */}
       {loading ? (
         <Loader text="Loading user directory..." />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No Users Found"
+          description={searchTerm || roleFilter !== 'ALL' ? "No users match your search criteria. Try adjusting or clearing your filters." : "No registered users in the database."}
+          actionLabel={searchTerm || roleFilter !== 'ALL' ? "Clear Filters" : undefined}
+          onAction={searchTerm || roleFilter !== 'ALL' ? () => { setSearchTerm(''); setRoleFilter('ALL'); } : undefined}
+        />
       ) : (
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">User</th>
-                  <th className="py-3 px-4">Role</th>
-                  <th className="py-3 px-4">Contact</th>
-                  <th className="py-3 px-4">Location</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {filtered.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-amber-400">
-                          {u.full_name.charAt(0)}
-                        </div>
-                        <div>
-                          <strong className="text-white block">{u.full_name}</strong>
-                          <span className="text-[11px] text-slate-400">{u.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${u.role === 'ADMIN' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                          u.role === 'AUTHORITY' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
-                            u.role === 'ENGINEER' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
-                              'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-400">
-                      {u.phone || '—'}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-300">
-                      {u.district ? `📍 ${u.district}, ${u.state}` : '—'}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${u.is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-                        }`}>
-                        {u.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => openEditModal(u)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors inline-flex items-center gap-1"
-                      >
-                        <Edit3 className="h-3.5 w-3.5" /> Edit
-                      </button>
-                    </td>
+        <div className="space-y-4">
+          {/* Desktop Table View */}
+          <div className="hidden sm:block p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">User</th>
+                    <th className="py-3 px-4">Role</th>
+                    <th className="py-3 px-4">Contact</th>
+                    <th className="py-3 px-4">Location</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filtered.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-amber-400">
+                            {u.full_name.charAt(0)}
+                          </div>
+                          <div>
+                            <strong className="text-white block">{u.full_name}</strong>
+                            <span className="text-[11px] text-slate-400">{u.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                          u.role === 'ADMIN' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                          u.role === 'AUTHORITY' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
+                          u.role === 'ENGINEER' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                          'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-400">
+                        {u.phone || '—'}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        {u.district ? `📍 ${u.district}, ${u.state}` : '—'}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                          u.is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                        }`}>
+                          {u.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => openEditModal(u)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors inline-flex items-center gap-1 active:scale-95"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" /> Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="sm:hidden space-y-3">
+            {filtered.map((u) => (
+              <div key={u.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md card-interactive space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-9 w-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-amber-400">
+                      {u.full_name.charAt(0)}
+                    </div>
+                    <div>
+                      <strong className="text-white text-sm block">{u.full_name}</strong>
+                      <span className="text-[11px] text-slate-400">{u.email}</span>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                    u.role === 'ADMIN' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                    u.role === 'AUTHORITY' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
+                    u.role === 'ENGINEER' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                    'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  }`}>
+                    {u.role}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-800/80">
+                  <div>
+                    <span className="text-slate-500 block">Phone</span>
+                    <span className="text-slate-300">{u.phone || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Location</span>
+                    <span className="text-slate-300 truncate block">{u.district ? `${u.district}, ${u.state}` : '—'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    u.is_active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                  }`}>
+                    {u.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                  <button
+                    onClick={() => openEditModal(u)}
+                    className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors inline-flex items-center gap-1 active:scale-95"
+                  >
+                    <Edit3 className="h-3 w-3" /> Edit
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -217,7 +283,7 @@ const ManageUsers = () => {
               required
               value={editForm.full_name}
               onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field text-xs py-2"
             />
           </div>
 
@@ -226,7 +292,7 @@ const ManageUsers = () => {
             <select
               value={editForm.role}
               onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field text-xs py-2"
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>{r}</option>
@@ -241,7 +307,7 @@ const ManageUsers = () => {
                 type="text"
                 value={editForm.district}
                 onChange={(e) => setEditForm({ ...editForm, district: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
             <div>
@@ -250,7 +316,7 @@ const ManageUsers = () => {
                 type="text"
                 value={editForm.state}
                 onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
           </div>

@@ -603,7 +603,7 @@ const ComplaintDetails = () => {
               value={assignRemarks}
               onChange={(e) => setAssignRemarks(e.target.value)}
               placeholder="e.g. Conduct site inspection, check subgrade damage, and apply bituminous overlay..."
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -663,7 +663,7 @@ const ComplaintDetails = () => {
               rows={3}
               value={verificationRemarks}
               onChange={(e) => setVerificationRemarks(e.target.value)}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -713,7 +713,7 @@ const ComplaintDetails = () => {
               value={deleteReason}
               onChange={(e) => setDeleteReason(e.target.value)}
               placeholder="Provide a detailed deletion reason..."
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+              className="input-field border-rose-500/50 focus:border-rose-500"
             />
           </div>
 
@@ -750,7 +750,7 @@ const ComplaintDetails = () => {
             <select
               value={repairData.stage}
               onChange={(e) => setRepairData({ ...repairData, stage: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field cursor-pointer"
             >
               {REPAIR_STAGES.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -767,7 +767,7 @@ const ComplaintDetails = () => {
               value={repairData.materials_used}
               onChange={(e) => setRepairData({ ...repairData, materials_used: e.target.value })}
               placeholder="e.g. Cold Bituminous Mix, Bitumen Emulsion Tack Coat, 10mm Aggregate"
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -777,7 +777,7 @@ const ComplaintDetails = () => {
               type="number"
               value={repairData.actual_cost}
               onChange={(e) => setRepairData({ ...repairData, actual_cost: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -788,7 +788,7 @@ const ComplaintDetails = () => {
               value={repairData.remarks}
               onChange={(e) => setRepairData({ ...repairData, remarks: e.target.value })}
               placeholder="Describe surface preparation, depth leveling, compaction passes, or traffic barricading..."
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 

@@ -4,6 +4,7 @@ import { authorityService } from '../../services/authorityService';
 import { useNotifications } from '../../context/NotificationContext';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
+import EmptyState from '../../components/common/EmptyState';
 import { MAHARASHTRA_DISTRICTS } from '../../utils/geoUtils';
 import {
   HardHat,
@@ -203,10 +204,18 @@ const ManageEngineers = () => {
       {/* Engineers Grid */}
       {loading ? (
         <Loader text="Loading engineers..." />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={HardHat}
+          title="No Engineers Found"
+          description={searchTerm || authFilter !== 'ALL' ? "No engineers match your search criteria. Try clearing filters." : "No field engineers registered yet."}
+          actionLabel={searchTerm || authFilter !== 'ALL' ? "Clear Filters" : "Register Engineer"}
+          onAction={searchTerm || authFilter !== 'ALL' ? () => { setSearchTerm(''); setAuthFilter('ALL'); } : openRegisterModal}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((eng) => (
-            <div key={eng.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between">
+            <div key={eng.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between card-interactive transition-all">
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -289,7 +298,7 @@ const ManageEngineers = () => {
                 placeholder="e.g. Er. Nilesh Patil"
                 value={regForm.full_name}
                 onChange={(e) => setRegForm({ ...regForm, full_name: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
 
@@ -301,7 +310,7 @@ const ManageEngineers = () => {
                 placeholder="e.g. ENG-MH-501"
                 value={regForm.employee_id}
                 onChange={(e) => setRegForm({ ...regForm, employee_id: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
           </div>
@@ -315,7 +324,7 @@ const ManageEngineers = () => {
                 placeholder="engineer@roadguard.gov.in"
                 value={regForm.email}
                 onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
 
@@ -326,7 +335,7 @@ const ManageEngineers = () => {
                 required
                 value={regForm.password}
                 onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
           </div>
@@ -339,7 +348,7 @@ const ManageEngineers = () => {
                 placeholder="+91 98765 43210"
                 value={regForm.phone}
                 onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
 
@@ -350,7 +359,7 @@ const ManageEngineers = () => {
                 required
                 value={regForm.designation}
                 onChange={(e) => setRegForm({ ...regForm, designation: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               />
             </div>
           </div>
@@ -361,7 +370,7 @@ const ManageEngineers = () => {
               <select
                 value={regForm.specialization}
                 onChange={(e) => setRegForm({ ...regForm, specialization: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               >
                 <option value="Pothole & Surface Patching">Pothole & Surface Patching</option>
                 <option value="Crack Sealing & Resurfacing">Crack Sealing & Resurfacing</option>
@@ -376,7 +385,7 @@ const ManageEngineers = () => {
               <select
                 value={regForm.district}
                 onChange={(e) => setRegForm({ ...regForm, district: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field text-xs py-2"
               >
                 {MAHARASHTRA_DISTRICTS.map((d) => (
                   <option key={d.name} value={d.name}>
@@ -392,7 +401,7 @@ const ManageEngineers = () => {
             <select
               value={regForm.authority_id}
               onChange={(e) => setRegForm({ ...regForm, authority_id: parseInt(e.target.value) })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field text-xs py-2"
             >
               {authorities.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -436,7 +445,7 @@ const ManageEngineers = () => {
               required
               value={editForm.designation}
               onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field text-xs py-2"
             />
           </div>
 
@@ -447,7 +456,7 @@ const ManageEngineers = () => {
               required
               value={editForm.specialization}
               onChange={(e) => setEditForm({ ...editForm, specialization: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field text-xs py-2"
             />
           </div>
 
@@ -456,7 +465,7 @@ const ManageEngineers = () => {
             <select
               value={editForm.status}
               onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field text-xs py-2"
             >
               <option value="ACTIVE">ACTIVE</option>
               <option value="ON_LEAVE">ON LEAVE</option>

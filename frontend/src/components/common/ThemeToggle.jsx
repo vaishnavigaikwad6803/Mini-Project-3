@@ -9,7 +9,7 @@ const ThemeToggle = ({ className = '' }) => {
     <button
       type="button"
       onClick={toggleTheme}
-      className={`relative inline-flex items-center justify-center p-2 rounded-xl border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-amber-500/40 ${
+      className={`relative inline-flex items-center justify-center p-2 rounded-xl border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 active:scale-95 ${
         isDark
           ? 'bg-slate-800/80 hover:bg-slate-700 text-amber-400 border-slate-700 shadow-sm'
           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 shadow-sm'

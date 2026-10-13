@@ -8,8 +8,12 @@ import ComplaintMap from '../../components/map/ComplaintMap';
 import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
+import EmptyState from '../../components/common/EmptyState';
 import { useNotifications } from '../../context/NotificationContext';
 import {
+  Camera,
+  PlusCircle,
+  RefreshCw,
   FileText,
   Clock,
   Wrench,
@@ -102,8 +106,11 @@ const CitizenDashboard = () => {
     });
   };
 
+  const [error, setError] = useState('');
+
   const loadData = async () => {
     try {
+      setError('');
       const [statsData, complaintsData] = await Promise.all([
         complaintService.getCitizenStats(),
         complaintService.getMyComplaints(),
@@ -112,6 +119,7 @@ const CitizenDashboard = () => {
       setRecentComplaints(complaintsData);
     } catch (err) {
       console.error("Error loading citizen dashboard:", err);
+      setError('Unable to load citizen complaint data. Please check your network connection.');
     } finally {
       setLoading(false);
     }
@@ -130,7 +138,6 @@ const CitizenDashboard = () => {
       const fullData = await complaintService.getComplaintById(complaintItem.id);
       setSelectedComplaint(fullData);
     } catch (err) {
-      // Fallback to table item data if network error
       setSelectedComplaint(complaintItem);
       showToast('Loaded local complaint preview.', 'info');
     } finally {
@@ -161,6 +168,23 @@ const CitizenDashboard = () => {
 
   return (
     <div className="space-y-8 pb-12">
+
+      {/* ERROR ALERT BANNER */}
+      {error && (
+        <div role="alert" className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-3 text-xs text-rose-300">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={loadData}
+            className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold flex items-center gap-1 transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      )}
 
       {/* 1. AUTO-DETECTED LIVE LOCATION STATUS BANNER */}
       <div className="p-4 sm:p-5 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
@@ -204,12 +228,20 @@ const CitizenDashboard = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <Link
+            to="/citizen/report"
+            className="btn-primary py-2 px-3.5 text-xs font-bold shadow-md shadow-amber-500/20"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Report Road Hazard</span>
+          </Link>
           <button
             type="button"
             onClick={runLocationDetection}
             disabled={userLocation.isLocating}
             className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5"
+            aria-label="Refresh GPS coordinates"
           >
             <Navigation className={`h-3.5 w-3.5 text-amber-400 ${userLocation.isLocating ? 'animate-spin' : ''}`} />
             {userLocation.isLocating ? 'Detecting...' : 'Refresh GPS'}
@@ -396,17 +428,17 @@ const CitizenDashboard = () => {
         </div>
 
         {filteredComplaints.length === 0 ? (
-          <div className="py-12 text-center space-y-3 bg-slate-950/40 rounded-2xl border border-slate-800/80">
-            <AlertTriangle className="h-10 w-10 text-slate-500 mx-auto" />
-            <h3 className="text-sm font-semibold text-slate-300">No Complaints in this Division</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              {activeDivision !== 'ALL'
-                ? `You haven't submitted any reports for ${activeDivision} roads yet.`
-                : 'No road damage complaints found. You can report road defects using the "Report Damage" button in the top navigation bar.'
-              }
-            </p>
-          </div>
+          <EmptyState
+            icon={AlertTriangle}
+            title={activeDivision !== 'ALL' ? `No Complaints in ${activeDivision} Division` : 'No Complaints Recorded Yet'}
+            description={activeDivision !== 'ALL'
+              ? `You haven't submitted any reports for ${activeDivision} roads yet.`
+              : 'You have not submitted any road damage reports yet. Take a photo of defects to report them.'}
+            actionLabel="Report Road Hazard"
+            actionTo="/citizen/report"
+          />
         ) : (
+<<<<<<< HEAD
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
@@ -458,68 +490,214 @@ const CitizenDashboard = () => {
                         <Eye className="h-3.5 w-3.5" /> Details
                       </Link>
                     </td>
+=======
+          <>
+            {/* Mobile Cards (sm:hidden) */}
+            <div className="grid grid-cols-1 gap-3 sm:hidden">
+              {filteredComplaints.slice(0, 8).map((c) => (
+                <div key={c.id} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
+                    <StatusBadge status={c.status} size="xs" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
+                    <p className="text-xs text-slate-400 mt-0.5">📍 {c.district}, {c.state}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+                    <RoadTypeBadge roadType={c.road_type} size="xs" />
+                    <Link
+                      to={`/complaints/${c.id}`}
+                      className="btn-secondary py-1.5 px-3 text-xs"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-amber-400" />
+                      <span>Details</span>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (hidden sm:block) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Complaint ID</th>
+                    <th className="py-3 px-4">Road Name & Location</th>
+                    <th className="py-3 px-4">Road Division</th>
+                    <th className="py-3 px-4">Damage Type & Priority</th>
+                    <th className="py-3 px-4">Assigned Authority</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+>>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filteredComplaints.slice(0, 8).map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-amber-400">
+                        {c.id}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
+                        <span className="text-[11px] text-slate-400">📍 {c.district}, {c.state}</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <RoadTypeBadge roadType={c.road_type} />
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="text-slate-200 font-semibold block">
+                          {c.primary_damage_type || c.damage_type || 'Road Defect'}
+                        </span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' :
+                            c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
+                              'bg-amber-500/20 text-amber-300'
+                          }`}>
+                          {c.priority} Priority
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        {c.authority_name || 'Pending'}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <Link
+                          to={`/complaints/${c.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Details
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
       {/* ========================================================================= */}
       {/* 8. COMPREHENSIVE VIEW DETAILS MODAL */}
       {/* ========================================================================= */}
-      {detailsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-3xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200 my-8 max-h-[90vh] overflow-y-auto">
+      <Modal
+        isOpen={detailsModalOpen}
+        onClose={() => { setDetailsModalOpen(false); setSelectedComplaint(null); }}
+        title={selectedComplaint ? `${selectedComplaint.id} • ${selectedComplaint.road_name}` : 'Complaint Details'}
+        maxWidth="max-w-3xl"
+      >
+        {loadingDetails ? (
+          <div className="py-12 text-center space-y-3">
+            <Loader text="Loading complete database record..." />
+          </div>
+        ) : selectedComplaint ? (
+          <div className="space-y-6">
 
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-md border border-amber-500/20">
-                    {selectedComplaint?.id}
-                  </span>
-                  {selectedComplaint && <StatusBadge status={selectedComplaint.status} />}
-                  {selectedComplaint && <RoadTypeBadge roadType={selectedComplaint.road_type} />}
-                </div>
-                <h3 className="text-lg sm:text-xl font-extrabold text-white font-['Outfit']">
-                  {selectedComplaint?.road_name || 'Complaint Details'}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setDetailsModalOpen(false); setSelectedComplaint(null); }}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+            {/* Badges strip */}
+            <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-slate-800">
+              <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-md border border-amber-500/20">
+                {selectedComplaint.id}
+              </span>
+              <StatusBadge status={selectedComplaint.status} />
+              <RoadTypeBadge roadType={selectedComplaint.road_type} />
             </div>
 
-            {loadingDetails ? (
-              <div className="py-12 text-center space-y-3">
-                <Loader text="Loading complete database record..." />
+            {/* Location & Authority Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+
+              {/* Location Box */}
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] block">Location Details</span>
+                <strong className="text-white block text-sm flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-amber-400 shrink-0" />
+                  {selectedComplaint.district}, {selectedComplaint.state}
+                </strong>
+                {selectedComplaint.landmark && (
+                  <p className="text-[11px] text-slate-300">Near: {selectedComplaint.landmark}</p>
+                )}
+                <p className="text-[10px] font-mono text-cyan-400">
+                  Coords: {selectedComplaint.latitude?.toFixed(4)}, {selectedComplaint.longitude?.toFixed(4)}
+                </p>
               </div>
-            ) : selectedComplaint ? (
-              <div className="space-y-6">
 
-                {/* Location & Authority Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              {/* Responsible Authority Box */}
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] block">Responsible Authority</span>
+                <strong className="text-white block text-sm flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
+                  {selectedComplaint.authority_name || 'Pending Assignment'}
+                </strong>
+                <p className="text-[11px] text-slate-400">{selectedComplaint.routing_notes || 'Jurisdiction verified via GIS'}</p>
+              </div>
 
-                  {/* Location Box */}
-                  <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                    <span className="text-slate-400 uppercase font-semibold text-[10px] block">Location Details</span>
-                    <strong className="text-white block text-sm flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4 text-amber-400 shrink-0" />
-                      {selectedComplaint.district}, {selectedComplaint.state}
+              {/* Priority & Defect Type */}
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+                <span className="text-slate-400 uppercase font-semibold text-[10px] block">Defect & Severity</span>
+                <strong className="text-white block text-sm">
+                  {selectedComplaint.primary_damage_type || selectedComplaint.damage_type || 'Road Defect'}
+                </strong>
+                <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded border ${selectedComplaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
+                    selectedComplaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
+                      'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  }`}>
+                  {selectedComplaint.priority} Priority
+                </span>
+              </div>
+
+            </div>
+
+            {/* Citizen Captured Road Damage Image Display */}
+            {selectedComplaint.image_url && (
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-400 font-bold flex items-center gap-1.5">
+                    <Camera className="h-4 w-4" />
+                    Citizen Captured Road Damage Photo
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Captured via Device Camera
+                  </span>
+                </div>
+                <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-black flex items-center justify-center max-h-64">
+                  <img
+                    src={selectedComplaint.image_url}
+                    alt="Citizen Road Damage"
+                    className="w-full h-56 object-cover"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            {selectedComplaint.description && (
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs">
+                <span className="text-slate-400 font-semibold uppercase text-[10px] block mb-1">Citizen Observation</span>
+                <p className="text-slate-200 leading-relaxed">{selectedComplaint.description}</p>
+              </div>
+            )}
+
+            {/* Assigned Engineer Section */}
+            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-cyan-400 font-bold flex items-center gap-1.5">
+                  <HardHat className="h-4 w-4" />
+                  Assigned Field Engineer
+                </span>
+                <span className="text-[10px] text-slate-500">Field Maintenance Team</span>
+              </div>
+
+              {selectedComplaint.engineer_name || selectedComplaint.repair?.engineer_name ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Engineer Name</span>
+                    <strong className="text-white">
+                      {selectedComplaint.engineer_name || selectedComplaint.repair?.engineer_name}
                     </strong>
-                    {selectedComplaint.landmark && (
-                      <p className="text-[11px] text-slate-300">Near: {selectedComplaint.landmark}</p>
-                    )}
-                    <p className="text-[10px] font-mono text-cyan-400">
-                      Coords: {selectedComplaint.latitude?.toFixed(4)}, {selectedComplaint.longitude?.toFixed(4)}
-                    </p>
                   </div>
+<<<<<<< HEAD
 
                   {/* Responsible Authority Box */}
                   <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
@@ -542,157 +720,103 @@ const CitizenDashboard = () => {
                         'bg-amber-500/20 text-amber-300 border-amber-500/40'
                       }`}>
                       {selectedComplaint.priority} Priority
+=======
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Employee ID</span>
+                    <span className="text-amber-400 font-mono font-bold">
+                      {selectedComplaint.engineer_employee_id || selectedComplaint.repair?.engineer_employee_id || 'N/A'}
+>>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
                     </span>
                   </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px]">Contact</span>
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {selectedComplaint.engineer_phone || '+91 Field Desk'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-slate-400 text-xs italic">
+                  Pending Authority Dispatch – An engineer will be assigned for site inspection shortly.
+                </p>
+              )}
+            </div>
 
+            {/* Field Repair Progress Details */}
+            {selectedComplaint.repair && (
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-purple-400 font-bold flex items-center gap-1.5">
+                    <Wrench className="h-4 w-4" />
+                    Field Repair Progress
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                    {selectedComplaint.repair.current_stage}
+                  </span>
                 </div>
 
-                {/* Citizen Captured Road Damage Image Display */}
-                {selectedComplaint.image_url && (
-                  <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-amber-400 font-bold flex items-center gap-1.5">
-                        <Camera className="h-4 w-4" />
-                        Citizen Captured Road Damage Photo
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        Captured via Device Camera
-                      </span>
-                    </div>
-                    <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-black flex items-center justify-center max-h-64">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] pt-1">
+                  <div>
+                    <span className="text-slate-400 block">Materials Used:</span>
+                    <strong className="text-slate-200">{selectedComplaint.repair.materials_used || 'Standard Pavement Mix'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block">Inspection / Completion Remarks:</span>
+                    <p className="text-slate-300">{selectedComplaint.repair.inspection_remarks || selectedComplaint.repair.completion_remarks || 'Work scheduled according to IRC standards.'}</p>
+                  </div>
+                </div>
+
+                {/* Completion Photo Proof if uploaded by engineer */}
+                {selectedComplaint.repair.repair_after_image && (
+                  <div className="pt-2">
+                    <span className="text-[11px] font-bold text-emerald-400 block mb-1.5">
+                      📸 Field Engineer Repaired Proof
+                    </span>
+                    <div className="h-44 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
                       <img
-                        src={selectedComplaint.image_url}
-                        alt="Citizen Road Damage"
-                        className="w-full h-56 object-cover"
+                        src={selectedComplaint.repair.repair_after_image}
+                        alt="Repair Completion"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   </div>
                 )}
-
-                {/* Description */}
-                {selectedComplaint.description && (
-                  <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs">
-                    <span className="text-slate-400 font-semibold uppercase text-[10px] block mb-1">Citizen Observation</span>
-                    <p className="text-slate-200 leading-relaxed">{selectedComplaint.description}</p>
-                  </div>
-                )}
-
-                {/* Assigned Engineer Section */}
-                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-cyan-400 font-bold flex items-center gap-1.5">
-                      <HardHat className="h-4 w-4" />
-                      Assigned Field Engineer
-                    </span>
-                    <span className="text-[10px] text-slate-500">Field Maintenance Team</span>
-                  </div>
-
-                  {selectedComplaint.engineer_name || selectedComplaint.repair?.engineer_name ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                      <div>
-                        <span className="text-slate-400 block text-[10px]">Engineer Name</span>
-                        <strong className="text-white">
-                          {selectedComplaint.engineer_name || selectedComplaint.repair?.engineer_name}
-                        </strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block text-[10px]">Employee ID</span>
-                        <span className="text-amber-400 font-mono font-bold">
-                          {selectedComplaint.engineer_employee_id || selectedComplaint.repair?.engineer_employee_id || 'N/A'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block text-[10px]">Contact</span>
-                        <span className="text-emerald-400 flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {selectedComplaint.engineer_phone || '+91 Field Desk'}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-slate-400 text-xs italic">
-                      Pending Authority Dispatch – An engineer will be assigned for site inspection shortly.
-                    </p>
-                  )}
-                </div>
-
-                {/* Field Repair Progress Details */}
-                {selectedComplaint.repair && (
-                  <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-purple-400 font-bold flex items-center gap-1.5">
-                        <Wrench className="h-4 w-4" />
-                        Field Repair Progress
-                      </span>
-                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
-                        {selectedComplaint.repair.current_stage}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] pt-1">
-                      <div>
-                        <span className="text-slate-400 block">Materials Used:</span>
-                        <strong className="text-slate-200">{selectedComplaint.repair.materials_used || 'Standard Pavement Mix'}</strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block">Inspection / Completion Remarks:</span>
-                        <p className="text-slate-300">{selectedComplaint.repair.inspection_remarks || selectedComplaint.repair.completion_remarks || 'Work scheduled according to IRC standards.'}</p>
-                      </div>
-                    </div>
-
-                    {/* Completion Photo Proof if uploaded by engineer */}
-                    {selectedComplaint.repair.repair_after_image && (
-                      <div className="pt-2">
-                        <span className="text-[11px] font-bold text-emerald-400 block mb-1.5">
-                          📸 Field Engineer Repaired Proof
-                        </span>
-                        <div className="h-44 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
-                          <img
-                            src={selectedComplaint.repair.repair_after_image}
-                            alt="Repair Completion"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Status Timeline History */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-amber-400" />
-                    Status Timeline & History
-                  </h4>
-                  <ComplaintTimeline
-                    history={selectedComplaint.status_history || []}
-                    currentStatus={selectedComplaint.status}
-                  />
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                  <span className="text-[11px] text-slate-500">
-                    Logged: {new Date(selectedComplaint.created_at).toLocaleString()}
-                  </span>
-                  <Link
-                    to={`/complaints/${selectedComplaint.id}`}
-                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all"
-                  >
-                    <Eye className="h-3.5 w-3.5" /> Open Dedicated Page
-                  </Link>
-                </div>
-
-              </div>
-            ) : (
-              <div className="py-8 text-center text-slate-400">
-                Complaint record could not be loaded.
               </div>
             )}
 
+            {/* Status Timeline History */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-amber-400" />
+                Status Timeline & History
+              </h4>
+              <ComplaintTimeline
+                history={selectedComplaint.status_history || []}
+                currentStatus={selectedComplaint.status}
+              />
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+              <span className="text-[11px] text-slate-500">
+                Logged: {new Date(selectedComplaint.created_at).toLocaleString()}
+              </span>
+              <Link
+                to={`/complaints/${selectedComplaint.id}`}
+                className="btn-primary py-2 px-4 text-xs"
+              >
+                <Eye className="h-3.5 w-3.5" /> Open Dedicated Page
+              </Link>
+            </div>
+
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="py-8 text-center text-slate-400 text-xs">
+            Complaint record could not be loaded.
+          </div>
+        )}
+      </Modal>
 
     </div>
   );
