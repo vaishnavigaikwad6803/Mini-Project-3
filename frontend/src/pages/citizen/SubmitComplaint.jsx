@@ -6,6 +6,7 @@ import { complaintService } from '../../services/complaintService';
 import MapPicker from '../../components/map/MapPicker';
 import AIResultCard from '../../components/ai/AIResultCard';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
+import CameraCapture from '../../components/common/CameraCapture';
 import {
   MapPin,
   FileText,
@@ -90,13 +91,10 @@ const SubmitComplaint = () => {
   const [gpsSuccess, setGpsSuccess] = useState(false);
   const [gpsError, setGpsError] = useState('');
 
-  // Image Upload State
+  // Image State (Live Camera Capture)
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageValidationError, setImageValidationError] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
 
   // Submission & API Result State
   const [loading, setLoading] = useState(false);
@@ -203,53 +201,6 @@ const SubmitComplaint = () => {
     } else {
       setFormData((prev) => ({ ...prev, district: newDistrict }));
     }
-  };
-
-  const validateAndSetFile = (file) => {
-    if (!file) return;
-
-    // Allowed image formats
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-    const hasValidMime = allowedTypes.includes(file.type.toLowerCase());
-    const hasValidExt = Boolean(file.name.match(/\.(jpe?g|png|webp)$/i));
-
-    if (!hasValidMime && !hasValidExt) {
-      setImageValidationError('Please upload a valid image file (JPEG, PNG, or WebP).');
-      setSelectedImage(null);
-      setImagePreview(null);
-      return;
-    }
-
-    // Maximum file size: 12MB
-    const maxSizeBytes = 12 * 1024 * 1024;
-    if (file.size > maxSizeBytes) {
-      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-      setImageValidationError(`File size (${sizeMb} MB) exceeds the 12 MB limit. Please select a smaller photo.`);
-      setSelectedImage(null);
-      setImagePreview(null);
-      return;
-    }
-
-    setImageValidationError('');
-    setError('');
-    setSelectedImage(file);
-    setImagePreview(URL.createObjectURL(file));
-  };
-
-  const handleFileDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      validateAndSetFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    setImageValidationError('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const handleCopyComplaintId = () => {
@@ -513,7 +464,7 @@ const SubmitComplaint = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* 1. ROAD DAMAGE IMAGE UPLOAD SECTION */}
+        {/* 1. ROAD DAMAGE LIVE CAMERA CAPTURE SECTION */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -522,11 +473,12 @@ const SubmitComplaint = () => {
                 1. Road Defect Photo (Required for AI Detection) *
               </h3>
               <p className="text-xs text-slate-400">
-                Upload or capture a clear photo of the pothole or cracked pavement surface.
+                Capture a live on-site photo of the road defect using your device camera for real-time AI damage inspection.
               </p>
             </div>
-            <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
-              JPEG, PNG, WebP (Max 12MB)
+            <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Camera Capture Only
             </span>
           </div>
 
@@ -538,115 +490,35 @@ const SubmitComplaint = () => {
             </div>
           )}
 
-          {/* Hidden File and Camera Inputs */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                validateAndSetFile(e.target.files[0]);
+          {/* Exclusively Live Camera Capture */}
+          <CameraCapture
+            capturedImage={selectedImage}
+            onImageCapture={(file, objUrl) => {
+              setSelectedImage(file);
+              setImagePreview(objUrl);
+              setImageValidationError('');
+              setError('');
+            }}
+            onImageClear={() => {
+              setSelectedImage(null);
+              setImagePreview(null);
+              setImageValidationError('');
+            }}
+            onValidationChange={(isValid, reason) => {
+              if (!isValid && reason) {
+                setImageValidationError(reason);
+              } else {
+                setImageValidationError('');
               }
             }}
-            accept="image/jpeg,image/png,image/webp,image/jpg"
-            className="hidden"
+            label="Live Road Defect Photo"
+            required={true}
+            enableAiValidation={true}
+            title="Live Road Defect Photo Attached"
+            subtitle="Verified on-site capture ready for AI detection"
+            capturePrompt="Open Device Camera & Capture Defect"
+            captureDescription="Point your device camera directly at the pothole or cracked road surface to take a live on-site photograph."
           />
-          <input
-            type="file"
-            ref={cameraInputRef}
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                validateAndSetFile(e.target.files[0]);
-              }
-            }}
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-          />
-
-          {/* Upload Dropzone or Image Preview */}
-          {!imagePreview ? (
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleFileDrop}
-              className={`p-8 rounded-2xl border-2 border-dashed transition-all text-center space-y-4 ${
-                isDragging
-                  ? 'border-amber-500 bg-amber-500/10'
-                  : 'border-slate-700/80 bg-slate-950/60 hover:border-slate-600'
-              }`}
-            >
-              <div className="h-14 w-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-amber-400 mx-auto shadow-md">
-                <UploadCloud className="h-7 w-7" />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  Drag and drop road photo here, or browse files
-                </p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Supported: JPG, JPEG, PNG, WebP up to 12 MB
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold transition-colors active:scale-95"
-                >
-                  Choose File
-                </button>
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all active:scale-95 flex items-center gap-1.5"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  Capture Photo
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
-              <div className="relative rounded-xl overflow-hidden max-h-72 bg-slate-900 border border-slate-800 flex items-center justify-center">
-                <img
-                  src={imagePreview}
-                  alt="Road Defect Preview"
-                  className="w-full h-auto max-h-72 object-contain"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-900/90 text-rose-400 hover:text-rose-300 border border-slate-700 shadow-lg hover:bg-slate-800 transition-colors"
-                  title="Remove image"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between text-xs text-slate-300 pt-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  <span className="font-semibold text-white truncate max-w-xs">{selectedImage?.name}</span>
-                  <span className="text-slate-500">
-                    ({selectedImage?.size ? `${(selectedImage.size / 1024).toFixed(0)} KB` : 'Ready'})
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-amber-400 hover:text-amber-300 text-xs font-semibold"
-                  >
-                    Change Photo
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* 2. DEFECT LOCATION & GPS SECTION (WITH MANUAL FALLBACK) */}

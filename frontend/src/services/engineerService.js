@@ -16,8 +16,12 @@ export const engineerService = {
     return response.data;
   },
 
-  assignEngineerToComplaint: async (complaintId, engineerId, remarks = '') => {
-    const response = await api.post(`/engineers/assign-to-complaint?complaint_id=${complaintId}&engineer_id=${engineerId}&remarks=${encodeURIComponent(remarks)}`);
+  assignEngineerToComplaint: async (complaintId, engineerId, remarks = '', deadline = null) => {
+    let url = `/engineers/assign-to-complaint?complaint_id=${complaintId}&engineer_id=${engineerId}&remarks=${encodeURIComponent(remarks)}`;
+    if (deadline) {
+      url += `&deadline=${encodeURIComponent(deadline)}`;
+    }
+    const response = await api.post(url);
     return response.data;
   },
 
