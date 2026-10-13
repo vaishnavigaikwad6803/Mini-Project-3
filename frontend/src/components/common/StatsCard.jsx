@@ -18,6 +18,7 @@ const StatsCard = ({
     rose: 'from-rose-500/15 via-slate-900 to-slate-900 border-rose-500/30 text-rose-400 group-hover:border-rose-500/50',
     indigo: 'from-indigo-500/15 via-slate-900 to-slate-900 border-indigo-500/30 text-indigo-400 group-hover:border-indigo-500/50',
     purple: 'from-purple-500/15 via-slate-900 to-slate-900 border-purple-500/30 text-purple-400 group-hover:border-purple-500/50',
+    blue: 'from-blue-500/15 via-slate-900 to-slate-900 border-blue-500/30 text-blue-400 group-hover:border-blue-500/50',
   };
 
   const activeRingMap = {
@@ -27,6 +28,7 @@ const StatsCard = ({
     rose: 'ring-2 ring-rose-400 border-rose-400/90 shadow-rose-500/20 scale-[1.02]',
     indigo: 'ring-2 ring-indigo-400 border-indigo-400/90 shadow-indigo-500/20 scale-[1.02]',
     purple: 'ring-2 ring-purple-400 border-purple-400/90 shadow-purple-500/20 scale-[1.02]',
+    blue: 'ring-2 ring-blue-400 border-blue-400/90 shadow-blue-500/20 scale-[1.02]',
   };
 
   const iconBgMap = {
@@ -36,6 +38,7 @@ const StatsCard = ({
     rose: 'bg-rose-500/10 text-rose-400 border-rose-500/30 group-hover:bg-rose-500/20',
     indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 group-hover:bg-indigo-500/20',
     purple: 'bg-purple-500/10 text-purple-400 border-purple-500/30 group-hover:bg-purple-500/20',
+    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/30 group-hover:bg-blue-500/20',
   };
 
   const clickableClasses = onClick
