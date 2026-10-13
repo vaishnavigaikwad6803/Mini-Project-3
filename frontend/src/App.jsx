@@ -46,6 +46,10 @@ function App() {
         <Route path="/track" element={<TrackComplaint />} />
         <Route path="/map" element={<PublicMap />} />
         <Route path="/complaints/:id" element={<ComplaintDetails />} />
+        {/* Route Aliases for quick damage reporting */}
+        <Route path="/submit-complaint" element={<Navigate to="/citizen/report" replace />} />
+        <Route path="/report-damage" element={<Navigate to="/citizen/report" replace />} />
+        <Route path="/report" element={<Navigate to="/citizen/report" replace />} />
       </Route>
 
       {/* 2. Citizen Protected Routes */}

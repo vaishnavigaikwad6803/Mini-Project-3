@@ -21,7 +21,8 @@ import {
   AlertCircle,
   FileText,
   DollarSign,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 
 const REPAIR_STAGES = [
@@ -38,6 +39,7 @@ const EngineerAssignments = () => {
 
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // Update Stage Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -59,6 +61,7 @@ const EngineerAssignments = () => {
 
   const loadAssignments = async () => {
     try {
+      setError('');
       let engId = user?.engineer_id;
       if (!engId) {
         const engs = await engineerService.getEngineers();
@@ -70,6 +73,7 @@ const EngineerAssignments = () => {
       }
     } catch (err) {
       console.error("Error loading assignments:", err);
+      setError('Unable to load assigned jobs. Please check network connection.');
     } finally {
       setLoading(false);
     }
@@ -148,6 +152,22 @@ const EngineerAssignments = () => {
 
   return (
     <div className="space-y-6 pb-12">
+
+      {/* Error state banner */}
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-xs text-rose-300">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={() => { setLoading(true); loadAssignments(); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div>
@@ -271,12 +291,40 @@ const EngineerAssignments = () => {
       >
         <form onSubmit={handleStageSubmit} className="space-y-4 text-xs">
 
+          {/* Incident Context & Original Reported Defect (Before Photo) */}
+          <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-amber-400 font-bold">{selectedComplaint?.id}</span>
+              <span className="text-slate-400 text-[11px]">📍 {selectedComplaint?.district}</span>
+            </div>
+            <h4 className="font-bold text-white text-sm">{selectedComplaint?.road_name}</h4>
+            <p className="text-[11px] text-slate-400">
+              Defect: <strong className="text-slate-300">{selectedComplaint?.primary_damage_type || 'Road Defect'}</strong>
+            </p>
+            
+            {/* Before Defect Image */}
+            {selectedComplaint?.image_url && (
+              <div className="pt-1.5 border-t border-slate-800">
+                <span className="text-[11px] font-semibold text-rose-400 block mb-1">
+                  📸 Citizen Reported Damage (Before Image):
+                </span>
+                <div className="h-32 rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
+                  <img
+                    src={selectedComplaint.image_url}
+                    alt="Original Damage"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">Current Progress Stage *</label>
             <select
               value={repairData.stage}
               onChange={(e) => setRepairData({ ...repairData, stage: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field cursor-pointer"
             >
               {REPAIR_STAGES.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -293,7 +341,7 @@ const EngineerAssignments = () => {
               value={repairData.materials_used}
               onChange={(e) => setRepairData({ ...repairData, materials_used: e.target.value })}
               placeholder="e.g. Cold Bituminous Mix, Bitumen Emulsion Tack Coat, 10mm Aggregate"
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -303,7 +351,7 @@ const EngineerAssignments = () => {
               type="number"
               value={repairData.actual_cost}
               onChange={(e) => setRepairData({ ...repairData, actual_cost: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -314,7 +362,7 @@ const EngineerAssignments = () => {
               value={repairData.remarks}
               onChange={(e) => setRepairData({ ...repairData, remarks: e.target.value })}
               placeholder="Describe surface preparation, depth leveling, compaction passes, or traffic barricading..."
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 

@@ -75,7 +75,7 @@ const MainLayout = () => {
             <div className="flex items-center gap-4">
               <Link to="/map" className="hover:text-amber-400 transition-colors">Public Map</Link>
               <Link to="/track" className="hover:text-amber-400 transition-colors">Track Status</Link>
-              <Link to="/login" className="hover:text-amber-400 transition-colors">Staff Login</Link>
+              <Link to="/login?type=authority" className="hover:text-amber-400 transition-colors">Staff Login</Link>
             </div>
           </div>
         </div>

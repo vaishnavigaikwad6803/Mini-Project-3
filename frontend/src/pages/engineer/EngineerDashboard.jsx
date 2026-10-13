@@ -18,7 +18,8 @@ import {
   Eye,
   MapPin,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 const REPAIR_STAGES = [
@@ -34,6 +35,7 @@ const EngineerDashboard = () => {
   const { showToast } = useNotifications();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -50,6 +52,7 @@ const EngineerDashboard = () => {
 
   const fetchAssignments = async () => {
     try {
+      setError('');
       let engId = user?.engineer_id;
       if (!engId) {
         const engs = await engineerService.getEngineers();
@@ -61,6 +64,7 @@ const EngineerDashboard = () => {
       }
     } catch (err) {
       console.error("Error fetching engineer dashboard:", err);
+      setError('Unable to load assigned jobs. Please check network connection.');
     } finally {
       setLoading(false);
     }
@@ -140,6 +144,22 @@ const EngineerDashboard = () => {
   return (
     <div className="space-y-8 pb-12">
 
+      {/* Error state banner */}
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-xs text-rose-300">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={() => { setLoading(true); fetchAssignments(); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      )}
+
       {/* Top Banner */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-purple-950/50 border border-slate-800 shadow-2xl space-y-3">
         <div className="flex items-center gap-2">
@@ -213,84 +233,133 @@ const EngineerDashboard = () => {
           <div className="p-12 text-center bg-slate-950/40 rounded-2xl border border-slate-800/80">
             <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
             <p className="text-xs text-slate-300 font-semibold mt-2">No active repair tasks assigned.</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Tasks dispatched by road authorities will appear here.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">ID</th>
-                  <th className="py-3 px-4">Road Name</th>
-                  <th className="py-3 px-4">Road Type</th>
-                  <th className="py-3 px-4">Defect Classification</th>
-                  <th className="py-3 px-4">Priority</th>
-                  <th className="py-3 px-4">Stage</th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {assignments.map((c) => {
-                  const canDirectResolve = ['Repair Started', 'Repair In Progress', 'Inspection Completed'].includes(c.status);
-                  const isDamageCompleted = ['Repair Completed', 'Authority Verification', 'Closed'].includes(c.status);
+          <div className="space-y-3">
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">ID</th>
+                    <th className="py-3 px-4">Road Name</th>
+                    <th className="py-3 px-4">Road Type</th>
+                    <th className="py-3 px-4">Defect Classification</th>
+                    <th className="py-3 px-4">Priority</th>
+                    <th className="py-3 px-4">Stage</th>
+                    <th className="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {assignments.map((c) => {
+                    const canDirectResolve = ['Repair Started', 'Repair In Progress', 'Inspection Completed'].includes(c.status);
+                    const isDamageCompleted = ['Repair Completed', 'Authority Verification', 'Closed'].includes(c.status);
 
-                  return (
-                    <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                        <span className="text-[11px] text-slate-400">📍 {c.district}</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <RoadTypeBadge roadType={c.road_type} />
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-semibold text-slate-200 block">{c.primary_damage_type || 'Defect'}</span>
-                        {c.ai_confidence && (
-                          <span className="text-[10px] text-cyan-400">
-                            AI: {Math.round(c.ai_confidence * 100)}%
+                    return (
+                      <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
+                          <span className="text-[11px] text-slate-400">📍 {c.district}</span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <RoadTypeBadge roadType={c.road_type} />
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-semibold text-slate-200 block">{c.primary_damage_type || 'Defect'}</span>
+                          {c.ai_confidence && (
+                            <span className="text-[10px] text-cyan-400">
+                              AI: {Math.round(c.ai_confidence * 100)}%
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                              c.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                                'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                            }`}>
+                            {c.priority || 'Medium'}
                           </span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                            c.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
-                              'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                          }`}>
-                          {c.priority || 'Medium'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <StatusBadge status={c.status} />
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {isDamageCompleted ? (
-                          <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/30">
-                            Completed
-                          </span>
-                        ) : (
-                          <div className="inline-flex items-center gap-1.5">
-                            <button
-                              onClick={() => openUpdateModal(c)}
-                              className="px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs shadow-md inline-flex items-center gap-1 transition-all"
-                            >
-                              <Wrench className="h-3.5 w-3.5" /> Update
-                            </button>
-                            {canDirectResolve && (
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <StatusBadge status={c.status} />
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          {isDamageCompleted ? (
+                            <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/30">
+                              Completed
+                            </span>
+                          ) : (
+                            <div className="inline-flex items-center gap-1.5">
                               <button
-                                onClick={() => openUpdateModal(c, 'Repair Completed')}
-                                className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 inline-flex items-center gap-1 transition-all"
+                                onClick={() => openUpdateModal(c)}
+                                className="px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs shadow-md inline-flex items-center gap-1 transition-all"
                               >
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+                                <Wrench className="h-3.5 w-3.5" /> Update
                               </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                              {canDirectResolve && (
+                                <button
+                                  onClick={() => openUpdateModal(c, 'Repair Completed')}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 inline-flex items-center gap-1 transition-all"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View (sm:hidden) */}
+            <div className="sm:hidden space-y-3">
+              {assignments.map((c) => {
+                const canDirectResolve = ['Repair Started', 'Repair In Progress', 'Inspection Completed'].includes(c.status);
+                const isDamageCompleted = ['Repair Completed', 'Authority Verification', 'Closed'].includes(c.status);
+
+                return (
+                  <div key={c.id} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
+                      <StatusBadge status={c.status} size="xs" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
+                      <p className="text-xs text-slate-400 mt-0.5">📍 {c.district} • {c.primary_damage_type || 'Defect'}</p>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                      {isDamageCompleted ? (
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs">
+                          Completed
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => openUpdateModal(c)}
+                            className="px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs shadow-md inline-flex items-center gap-1"
+                          >
+                            <Wrench className="h-3.5 w-3.5" /> Update
+                          </button>
+                          {canDirectResolve && (
+                            <button
+                              onClick={() => openUpdateModal(c, 'Repair Completed')}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md inline-flex items-center gap-1"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -303,12 +372,40 @@ const EngineerDashboard = () => {
       >
         <form onSubmit={handleStageSubmit} className="space-y-4 text-xs">
 
+          {/* Incident Context & Original Reported Defect (Before Photo) */}
+          <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-amber-400 font-bold">{selectedComplaint?.id}</span>
+              <span className="text-slate-400 text-[11px]">📍 {selectedComplaint?.district}</span>
+            </div>
+            <h4 className="font-bold text-white text-sm">{selectedComplaint?.road_name}</h4>
+            <p className="text-[11px] text-slate-400">
+              Defect: <strong className="text-slate-300">{selectedComplaint?.primary_damage_type || 'Road Defect'}</strong>
+            </p>
+            
+            {/* Before Defect Image */}
+            {selectedComplaint?.image_url && (
+              <div className="pt-1.5 border-t border-slate-800">
+                <span className="text-[11px] font-semibold text-rose-400 block mb-1">
+                  📸 Citizen Reported Damage (Before Image):
+                </span>
+                <div className="h-32 rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
+                  <img
+                    src={selectedComplaint.image_url}
+                    alt="Original Damage"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block font-semibold text-slate-300 mb-1.5">Current Progress Stage *</label>
             <select
               value={repairData.stage}
               onChange={(e) => setRepairData({ ...repairData, stage: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field cursor-pointer"
             >
               {REPAIR_STAGES.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -325,7 +422,7 @@ const EngineerDashboard = () => {
               value={repairData.materials_used}
               onChange={(e) => setRepairData({ ...repairData, materials_used: e.target.value })}
               placeholder="e.g. Cold Bituminous Mix, Bitumen Emulsion Tack Coat, 10mm Aggregate"
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -335,7 +432,7 @@ const EngineerDashboard = () => {
               type="number"
               value={repairData.actual_cost}
               onChange={(e) => setRepairData({ ...repairData, actual_cost: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -346,7 +443,7 @@ const EngineerDashboard = () => {
               value={repairData.remarks}
               onChange={(e) => setRepairData({ ...repairData, remarks: e.target.value })}
               placeholder="Describe surface preparation, depth leveling, compaction passes, or traffic barricading..."
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-3 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 

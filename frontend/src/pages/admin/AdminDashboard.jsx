@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import { complaintService } from '../../services/complaintService';
 import StatsCard from '../../components/common/StatsCard';
 import Loader from '../../components/common/Loader';
 import {
@@ -30,7 +31,10 @@ import {
   BarChart3,
   TrendingUp,
   MapPin,
-  ArrowRight
+  ArrowRight,
+  Download,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 const COLORS = ['#f59e0b', '#6366f1', '#06b6d4', '#10b981', '#a855f7', '#ef4444'];
@@ -38,13 +42,63 @@ const COLORS = ['#f59e0b', '#6366f1', '#06b6d4', '#10b981', '#a855f7', '#ef4444'
 const AdminDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
+    setError('');
     adminService.getDashboardData()
       .then((res) => setData(res))
-      .catch((err) => console.error("Error loading admin dashboard:", err))
+      .catch((err) => {
+        console.error("Error loading admin dashboard:", err);
+        setError('Unable to aggregate analytics from backend services. Please check connection.');
+      })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const complaints = await complaintService.getComplaints();
+      if (!complaints || complaints.length === 0) {
+        alert("No complaints available to export.");
+        return;
+      }
+      const headers = ["ID", "Road Name", "Road Type", "District", "State", "Status", "Priority", "AI Defect", "AI Confidence", "Authority", "Engineer Name", "Created At"];
+      const rows = complaints.map((c) => [
+        c.id,
+        `"${(c.road_name || '').replace(/"/g, '""')}"`,
+        c.road_type || 'N/A',
+        c.district || 'N/A',
+        c.state || 'N/A',
+        c.status || 'N/A',
+        c.priority || 'N/A',
+        c.primary_damage_type || 'N/A',
+        c.ai_confidence ? `${Math.round(c.ai_confidence * 100)}%` : 'N/A',
+        `"${(c.authority_name || 'Unassigned').replace(/"/g, '""')}"`,
+        `"${(c.engineer_name || 'Unassigned').replace(/"/g, '""')}"`,
+        new Date(c.created_at).toISOString(),
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `RoadGuard_Complaints_Audit_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Failed to export complaints CSV:", err);
+      alert("Failed to export complaints audit data.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) return <Loader text="Aggregating system analytics & charts..." />;
 
@@ -52,6 +106,22 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8 pb-12">
+
+      {/* Error state banner */}
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-xs text-rose-300">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={() => { setLoading(true); loadData(); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-rose-950/40 border border-slate-800 shadow-2xl space-y-4">
@@ -72,6 +142,15 @@ const AdminDashboard = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleExportCSV}
+              disabled={exporting}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 hover:border-amber-500/50 transition-colors flex items-center gap-1.5 shadow-sm"
+              title="Export all complaints to CSV"
+            >
+              <Download className="h-3.5 w-3.5" />
+              {exporting ? 'Exporting...' : 'Export CSV Audit'}
+            </button>
             <Link
               to="/admin/authorities"
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-colors"
@@ -139,7 +218,7 @@ const AdminDashboard = () => {
               <p className="text-xs text-slate-400">Jurisdiction distribution across highways & streets</p>
             </div>
             <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-              <PieChart className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4" />
             </span>
           </div>
 
@@ -254,7 +333,7 @@ const AdminDashboard = () => {
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
               <tr>
@@ -279,6 +358,36 @@ const AdminDashboard = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards for Authority Performance */}
+        <div className="sm:hidden space-y-3">
+          {(data?.authority_performance || []).map((ap, idx) => (
+            <div key={idx} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-white">{ap.authority_name}</h4>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{ap.authority_type}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-500 block">Total</span>
+                  <strong className="text-amber-400 font-bold">{ap.total_assigned}</strong>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-500 block">Active</span>
+                  <strong className="text-purple-400 font-bold">{ap.in_progress}</strong>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-500 block">Closed</span>
+                  <strong className="text-emerald-400 font-bold">{ap.completed}</strong>
+                </div>
+              </div>
+              <div className="text-[11px] text-slate-400 pt-1 flex justify-between">
+                <span>Avg. Resolution Speed:</span>
+                <span className="text-cyan-400 font-semibold">{ap.avg_resolution_days} days</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

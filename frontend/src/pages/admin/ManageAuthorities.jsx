@@ -192,10 +192,16 @@ const ManageAuthorities = () => {
       {/* Grid Cards */}
       {loading ? (
         <Loader text="Loading authorities..." />
+      ) : filtered.length === 0 ? (
+        <div className="p-8 text-center bg-slate-900 rounded-3xl border border-slate-800 space-y-2">
+          <Building2 className="h-10 w-10 text-slate-600 mx-auto" />
+          <h3 className="text-sm font-semibold text-slate-300">No road authorities found</h3>
+          <p className="text-xs text-slate-500">Register new authority divisions or adjust your search filter.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filtered.map((auth) => (
-            <div key={auth.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between">
+            <div key={auth.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between card-interactive">
 
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -273,7 +279,7 @@ const ManageAuthorities = () => {
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 placeholder="e.g. NHAI-RO-MUM"
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white uppercase font-mono focus:outline-none focus:border-amber-500 disabled:opacity-50"
+                className="input-field uppercase font-mono disabled:opacity-50"
               />
             </div>
             <div>
@@ -281,7 +287,7 @@ const ManageAuthorities = () => {
               <select
                 value={formData.authority_type}
                 onChange={(e) => setFormData({ ...formData, authority_type: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field cursor-pointer"
               >
                 {AUTHORITY_TYPES.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -298,7 +304,7 @@ const ManageAuthorities = () => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. National Highways Authority of India (RO Mumbai)"
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -307,7 +313,7 @@ const ManageAuthorities = () => {
             <select
               value={formData.road_type_coverage}
               onChange={(e) => setFormData({ ...formData, road_type_coverage: e.target.value })}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field cursor-pointer"
             >
               {ROAD_TYPES.map((rt) => (
                 <option key={rt} value={rt}>{rt}</option>
@@ -323,7 +329,7 @@ const ManageAuthorities = () => {
                 required
                 value={formData.district}
                 onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
             <div>
@@ -333,7 +339,7 @@ const ManageAuthorities = () => {
                 required
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
           </div>
@@ -345,7 +351,7 @@ const ManageAuthorities = () => {
               value={formData.jurisdiction_area}
               onChange={(e) => setFormData({ ...formData, jurisdiction_area: e.target.value })}
               placeholder="e.g. NH-48 Express Highway & Western Corridor..."
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="input-field"
             />
           </div>
 
@@ -357,7 +363,7 @@ const ManageAuthorities = () => {
                 required
                 value={formData.contact_email}
                 onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
             <div>
@@ -367,7 +373,7 @@ const ManageAuthorities = () => {
                 required
                 value={formData.contact_phone}
                 onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
           </div>

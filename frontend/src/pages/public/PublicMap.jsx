@@ -1,57 +1,212 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { adminService } from '../../services/adminService';
-import ComplaintMap from '../../components/map/ComplaintMap';
+import { authorityService } from '../../services/authorityService';
+import ComplaintMap, { isValidCoordinate } from '../../components/map/ComplaintMap';
 import Loader from '../../components/common/Loader';
-import { MapPin, ShieldAlert, Layers, Info, Shield } from 'lucide-react';
+import {
+  MapPin,
+  ShieldAlert,
+  Layers,
+  Info,
+  Shield,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  HardHat,
+  Compass
+} from 'lucide-react';
 
 const PublicMap = () => {
   const [complaints, setComplaints] = useState([]);
+  const [authorities, setAuthorities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+
+    try {
+      const [complaintsRes, authoritiesRes] = await Promise.allSettled([
+        adminService.getMapComplaints(),
+        authorityService.getAuthorities()
+      ]);
+
+      if (complaintsRes.status === 'fulfilled') {
+        const data = Array.isArray(complaintsRes.value) ? complaintsRes.value : [];
+        setComplaints(data);
+      } else {
+        console.error("Error fetching map complaints:", complaintsRes.reason);
+        setError("Unable to connect to GIS spatial database. Please ensure backend is running.");
+      }
+
+      if (authoritiesRes.status === 'fulfilled') {
+        const authList = Array.isArray(authoritiesRes.value) ? authoritiesRes.value : [];
+        setAuthorities(authList);
+      } else {
+        console.warn("Authorities listing unavailable, fallback to complaints authorities:", authoritiesRes.reason);
+      }
+    } catch (err) {
+      console.error("Unexpected error in loadData:", err);
+      setError("An unexpected error occurred while loading map data.");
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    adminService.getMapComplaints()
-      .then((data) => setComplaints(data))
-      .catch((err) => console.error("Error fetching map complaints:", err))
-      .finally(() => setLoading(false));
-  }, []);
+    loadData(false);
+  }, [loadData]);
+
+  // Compute live KPI metrics from actual complaints data
+  const metrics = useMemo(() => {
+    const total = complaints.length;
+    const valid = complaints.filter(c => isValidCoordinate(c.latitude, c.longitude)).length;
+    const active = complaints.filter(c =>
+      ['Submitted', 'AI Analyzed', 'Authority Assigned', 'Under Review', 'Inspection Pending'].includes(c.status)
+    ).length;
+    const inRepair = complaints.filter(c =>
+      ['Engineer Assigned', 'Inspection Completed', 'Repair Started', 'Repair In Progress', 'Authority Verification'].includes(c.status)
+    ).length;
+    const resolved = complaints.filter(c =>
+      ['Repair Completed', 'Closed'].includes(c.status)
+    ).length;
+    const critical = complaints.filter(c =>
+      ['critical', 'high'].includes((c.priority || c.ai_severity || '').toLowerCase())
+    ).length;
+
+    return { total, valid, active, inRepair, resolved, critical };
+  }, [complaints]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-      {/* Header */}
+      {/* Header with Title and Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1">
               <Shield className="h-3 w-3" /> Maharashtra State GIS Network
             </span>
-            <span className="text-xs text-slate-400">Road Divisions: NH • State • Rural • Munci</span>
+            <span className="text-xs text-slate-400">Road Divisions: NHAI • PWD • PMGSY • Municipal</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
-            Maharashtra Road Defect GIS Spatial Map
+            Live Road Defect GIS Spatial Map
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Explore active potholes, cracks, and repaired infrastructure across Maharashtra's **National Highways (NHAI)**, **State Corridors (PWD)**, **Rural Village Links (PMGSY)**, and **Municipal Wards (BMC/PMC)**.
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl">
+            Real-time geospatial tracking of road surface defects across Maharashtra's <strong>National Highways (NHAI)</strong>, <strong>State Corridors (PWD)</strong>, <strong>Rural Links (PMGSY)</strong>, and <strong>Municipal Wards</strong>.
           </p>
         </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => loadData(true)}
+            disabled={loading || isRefreshing}
+            className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-xs font-bold text-slate-200 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 text-amber-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Syncing...' : 'Refresh GIS'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Info notice */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-xs font-semibold">Active Incidents</span>
+            <AlertTriangle className="h-4 w-4 text-rose-400" />
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-rose-400 font-['Outfit']">
+            {metrics.active}
+          </div>
+          <span className="text-[11px] text-slate-400">Awaiting inspection/dispatch</span>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-xs font-semibold">In Repair Work</span>
+            <HardHat className="h-4 w-4 text-orange-400" />
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-orange-400 font-['Outfit']">
+            {metrics.inRepair}
+          </div>
+          <span className="text-[11px] text-slate-400">Assigned field engineers</span>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-xs font-semibold">Repaired & Resolved</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-emerald-400 font-['Outfit']">
+            {metrics.resolved}
+          </div>
+          <span className="text-[11px] text-slate-400">Verified road restorations</span>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
+          <div className="flex items-center justify-between text-slate-400 mb-1">
+            <span className="text-xs font-semibold">Spatial Coverage</span>
+            <MapPin className="h-4 w-4 text-amber-400" />
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-amber-400 font-['Outfit']">
+            {metrics.valid} <span className="text-xs font-normal text-slate-400">/ {metrics.total}</span>
+          </div>
+          <span className="text-[11px] text-slate-400">GPS geocoded coordinates</span>
+        </div>
+      </div>
+
+      {/* Error Banner with Retry */}
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-rose-300">
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert className="h-5 w-5 text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadData(false)}
+            className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+
+      {/* Notice Banner */}
+      <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
         <div className="flex items-center gap-2">
           <Info className="h-4 w-4 text-cyan-400 shrink-0" />
-          <span>Interactive GIS: Switch between Road Divisions (NH, State, Rural, Munci) and jump directly to any Maharashtra district.</span>
+          <span>Click any marker to inspect damage photography, assigned authority, and designated field engineer.</span>
         </div>
-        <span className="font-semibold text-amber-400">
-          {complaints.length} Total Incidents in Maharashtra
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span className="text-slate-300 font-mono text-[11px]">OpenStreetMap Live Vector Tiles</span>
+        </div>
       </div>
 
-      {/* Map */}
+      {/* Map Container */}
       {loading ? (
-        <Loader text="Loading Maharashtra GIS spatial layers..." />
+        <div className="h-[620px] rounded-3xl bg-slate-900/80 border border-slate-800 flex items-center justify-center">
+          <Loader text="Loading Maharashtra GIS spatial layers and defect pins..." />
+        </div>
       ) : (
-        <ComplaintMap complaints={complaints} height="h-[620px]" showFilters={true} />
+        <ComplaintMap
+          complaints={complaints}
+          authorities={authorities}
+          height="h-[620px]"
+          showFilters={true}
+          startWithIndia={true}
+        />
       )}
 
     </div>

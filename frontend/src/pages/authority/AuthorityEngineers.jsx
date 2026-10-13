@@ -165,12 +165,13 @@ const AuthorityEngineers = () => {
       {loading ? (
         <Loader text="Loading engineer roster..." />
       ) : filtered.length === 0 ? (
-        <div className="p-12 text-center bg-slate-900 rounded-3xl border border-slate-800 space-y-3">
+        <div className="p-8 text-center bg-slate-900 rounded-3xl border border-slate-800 space-y-3">
           <HardHat className="h-10 w-10 text-slate-600 mx-auto" />
           <h3 className="text-sm font-semibold text-slate-300">No engineers found in jurisdiction</h3>
+          <p className="text-xs text-slate-500">Register field engineers to assign incoming road damage repair orders.</p>
           <button
             onClick={openRegisterModal}
-            className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5"
+            className="btn-primary text-xs inline-flex items-center gap-1.5 shadow-md shadow-amber-500/20"
           >
             <UserPlus className="h-4 w-4" /> Register First Engineer
           </button>
@@ -178,7 +179,7 @@ const AuthorityEngineers = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((eng) => (
-            <div key={eng.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 relative overflow-hidden flex flex-col justify-between">
+            <div key={eng.id} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4 relative overflow-hidden flex flex-col justify-between card-interactive">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20">
@@ -246,7 +247,7 @@ const AuthorityEngineers = () => {
                 placeholder="e.g. Er. Nilesh Patil"
                 value={regForm.full_name}
                 onChange={(e) => setRegForm({ ...regForm, full_name: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
 
@@ -258,7 +259,7 @@ const AuthorityEngineers = () => {
                 placeholder="e.g. ENG-MH-501"
                 value={regForm.employee_id}
                 onChange={(e) => setRegForm({ ...regForm, employee_id: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
           </div>
@@ -272,7 +273,7 @@ const AuthorityEngineers = () => {
                 placeholder="engineer@roadguard.gov.in"
                 value={regForm.email}
                 onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
 
@@ -283,7 +284,7 @@ const AuthorityEngineers = () => {
                 required
                 value={regForm.password}
                 onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
           </div>
@@ -296,7 +297,7 @@ const AuthorityEngineers = () => {
                 placeholder="+91 98765 43210"
                 value={regForm.phone}
                 onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
 
@@ -307,7 +308,7 @@ const AuthorityEngineers = () => {
                 required
                 value={regForm.designation}
                 onChange={(e) => setRegForm({ ...regForm, designation: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field"
               />
             </div>
           </div>
@@ -318,7 +319,7 @@ const AuthorityEngineers = () => {
               <select
                 value={regForm.specialization}
                 onChange={(e) => setRegForm({ ...regForm, specialization: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field cursor-pointer"
               >
                 <option value="Pothole & Surface Patching">Pothole & Surface Patching</option>
                 <option value="Crack Sealing & Resurfacing">Crack Sealing & Resurfacing</option>
@@ -333,7 +334,7 @@ const AuthorityEngineers = () => {
               <select
                 value={regForm.district}
                 onChange={(e) => setRegForm({ ...regForm, district: e.target.value })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field cursor-pointer"
               >
                 {MAHARASHTRA_DISTRICTS.map((d) => (
                   <option key={d.name} value={d.name}>
@@ -350,7 +351,7 @@ const AuthorityEngineers = () => {
               <select
                 value={regForm.authority_id}
                 onChange={(e) => setRegForm({ ...regForm, authority_id: parseInt(e.target.value) })}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="input-field cursor-pointer"
               >
                 {authorities.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -372,7 +373,7 @@ const AuthorityEngineers = () => {
             <button
               type="submit"
               disabled={registering}
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md disabled:opacity-50 flex items-center gap-1.5"
+              className="px-5 py-2 rounded-xl btn-primary text-xs shadow-md shadow-amber-500/20 disabled:opacity-50 flex items-center gap-1.5"
             >
               <UserPlus className="h-4 w-4" />
               {registering ? 'Registering...' : 'Register Engineer'}
