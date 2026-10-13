@@ -176,17 +176,7 @@ const Navbar = () => {
             {isAuthenticated && (
               <Link
                 to={getDashboardPath()}
-<<<<<<< HEAD
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${location.pathname.startsWith('/citizen') ||
-                  location.pathname.startsWith('/authority') ||
-                  location.pathname.startsWith('/engineer') ||
-                  location.pathname.startsWith('/admin')
-                  ? 'text-amber-400 bg-slate-800/60'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
-                  }`}
-=======
                 className={getNavLinkClass(isActiveRoute('dashboard'))}
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
               >
                 <LayoutDashboard className="h-4 w-4 text-indigo-400" />
                 <span>Dashboard</span>

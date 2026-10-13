@@ -438,59 +438,6 @@ const CitizenDashboard = () => {
             actionTo="/citizen/report"
           />
         ) : (
-<<<<<<< HEAD
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Complaint ID</th>
-                  <th className="py-3 px-4">Road Name & Location</th>
-                  <th className="py-3 px-4">Road Division</th>
-                  <th className="py-3 px-4">Damage Type & Priority</th>
-                  <th className="py-3 px-4">Assigned Authority</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {filteredComplaints.slice(0, 8).map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-amber-400">
-                      {c.id}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                      <span className="text-[11px] text-slate-400">📍 {c.district}, {c.state}</span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <RoadTypeBadge roadType={c.road_type} />
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="text-slate-200 font-semibold block">
-                        {c.primary_damage_type || c.damage_type || 'Road Defect'}
-                      </span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' :
-                        c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
-                          'bg-amber-500/20 text-amber-300'
-                        }`}>
-                        {c.priority} Priority
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-300">
-                      {c.authority_name || 'Pending'}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Link
-                        to={`/complaints/${c.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors"
-                      >
-                        <Eye className="h-3.5 w-3.5" /> Details
-                      </Link>
-                    </td>
-=======
           <>
             {/* Mobile Cards (sm:hidden) */}
             <div className="grid grid-cols-1 gap-3 sm:hidden">
@@ -530,7 +477,6 @@ const CitizenDashboard = () => {
                     <th className="py-3 px-4">Assigned Authority</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4 text-right">Actions</th>
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -697,35 +643,10 @@ const CitizenDashboard = () => {
                       {selectedComplaint.engineer_name || selectedComplaint.repair?.engineer_name}
                     </strong>
                   </div>
-<<<<<<< HEAD
-
-                  {/* Responsible Authority Box */}
-                  <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                    <span className="text-slate-400 uppercase font-semibold text-[10px] block">Responsible Authority</span>
-                    <strong className="text-white block text-sm flex items-center gap-1.5">
-                      <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
-                      {selectedComplaint.authority_name || 'Pending Assignment'}
-                    </strong>
-                    <p className="text-[11px] text-slate-400">{selectedComplaint.routing_notes || 'Jurisdiction verified via GIS'}</p>
-                  </div>
-
-                  {/* Priority & Defect Type */}
-                  <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                    <span className="text-slate-400 uppercase font-semibold text-[10px] block">Defect & Severity</span>
-                    <strong className="text-white block text-sm">
-                      {selectedComplaint.primary_damage_type || selectedComplaint.damage_type || 'Road Defect'}
-                    </strong>
-                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded border ${selectedComplaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
-                      selectedComplaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
-                        'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                      }`}>
-                      {selectedComplaint.priority} Priority
-=======
                   <div>
                     <span className="text-slate-400 block text-[10px]">Employee ID</span>
                     <span className="text-amber-400 font-mono font-bold">
                       {selectedComplaint.engineer_employee_id || selectedComplaint.repair?.engineer_employee_id || 'N/A'}
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
                     </span>
                   </div>
                   <div>

@@ -402,18 +402,11 @@ const ComplaintMap = ({
             <button
               type="button"
               onClick={() => setSelectedRoadDivision('ALL')}
-<<<<<<< HEAD
-              className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'ALL'
-                ? 'bg-slate-100 text-slate-950 border-white shadow-lg'
-                : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:bg-slate-800'
-                }`}
-=======
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${
                 selectedRoadDivision === 'ALL'
                   ? 'bg-slate-100 text-slate-950 border-white shadow-lg'
                   : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:bg-slate-800'
               }`}
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
             >
               <div className="flex items-center gap-1.5">
                 <span>🗺️</span>
@@ -427,18 +420,11 @@ const ComplaintMap = ({
             <button
               type="button"
               onClick={() => setSelectedRoadDivision('NH')}
-<<<<<<< HEAD
-              className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'NH'
-                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/25'
-                : 'bg-slate-900/90 text-amber-300 border-slate-800 hover:bg-amber-950/30'
-                }`}
-=======
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${
                 selectedRoadDivision === 'NH'
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/25'
                   : 'bg-slate-900/90 text-amber-300 border-slate-800 hover:bg-amber-950/30'
               }`}
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
             >
               <div className="flex items-center gap-1.5">
                 <span>🛣️</span>
@@ -452,18 +438,11 @@ const ComplaintMap = ({
             <button
               type="button"
               onClick={() => setSelectedRoadDivision('STATE')}
-<<<<<<< HEAD
-              className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'STATE'
-                ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/25'
-                : 'bg-slate-900/90 text-indigo-300 border-slate-800 hover:bg-indigo-950/30'
-                }`}
-=======
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${
                 selectedRoadDivision === 'STATE'
                   ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/25'
                   : 'bg-slate-900/90 text-indigo-300 border-slate-800 hover:bg-indigo-950/30'
               }`}
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
             >
               <div className="flex items-center gap-1.5">
                 <span>🛣️</span>
@@ -477,18 +456,11 @@ const ComplaintMap = ({
             <button
               type="button"
               onClick={() => setSelectedRoadDivision('RURAL')}
-<<<<<<< HEAD
-              className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'RURAL'
-                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/25'
-                : 'bg-slate-900/90 text-emerald-300 border-slate-800 hover:bg-emerald-950/30'
-                }`}
-=======
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${
                 selectedRoadDivision === 'RURAL'
                   ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/25'
                   : 'bg-slate-900/90 text-emerald-300 border-slate-800 hover:bg-emerald-950/30'
               }`}
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
             >
               <div className="flex items-center gap-1.5">
                 <span>🌾</span>
@@ -502,18 +474,11 @@ const ComplaintMap = ({
             <button
               type="button"
               onClick={() => setSelectedRoadDivision('MUNCI')}
-<<<<<<< HEAD
-              className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'MUNCI'
-                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/25'
-                : 'bg-slate-900/90 text-cyan-300 border-slate-800 hover:bg-cyan-950/30'
-                }`}
-=======
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${
                 selectedRoadDivision === 'MUNCI'
                   ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/25'
                   : 'bg-slate-900/90 text-cyan-300 border-slate-800 hover:bg-cyan-950/30'
               }`}
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
             >
               <div className="flex items-center gap-1.5">
                 <span>🏙️</span>
@@ -529,35 +494,6 @@ const ComplaintMap = ({
           <div className="p-3.5 bg-slate-900/90 rounded-2xl border border-slate-800 backdrop-blur-md space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2.5">
 
-<<<<<<< HEAD
-            {/* Quick View Switchers */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleFullIndiaView}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${!isZoomedIn
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                title="View entire map of India"
-              >
-                <Globe2 className="h-3.5 w-3.5" />
-                <span>Full India Map</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleMaharashtraZoom}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${isZoomedIn
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                  }`}
-                title="Zoom into Maharashtra state"
-              >
-                <Compass className="h-3.5 w-3.5" />
-                <span>Zoom to Maharashtra</span>
-              </button>
-=======
               {/* View Buttons & Search Box */}
               <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
                 <div className="relative flex-1 min-w-[180px]">
@@ -631,7 +567,6 @@ const ComplaintMap = ({
                   </span>
                 )}
               </div>
->>>>>>> a327f197c4cba11500b7adf66bb622cde0b8e2ec
             </div>
 
             {/* Dropdown Filters Row */}
