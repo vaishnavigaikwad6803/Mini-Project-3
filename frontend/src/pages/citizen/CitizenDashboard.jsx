@@ -402,56 +402,7 @@ const CitizenDashboard = () => {
         </div>
       </div>
 
-      {/* 4. KPI STATS CARDS (CLICKABLE) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatsCard
-          title="Total Reports"
-          value={stats?.total_complaints || 0}
-          subtitle="All-time submissions"
-          icon={FileText}
-          color="amber"
-          onClick={() => handleStatusFilterClick('ALL')}
-          isActive={statusFilter === 'ALL'}
-        />
-        <StatsCard
-          title="Pending Review"
-          value={stats?.pending_complaints || 0}
-          subtitle="Under authority triage"
-          icon={Clock}
-          color="cyan"
-          onClick={() => handleStatusFilterClick('PENDING')}
-          isActive={statusFilter === 'PENDING'}
-        />
-        <StatsCard
-          title="Under Review"
-          value={stats?.under_review_complaints || 0}
-          subtitle="Authority assigned"
-          icon={Search}
-          color="indigo"
-          onClick={() => handleStatusFilterClick('UNDER_REVIEW')}
-          isActive={statusFilter === 'UNDER_REVIEW'}
-        />
-        <StatsCard
-          title="In Repair"
-          value={stats?.in_repair_complaints || 0}
-          subtitle="Field engineer active"
-          icon={Wrench}
-          color="purple"
-          onClick={() => handleStatusFilterClick('IN_REPAIR')}
-          isActive={statusFilter === 'IN_REPAIR'}
-        />
-        <StatsCard
-          title="Resolved"
-          value={stats?.completed_complaints || 0}
-          subtitle="Verified & closed"
-          icon={CheckCircle2}
-          color="emerald"
-          onClick={() => handleStatusFilterClick('RESOLVED')}
-          isActive={statusFilter === 'RESOLVED'}
-        />
-      </div>
-
-      {/* 5. CITIZEN COMPLAINT LIFECYCLE & RESOLUTION BREAKDOWN PIE CHART */}
+      {/* 4. CITIZEN COMPLAINT LIFECYCLE & RESOLUTION BREAKDOWN PIE CHART */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* 1. Interactive Donut / Pie Chart */}
@@ -597,6 +548,55 @@ const CitizenDashboard = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* 5. KPI STATS CARDS (CLICKABLE) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatsCard
+          title="Total Reports"
+          value={stats?.total_complaints || 0}
+          subtitle="All-time submissions"
+          icon={FileText}
+          color="amber"
+          onClick={() => handleStatusFilterClick('ALL')}
+          isActive={statusFilter === 'ALL'}
+        />
+        <StatsCard
+          title="Pending Review"
+          value={stats?.pending_complaints || 0}
+          subtitle="Under authority triage"
+          icon={Clock}
+          color="cyan"
+          onClick={() => handleStatusFilterClick('PENDING')}
+          isActive={statusFilter === 'PENDING'}
+        />
+        <StatsCard
+          title="Under Review"
+          value={stats?.under_review_complaints || 0}
+          subtitle="Authority assigned"
+          icon={Search}
+          color="indigo"
+          onClick={() => handleStatusFilterClick('UNDER_REVIEW')}
+          isActive={statusFilter === 'UNDER_REVIEW'}
+        />
+        <StatsCard
+          title="In Repair"
+          value={stats?.in_repair_complaints || 0}
+          subtitle="Field engineer active"
+          icon={Wrench}
+          color="purple"
+          onClick={() => handleStatusFilterClick('IN_REPAIR')}
+          isActive={statusFilter === 'IN_REPAIR'}
+        />
+        <StatsCard
+          title="Resolved"
+          value={stats?.completed_complaints || 0}
+          subtitle="Verified & closed"
+          icon={CheckCircle2}
+          color="emerald"
+          onClick={() => handleStatusFilterClick('RESOLVED')}
+          isActive={statusFilter === 'RESOLVED'}
+        />
       </div>
 
       {/* 6. COMPLAINTS LIST TABLE */}
