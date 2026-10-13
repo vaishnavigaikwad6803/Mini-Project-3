@@ -357,8 +357,8 @@ const CitizenDashboard = () => {
                 key={div.key}
                 onClick={() => setActiveDivision(isSelected ? 'ALL' : div.key)}
                 className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${isSelected
-                    ? `${div.activeClass} border-transparent scale-[1.02]`
-                    : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
+                  ? `${div.activeClass} border-transparent scale-[1.02]`
+                  : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
                   }`}
               >
                 <div className="flex items-center justify-between">
