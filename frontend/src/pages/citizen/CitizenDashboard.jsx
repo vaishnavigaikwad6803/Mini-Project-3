@@ -642,12 +642,20 @@ const CitizenDashboard = () => {
         {filteredComplaints.length === 0 ? (
           <EmptyState
             icon={AlertTriangle}
-            title={activeDivision !== 'ALL' ? `No Complaints in ${activeDivision} Division` : 'No Complaints Recorded Yet'}
-            description={activeDivision !== 'ALL'
-              ? `You haven't submitted any reports for ${activeDivision} roads yet.`
-              : 'You have not submitted any road damage reports yet. Take a photo of defects to report them.'}
-            actionLabel="Report Road Hazard"
-            actionTo="/citizen/report"
+            title={
+              activeDivision !== 'ALL' && statusFilter !== 'ALL'
+                ? `No ${statusFilter.replace('_', ' ')} Complaints in ${activeDivision} Division`
+                : activeDivision !== 'ALL'
+                ? `No Complaints in ${activeDivision} Division`
+                : statusFilter !== 'ALL'
+                ? `No ${statusFilter.replace('_', ' ')} Complaints Found`
+                : 'No Complaints Recorded Yet'
+            }
+            description={
+              activeDivision !== 'ALL' || statusFilter !== 'ALL'
+                ? 'None of your complaints match the active filter criteria. Try selecting another filter or clearing all filters.'
+                : 'You have not submitted any road damage reports yet.'
+            }
           />
         ) : (
           <>
