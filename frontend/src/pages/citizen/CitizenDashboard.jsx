@@ -657,7 +657,14 @@ const CitizenDashboard = () => {
                 <div key={c.id} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
-                    <StatusBadge status={c.status} size="xs" />
+                    <div className="flex items-center gap-2">
+                      {c.created_at && (
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
+                      <StatusBadge status={c.status} size="xs" />
+                    </div>
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
@@ -684,6 +691,7 @@ const CitizenDashboard = () => {
                   <tr>
                     <th className="py-3 px-4">Complaint ID</th>
                     <th className="py-3 px-4">Road Name & Location</th>
+                    <th className="py-3 px-4">Date</th>
                     <th className="py-3 px-4">Road Division</th>
                     <th className="py-3 px-4">Damage Type & Priority</th>
                     <th className="py-3 px-4">Assigned Authority</th>
@@ -700,6 +708,22 @@ const CitizenDashboard = () => {
                       <td className="py-3.5 px-4">
                         <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
                         <span className="text-[11px] text-slate-400">📍 {c.district}, {c.state}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                        <span className="font-medium text-slate-200 block">
+                          {c.created_at
+                            ? new Date(c.created_at).toLocaleDateString([], {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : 'N/A'}
+                        </span>
+                        {c.created_at && (
+                          <span className="text-[11px] text-slate-400 block">
+                            {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4">
                         <RoadTypeBadge roadType={c.road_type} />
