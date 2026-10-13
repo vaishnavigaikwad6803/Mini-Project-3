@@ -82,6 +82,11 @@
   z-index: 10;
 }
 
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
 .leaflet-popup-content-wrapper {
   background: #1e293b !important;
   color: #f8fafc !important;

@@ -101,43 +101,78 @@ export const isValidCoordinate = (lat, lng) => {
   );
 };
 
-// Create custom colored marker icons
+// Create custom teardrop map pin marker icons matching the provided pin design
 const createStatusMarkerIcon = (status, divisionTag = '', isSelected = false) => {
   const statusInfo = getStatusMarkerInfo(status);
-  const size = isSelected ? 34 : 28;
-  const borderWidth = isSelected ? '3px' : '2px';
-  const borderColor = isSelected ? '#f59e0b' : '#ffffff';
-  const shadowGlow = isSelected
-    ? `0 0 16px #f59e0b, 0 0 8px ${statusInfo.glow}`
-    : `0 0 8px ${statusInfo.glow}`;
+  const width = isSelected ? 38 : 32;
+  const height = isSelected ? 48 : 42;
+  const pinColor = statusInfo.color;
+  const strokeColor = isSelected ? '#fbbf24' : '#ffffff';
+  const strokeWidth = isSelected ? 2.5 : 1.75;
+  const tagText = divisionTag && divisionTag !== '●' ? divisionTag : '';
+
+  const svgHtml = `
+    <div style="
+      width: ${width}px;
+      height: ${height}px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      filter: ${isSelected 
+        ? 'drop-shadow(0 0 10px #f59e0b) drop-shadow(0 6px 8px rgba(0,0,0,0.6))' 
+        : 'drop-shadow(0 4px 6px rgba(0,0,0,0.45))'};
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      ${isSelected ? 'transform: scale(1.15); z-index: 1000;' : ''}
+    ">
+      <svg width="${width}" height="${height}" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ground Base Oval Shadow (from user design) -->
+        <ellipse cx="17" cy="40.5" rx="11" ry="3.3" fill="#020617" fill-opacity="0.75" />
+        <ellipse cx="17" cy="40.5" rx="7.5" ry="2.2" fill="#000000" fill-opacity="0.85" />
+
+        <!-- Teardrop Pin Body -->
+        <path
+          d="M 17 2.5 C 9.5 2.5 3.5 8.5 3.5 16 C 3.5 26.5 15.2 37.2 16.4 38.2 C 16.7 38.5 17.3 38.5 17.6 38.2 C 18.8 37.2 30.5 26.5 30.5 16 C 30.5 8.5 24.5 2.5 17 2.5 Z"
+          fill="${pinColor}"
+          stroke="${strokeColor}"
+          stroke-width="${strokeWidth}"
+          stroke-linejoin="round"
+        />
+
+        <!-- Center Circular Hole Cutout / Badge with white border -->
+        <circle
+          cx="17"
+          cy="16"
+          r="6.2"
+          fill="#ffffff"
+          stroke="rgba(0,0,0,0.15)"
+          stroke-width="0.75"
+        />
+
+        ${tagText ? `
+          <text
+            x="17"
+            y="18.8"
+            text-anchor="middle"
+            font-size="7.5"
+            font-weight="900"
+            font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            fill="${pinColor}"
+          >${tagText}</text>
+        ` : `
+          <!-- Cutout dark center hole when no text tag -->
+          <circle cx="17" cy="16" r="3.2" fill="#0f172a" fill-opacity="0.85" />
+        `}
+      </svg>
+    </div>
+  `;
 
   return new L.DivIcon({
-    className: 'custom-div-icon',
-    html: `
-      <div style="
-        background-color: ${statusInfo.color};
-        width: ${size}px;
-        height: ${size}px;
-        border-radius: 50%;
-        border: ${borderWidth} solid ${borderColor};
-        box-shadow: ${shadowGlow};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 800;
-        font-size: ${isSelected ? '11px' : '9.5px'};
-        font-family: monospace;
-        cursor: pointer;
-        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        ${isSelected ? 'transform: scale(1.15); z-index: 1000;' : ''}
-      ">
-        ${divisionTag || statusInfo.tag}
-      </div>
-    `,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2 - 4],
+    className: 'custom-pin-marker',
+    html: svgHtml,
+    iconSize: [width, height],
+    iconAnchor: [width / 2, isSelected ? 44 : 39],
+    popupAnchor: [0, isSelected ? -44 : -39],
   });
 };
 
@@ -983,17 +1018,29 @@ const ComplaintMap = ({
           <span className="font-bold text-slate-200">Map Legend:</span>
 
           <span className="flex items-center gap-1.5 font-medium text-slate-200">
-            <span className="h-3 w-3 rounded-full bg-red-500 inline-block shadow-sm shadow-red-500/50 border border-white"></span>
+            <svg width="12" height="16" viewBox="0 0 17 22" fill="none" className="shrink-0">
+              <ellipse cx="8.5" cy="20" rx="5.5" ry="1.6" fill="#0f172a" fillOpacity="0.7" />
+              <path d="M 8.5 1.5 C 4.7 1.5 1.7 4.5 1.7 8.3 C 1.7 13.5 7.6 18.8 8.2 19.3 C 8.4 19.5 8.6 19.5 8.8 19.3 C 9.4 18.8 15.3 13.5 15.3 8.3 C 15.3 4.5 12.3 1.5 8.5 1.5 Z" fill="#ef4444" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="8.5" cy="8.3" r="2.8" fill="#ffffff" />
+            </svg>
             <span>Damage Reported</span>
           </span>
 
           <span className="flex items-center gap-1.5 font-medium text-slate-200">
-            <span className="h-3 w-3 rounded-full bg-orange-500 inline-block shadow-sm shadow-orange-500/50 border border-white"></span>
+            <svg width="12" height="16" viewBox="0 0 17 22" fill="none" className="shrink-0">
+              <ellipse cx="8.5" cy="20" rx="5.5" ry="1.6" fill="#0f172a" fillOpacity="0.7" />
+              <path d="M 8.5 1.5 C 4.7 1.5 1.7 4.5 1.7 8.3 C 1.7 13.5 7.6 18.8 8.2 19.3 C 8.4 19.5 8.6 19.5 8.8 19.3 C 9.4 18.8 15.3 13.5 15.3 8.3 C 15.3 4.5 12.3 1.5 8.5 1.5 Z" fill="#f97316" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="8.5" cy="8.3" r="2.8" fill="#ffffff" />
+            </svg>
             <span>In Repair</span>
           </span>
 
           <span className="flex items-center gap-1.5 font-medium text-slate-200">
-            <span className="h-3 w-3 rounded-full bg-emerald-500 inline-block shadow-sm shadow-emerald-500/50 border border-white"></span>
+            <svg width="12" height="16" viewBox="0 0 17 22" fill="none" className="shrink-0">
+              <ellipse cx="8.5" cy="20" rx="5.5" ry="1.6" fill="#0f172a" fillOpacity="0.7" />
+              <path d="M 8.5 1.5 C 4.7 1.5 1.7 4.5 1.7 8.3 C 1.7 13.5 7.6 18.8 8.2 19.3 C 8.4 19.5 8.6 19.5 8.8 19.3 C 9.4 18.8 15.3 13.5 15.3 8.3 C 15.3 4.5 12.3 1.5 8.5 1.5 Z" fill="#10b981" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="8.5" cy="8.3" r="2.8" fill="#ffffff" />
+            </svg>
             <span>Resolved</span>
           </span>
         </div>
