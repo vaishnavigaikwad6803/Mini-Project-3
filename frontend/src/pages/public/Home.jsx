@@ -1,5 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
+} from 'recharts';
 import {
   MapPin,
   Building2,
@@ -17,8 +29,10 @@ import {
   Wrench,
   Sparkles,
   Compass,
-  FileCheck2
+  FileCheck2,
+  BarChart3
 } from 'lucide-react';
+import { complaintService } from '../../services/complaintService';
 
 const DAMAGE_CATEGORIES = [
   {
@@ -164,34 +178,45 @@ const LIFECYCLE_STEPS = [
   }
 ];
 
+const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#06b6d4', '#a855f7', '#ef4444'];
+
 const Home = () => {
-  const navigate = useNavigate();
-  const [complaintIdInput, setComplaintIdInput] = useState('');
-  const [trackError, setTrackError] = useState('');
+  const [analyticsData, setAnalyticsData] = useState({
+    road_type_distribution: [
+      { name: 'National Highway', count: 2, percentage: 25.0 },
+      { name: 'Municipal', count: 2, percentage: 25.0 },
+      { name: 'Rural', count: 2, percentage: 25.0 },
+      { name: 'State Highway', count: 2, percentage: 25.0 }
+    ],
+    damage_type_distribution: [
+      { name: 'Alligator Crack', count: 1, percentage: 12.5 },
+      { name: 'Longitudinal Crack', count: 1, percentage: 12.5 },
+      { name: 'No Clear Damage Detected', count: 1, percentage: 12.5 },
+      { name: 'Pothole', count: 2, percentage: 25.0 },
+      { name: 'Surface Damage', count: 2, percentage: 25.0 },
+      { name: 'Transverse Crack', count: 1, percentage: 12.5 }
+    ]
+  });
 
-  const handleTrackSubmit = (e) => {
-    e.preventDefault();
-    const trimmed = complaintIdInput.trim();
-
-    if (!trimmed) {
-      setTrackError('Please enter a Complaint ID (e.g. RGD-2026-1001)');
-      return;
-    }
-
-    if (trimmed.length < 3) {
-      setTrackError('Complaint ID must be at least 3 characters long');
-      return;
-    }
-
-    setTrackError('');
-    navigate(`/track?id=${encodeURIComponent(trimmed)}`);
-  };
-
-  const handleApplyDemoId = (demoId) => {
-    setComplaintIdInput(demoId);
-    setTrackError('');
-    navigate(`/track?id=${encodeURIComponent(demoId)}`);
-  };
+  useEffect(() => {
+    complaintService.getPublicAnalytics()
+      .then((res) => {
+        if (res && res.road_type_distribution && res.damage_type_distribution) {
+          // Normalize road type names for concise chart labels
+          const normalizedRoadTypes = (res.road_type_distribution || []).map((item) => ({
+            ...item,
+            displayName: item.name.replace('/City Road', '').replace('/Village Road', '')
+          }));
+          setAnalyticsData({
+            road_type_distribution: normalizedRoadTypes,
+            damage_type_distribution: res.damage_type_distribution || []
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch live public analytics, using local dataset:', err);
+      });
+  }, []);
 
   return (
     <div className="space-y-12 sm:space-y-14 pb-12">
@@ -204,12 +229,6 @@ const Home = () => {
         <div className="absolute top-1/3 right-10 w-[280px] h-[220px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-
-          {/* System Badge */}
-          {/* <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs font-semibold text-amber-400 mb-5 shadow-lg backdrop-blur-md">
-            <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
-            <span className="font-mono uppercase tracking-wider text-[11px]">AI-Powered Road Infrastructure Platform</span>
-          </div> */}
 
           {/* Main Title */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-['Outfit'] max-w-4xl mx-auto leading-tight">
@@ -239,104 +258,87 @@ const Home = () => {
             </Link>
           </div>
 
-          {/* Complaint ID Tracking Box */}
-          <div className="mt-8 max-w-md mx-auto text-left">
-            <form onSubmit={handleTrackSubmit} className="relative">
-              <div className={`flex items-center rounded-2xl bg-slate-900/90 border ${trackError ? 'border-rose-500/80 ring-2 ring-rose-500/20' : 'border-slate-700/80 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20'} p-1.5 transition-all shadow-xl backdrop-blur-md`}>
-                <Search className="h-4 w-4 text-slate-400 ml-3 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Enter Complaint ID (e.g. RGD-2026-1001)"
-                  value={complaintIdInput}
-                  onChange={(e) => {
-                    setComplaintIdInput(e.target.value);
-                    if (trackError) setTrackError('');
-                  }}
-                  className="w-full bg-transparent px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none uppercase font-mono"
-                  aria-label="Track complaint ID"
-                />
-                {complaintIdInput && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setComplaintIdInput('');
-                      setTrackError('');
-                    }}
-                    className="p-1 text-slate-400 hover:text-white mr-1"
-                    title="Clear input"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all shrink-0 active:scale-95"
-                >
-                  Track Status
-                </button>
-              </div>
+          {/* Live System Analytics: Pie Chart & Bar Chart */}
+          <div className="mt-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
 
-              {/* Validation Error Message */}
-              {trackError && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-rose-400 px-1">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  <span>{trackError}</span>
+            {/* 1. Complaints by Road Classification Donut Chart */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-white font-['Outfit']">
+                    Complaints by Road Classification
+                  </h3>
+                  <p className="text-xs text-slate-400">Jurisdiction distribution across highways & streets</p>
                 </div>
-              )}
+                <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                  <BarChart3 className="h-4 w-4" />
+                </span>
+              </div>
 
-              {/* Quick Demo Helper */}
-              <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1">
-                <span>Quick demo:</span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleApplyDemoId('RGD-2026-1001')}
-                    className="font-mono text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2"
-                  >
-                    RGD-2026-1001
-                  </button>
-                  <span className="text-slate-600">•</span>
-                  <button
-                    type="button"
-                    onClick={() => handleApplyDemoId('RGD-2026-1002')}
-                    className="font-mono text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2"
-                  >
-                    RGD-2026-1002
-                  </button>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analyticsData?.road_type_distribution || []}
+                      dataKey="count"
+                      nameKey="displayName"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={5}
+                      label={({ name, displayName, percent }) => `${(displayName || name || '').split('/')[0]} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {(analyticsData?.road_type_distribution || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', borderRadius: '0.75rem', fontSize: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 2. AI Detected Road Damage Types Bar Chart */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-white font-['Outfit']">
+                    AI Detected Road Damage Types
+                  </h3>
+                  <p className="text-xs text-slate-400">Potholes, cracks & surface degradation</p>
                 </div>
+                <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
+                  <Cpu className="h-4 w-4" />
+                </span>
               </div>
-            </form>
-          </div>
 
-          {/* Architecture Capability Badges */}
-          <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
-            <div className="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-sm backdrop-blur-md hover:border-slate-700 transition-colors">
-              <div className="text-lg sm:text-xl font-extrabold text-white font-['Outfit'] flex items-center justify-center gap-1.5">
-                <Cpu className="h-4 w-4 text-cyan-400" /> YOLOv8
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={analyticsData?.damage_type_distribution || []}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      angle={-15}
+                      textAnchor="end"
+                    />
+                    <YAxis stroke="#94a3b8" fontSize={11} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', borderRadius: '0.75rem', fontSize: '12px' }}
+                    />
+                    <Bar dataKey="count" fill="#06b6d4" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">Computer Vision Engine</p>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-sm backdrop-blur-md hover:border-amber-500/30 transition-colors">
-              <div className="text-lg sm:text-xl font-extrabold text-amber-400 font-['Outfit'] flex items-center justify-center gap-1.5">
-                <MapPin className="h-4 w-4 text-amber-400" /> GPS Tagged
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">Leaflet Spatial Mapping</p>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-sm backdrop-blur-md hover:border-indigo-500/30 transition-colors">
-              <div className="text-lg sm:text-xl font-extrabold text-indigo-400 font-['Outfit'] flex items-center justify-center gap-1.5">
-                <Building2 className="h-4 w-4 text-indigo-400" /> 4 Road Tiers
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">NHAI • PWD • Urban • Rural</p>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-sm backdrop-blur-md hover:border-emerald-500/30 transition-colors">
-              <div className="text-lg sm:text-xl font-extrabold text-emerald-400 font-['Outfit'] flex items-center justify-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Verified Audit
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">End-to-End Closure</p>
-            </div>
           </div>
 
         </div>

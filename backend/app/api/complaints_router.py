@@ -349,6 +349,17 @@ def get_complaints(
     complaints = query.order_by(desc(Complaint.created_at)).offset(skip).limit(limit).all()
     return [enrich_complaint_response(c) for c in complaints]
 
+@router.get("/public/analytics")
+def get_public_analytics(db: Session = Depends(get_db)):
+    """Returns aggregated road classification and AI damage type distributions for public charts."""
+    from app.services.analytics_service import get_admin_dashboard_metrics
+    metrics = get_admin_dashboard_metrics(db)
+    return {
+        "road_type_distribution": metrics.get("road_type_distribution", []),
+        "damage_type_distribution": metrics.get("damage_type_distribution", []),
+        "stats": metrics.get("stats", {})
+    }
+
 @router.get("/citizen/stats", response_model=CitizenStatsResponse)
 def get_citizen_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Returns complaint counts and status breakdown for the logged-in citizen."""

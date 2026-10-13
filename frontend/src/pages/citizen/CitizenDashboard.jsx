@@ -11,6 +11,13 @@ import Modal from '../../components/common/Modal';
 import EmptyState from '../../components/common/EmptyState';
 import { useNotifications } from '../../context/NotificationContext';
 import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip as ChartTooltip
+} from 'recharts';
+import {
   Camera,
   PlusCircle,
   RefreshCw,
@@ -37,7 +44,8 @@ import {
   Info,
   Map as MapIcon,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  BarChart3
 } from 'lucide-react';
 import {
   ROAD_DIVISIONS,
@@ -77,6 +85,17 @@ const CitizenDashboard = () => {
 
   // Road Division Filter state
   const [activeDivision, setActiveDivision] = useState('ALL');
+  // 4th Image Clickable KPI State
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const handleStatusFilterClick = (key) => {
+    setStatusFilter((prev) => (prev === key ? 'ALL' : key));
+    // Smooth scroll down to complaints section
+    const el = document.getElementById('citizen-complaints-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   // View Details Modal State
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -154,13 +173,74 @@ const CitizenDashboard = () => {
     munci: recentComplaints.filter(c => c.road_type === 'Municipal/City Road').length,
   };
 
-  // Filter complaints based on active road division
+  // Compute status breakdown counts for the citizen Pie Chart
+  const reportedCount = stats?.pending_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s === 'submitted' || s === 'ai analyzed' || s === 'ai_analyzed';
+  }).length;
+
+  const reviewCount = stats?.under_review_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s === 'authority assigned' || s === 'under review' || s === 'authority_assigned' || s === 'under_review';
+  }).length;
+
+  const repairCount = stats?.in_repair_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return [
+      'engineer assigned', 'inspection pending', 'inspection completed',
+      'repair started', 'repair in progress', 'repair completed',
+      'authority verification', 'engineer_assigned', 'inspection_pending',
+      'inspection_completed', 'repair_started', 'repair_in_progress',
+      'repair_completed', 'authority_verification'
+    ].includes(s);
+  }).length;
+
+  const resolvedCount = stats?.completed_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s === 'closed' || s === 'resolved';
+  }).length;
+
+  const totalCitizenComplaints = stats?.total_complaints ?? recentComplaints.length;
+  const resolutionRate = totalCitizenComplaints > 0
+    ? Math.round((resolvedCount / totalCitizenComplaints) * 100)
+    : 0;
+
+  const citizenPieData = [
+    { name: 'Damage Reported', count: reportedCount, color: '#f59e0b', key: 'PENDING' },
+    { name: 'Complaints Under Review', count: reviewCount, color: '#6366f1', key: 'UNDER_REVIEW' },
+    { name: 'In Repair', count: repairCount, color: '#a855f7', key: 'IN_REPAIR' },
+    { name: 'Complaints Resolved', count: resolvedCount, color: '#10b981', key: 'RESOLVED' },
+  ].filter(item => item.count > 0);
+
+  // Filter complaints based on active road division AND clickable status filter
   const filteredComplaints = recentComplaints.filter((c) => {
-    if (activeDivision === 'ALL') return true;
-    if (activeDivision === 'NH') return c.road_type === 'National Highway';
-    if (activeDivision === 'STATE') return c.road_type === 'State Highway';
-    if (activeDivision === 'RURAL') return c.road_type === 'Rural/Village Road';
-    if (activeDivision === 'MUNCI') return c.road_type === 'Municipal/City Road';
+    // 1. Division filter
+    if (activeDivision === 'NH' && c.road_type !== 'National Highway') return false;
+    if (activeDivision === 'STATE' && c.road_type !== 'State Highway') return false;
+    if (activeDivision === 'RURAL' && c.road_type !== 'Rural/Village Road') return false;
+    if (activeDivision === 'MUNCI' && c.road_type !== 'Municipal/City Road') return false;
+
+    // 2. Status filter
+    if (statusFilter === 'ALL') return true;
+    const st = (c.status || '').toLowerCase();
+    if (statusFilter === 'PENDING') {
+      return st === 'submitted' || st === 'ai analyzed' || st === 'ai_analyzed';
+    }
+    if (statusFilter === 'UNDER_REVIEW') {
+      return st === 'authority assigned' || st === 'under review' || st === 'authority_assigned' || st === 'under_review';
+    }
+    if (statusFilter === 'IN_REPAIR') {
+      return [
+        'engineer assigned', 'inspection pending', 'inspection completed',
+        'repair started', 'repair in progress', 'repair completed',
+        'authority verification', 'engineer_assigned', 'inspection_pending',
+        'inspection_completed', 'repair_started', 'repair_in_progress',
+        'repair_completed', 'authority_verification'
+      ].includes(st);
+    }
+    if (statusFilter === 'RESOLVED') {
+      return st === 'closed' || st === 'resolved';
+    }
     return true;
   });
 
@@ -316,7 +396,7 @@ const CitizenDashboard = () => {
         </div>
       </div>
 
-      {/* 4. KPI STATS CARDS */}
+      {/* 4. KPI STATS CARDS (CLICKABLE) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatsCard
           title="Total Reports"
@@ -324,6 +404,8 @@ const CitizenDashboard = () => {
           subtitle="All-time submissions"
           icon={FileText}
           color="amber"
+          onClick={() => handleStatusFilterClick('ALL')}
+          isActive={statusFilter === 'ALL'}
         />
         <StatsCard
           title="Pending Review"
@@ -331,6 +413,8 @@ const CitizenDashboard = () => {
           subtitle="Under authority triage"
           icon={Clock}
           color="cyan"
+          onClick={() => handleStatusFilterClick('PENDING')}
+          isActive={statusFilter === 'PENDING'}
         />
         <StatsCard
           title="Under Review"
@@ -338,6 +422,8 @@ const CitizenDashboard = () => {
           subtitle="Authority assigned"
           icon={Search}
           color="indigo"
+          onClick={() => handleStatusFilterClick('UNDER_REVIEW')}
+          isActive={statusFilter === 'UNDER_REVIEW'}
         />
         <StatsCard
           title="In Repair"
@@ -345,6 +431,8 @@ const CitizenDashboard = () => {
           subtitle="Field engineer active"
           icon={Wrench}
           color="purple"
+          onClick={() => handleStatusFilterClick('IN_REPAIR')}
+          isActive={statusFilter === 'IN_REPAIR'}
         />
         <StatsCard
           title="Resolved"
@@ -352,10 +440,160 @@ const CitizenDashboard = () => {
           subtitle="Verified & closed"
           icon={CheckCircle2}
           color="emerald"
+          onClick={() => handleStatusFilterClick('RESOLVED')}
+          isActive={statusFilter === 'RESOLVED'}
         />
       </div>
 
-      {/* 5. INTERACTIVE MAHARASHTRA GIS MAP */}
+      {/* 5. CITIZEN COMPLAINT LIFECYCLE & RESOLUTION BREAKDOWN PIE CHART */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* 1. Interactive Donut / Pie Chart */}
+        <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white font-['Outfit']">
+                  Complaint Status & Resolution Breakdown
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                  Lifecycle Distribution
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Visualizing damage reported, complaints under review, and completed road repairs
+              </p>
+            </div>
+            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <BarChart3 className="h-4 w-4" />
+            </span>
+          </div>
+
+          {citizenPieData.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-6 pt-2">
+              <div className="h-60 w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={citizenPieData}
+                      dataKey="count"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={5}
+                    >
+                      {citizenPieData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          className="cursor-pointer transition-transform hover:opacity-80"
+                          onClick={() => handleStatusFilterClick(entry.key)}
+                        />
+                      ))}
+                    </Pie>
+                    <ChartTooltip
+                      contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', borderRadius: '0.75rem', fontSize: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Status Breakdown Legend & Clickable Filter Pills */}
+              <div className="space-y-2.5">
+                {citizenPieData.map((item) => {
+                  const pct = totalCitizenComplaints > 0 ? ((item.count / totalCitizenComplaints) * 100).toFixed(0) : 0;
+                  const isFiltered = statusFilter === item.key;
+                  return (
+                    <button
+                      key={item.name}
+                      type="button"
+                      onClick={() => handleStatusFilterClick(item.key)}
+                      className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all ${
+                        isFiltered
+                          ? 'bg-slate-800 border-amber-400/80 ring-1 ring-amber-400/50'
+                          : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="h-3 w-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: item.color }} />
+                        <span className="text-xs font-semibold text-slate-200">{item.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-white">{item.count}</span>
+                        <span className="text-[11px] font-mono text-slate-400">({pct}%)</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-400 text-xs space-y-2">
+              <p>No complaints reported yet.</p>
+              <Link to="/citizen/report" className="btn-primary py-2 px-4 text-xs inline-flex items-center gap-1.5">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span>Report Road Damage</span>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* 2. Resolution Progress Metric Card */}
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Resolution Velocity</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            </div>
+            <h4 className="text-3xl font-extrabold text-white font-['Outfit']">
+              {resolutionRate}% Resolved
+            </h4>
+            <p className="text-xs text-slate-400 mt-1.5">
+              {resolvedCount} of {totalCitizenComplaints} road defect submissions verified & repaired
+            </p>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden mt-4 border border-slate-700/60">
+              <div
+                className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, resolutionRate))}%` }}
+              />
+            </div>
+
+            {/* Active Status Filter Chip */}
+            {statusFilter !== 'ALL' && (
+              <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+                <div className="text-xs text-amber-300">
+                  <span className="text-slate-400 block text-[10px] uppercase">Active KPI Filter:</span>
+                  <strong className="font-semibold">{statusFilter.replace('_', ' ')}</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('ALL')}
+                  className="text-[11px] text-amber-400 hover:text-white underline font-semibold"
+                >
+                  Clear Filter
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-slate-800/80">
+            <Link
+              to="/citizen/report"
+              className="btn-primary w-full py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-amber-500/20"
+            >
+              <Camera className="h-4 w-4" />
+              <span>Report New Damage</span>
+            </Link>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 6. INTERACTIVE MAHARASHTRA GIS MAP */}
       <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -381,7 +619,7 @@ const CitizenDashboard = () => {
         </div>
 
         <ComplaintMap
-          complaints={recentComplaints}
+          complaints={filteredComplaints}
           height="h-[440px]"
           showFilters={true}
           initialRoadDivision={activeDivision}
@@ -389,8 +627,8 @@ const CitizenDashboard = () => {
         />
       </div>
 
-      {/* 6. COMPLAINTS LIST TABLE */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+      {/* 7. COMPLAINTS LIST TABLE */}
+      <div id="citizen-complaints-section" className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -402,28 +640,30 @@ const CitizenDashboard = () => {
                   Filtered by {activeDivision}
                 </span>
               )}
+              {statusFilter !== 'ALL' && (
+                <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 text-xs font-bold border border-cyan-500/30">
+                  Status: {statusFilter.replace('_', ' ')}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400">
-              Live status, assigned engineer, and tracking for your road defect submissions
+              Live status, assigned engineer, and tracking for your road defect submissions ({filteredComplaints.length} shown)
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            {activeDivision !== 'ALL' && (
+            {(activeDivision !== 'ALL' || statusFilter !== 'ALL') && (
               <button
                 type="button"
-                onClick={() => setActiveDivision('ALL')}
+                onClick={() => {
+                  setActiveDivision('ALL');
+                  setStatusFilter('ALL');
+                }}
                 className="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700"
               >
-                Clear Filter
+                Clear All Filters
               </button>
             )}
-            <Link
-              to="/citizen/complaints"
-              className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-            >
-              View All ({recentComplaints.length}) <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
           </div>
         </div>
 

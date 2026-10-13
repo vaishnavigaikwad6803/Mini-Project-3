@@ -23,7 +23,6 @@ const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
 
   const citizenNav = [
     { to: '/citizen', icon: LayoutDashboard, label: 'Overview' },
-    { to: '/citizen/complaints', icon: FileText, label: 'My Complaints' },
     { to: '/map', icon: MapPin, label: 'Live Road Map' },
   ];
 
