@@ -4,7 +4,6 @@ import { complaintService } from '../../services/complaintService';
 import StatsCard from '../../components/common/StatsCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
-import ComplaintMap from '../../components/map/ComplaintMap';
 import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
@@ -310,6 +309,13 @@ const CitizenDashboard = () => {
 
         <div className="flex items-center gap-2.5">
           <Link
+            to="/map"
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5"
+          >
+            <MapIcon className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Live Map</span>
+          </Link>
+          <Link
             to="/citizen/report"
             className="btn-primary py-2 px-3.5 text-xs font-bold shadow-md shadow-amber-500/20"
           >
@@ -593,41 +599,7 @@ const CitizenDashboard = () => {
 
       </div>
 
-      {/* 6. INTERACTIVE MAHARASHTRA GIS MAP */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-amber-400" />
-                Maharashtra State Road Defect Map
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                📍 Live Defect Spatial View
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">
-              View active damage reports, road defect categories, and repair progress across Maharashtra. Click on any marker to view complaint details.
-            </p>
-          </div>
-          <Link
-            to="/map"
-            className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-          >
-            Open Full GIS Portal <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-
-        <ComplaintMap
-          complaints={filteredComplaints}
-          height="h-[440px]"
-          showFilters={true}
-          initialRoadDivision={activeDivision}
-          onViewDetails={handleOpenDetails}
-        />
-      </div>
-
-      {/* 7. COMPLAINTS LIST TABLE */}
+      {/* 6. COMPLAINTS LIST TABLE */}
       <div id="citizen-complaints-section" className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -767,7 +739,7 @@ const CitizenDashboard = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 8. COMPREHENSIVE VIEW DETAILS MODAL */}
+      {/* 7. COMPREHENSIVE VIEW DETAILS MODAL */}
       {/* ========================================================================= */}
       <Modal
         isOpen={detailsModalOpen}
