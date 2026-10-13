@@ -104,11 +104,11 @@ const Navbar = () => {
               <Link
                 to={getDashboardPath()}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${location.pathname.startsWith('/citizen') ||
-                    location.pathname.startsWith('/authority') ||
-                    location.pathname.startsWith('/engineer') ||
-                    location.pathname.startsWith('/admin')
-                    ? 'text-amber-400 bg-slate-800/60'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
+                  location.pathname.startsWith('/authority') ||
+                  location.pathname.startsWith('/engineer') ||
+                  location.pathname.startsWith('/admin')
+                  ? 'text-amber-400 bg-slate-800/60'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
                   }`}
               >
                 <LayoutDashboard className="h-4 w-4" />

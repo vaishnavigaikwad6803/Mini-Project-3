@@ -251,8 +251,8 @@ const ComplaintMap = ({
               type="button"
               onClick={() => setSelectedRoadDivision('ALL')}
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'ALL'
-                  ? 'bg-slate-100 text-slate-950 border-white shadow-lg'
-                  : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:bg-slate-800'
+                ? 'bg-slate-100 text-slate-950 border-white shadow-lg'
+                : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:bg-slate-800'
                 }`}
             >
               <div className="flex items-center gap-1.5">
@@ -268,8 +268,8 @@ const ComplaintMap = ({
               type="button"
               onClick={() => setSelectedRoadDivision('NH')}
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'NH'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/25'
-                  : 'bg-slate-900/90 text-amber-300 border-slate-800 hover:bg-amber-950/30'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/25'
+                : 'bg-slate-900/90 text-amber-300 border-slate-800 hover:bg-amber-950/30'
                 }`}
             >
               <div className="flex items-center gap-1.5">
@@ -285,8 +285,8 @@ const ComplaintMap = ({
               type="button"
               onClick={() => setSelectedRoadDivision('STATE')}
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'STATE'
-                  ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/25'
-                  : 'bg-slate-900/90 text-indigo-300 border-slate-800 hover:bg-indigo-950/30'
+                ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/25'
+                : 'bg-slate-900/90 text-indigo-300 border-slate-800 hover:bg-indigo-950/30'
                 }`}
             >
               <div className="flex items-center gap-1.5">
@@ -302,8 +302,8 @@ const ComplaintMap = ({
               type="button"
               onClick={() => setSelectedRoadDivision('RURAL')}
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'RURAL'
-                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/25'
-                  : 'bg-slate-900/90 text-emerald-300 border-slate-800 hover:bg-emerald-950/30'
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/25'
+                : 'bg-slate-900/90 text-emerald-300 border-slate-800 hover:bg-emerald-950/30'
                 }`}
             >
               <div className="flex items-center gap-1.5">
@@ -319,8 +319,8 @@ const ComplaintMap = ({
               type="button"
               onClick={() => setSelectedRoadDivision('MUNCI')}
               className={`p-2.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${selectedRoadDivision === 'MUNCI'
-                  ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/25'
-                  : 'bg-slate-900/90 text-cyan-300 border-slate-800 hover:bg-cyan-950/30'
+                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/25'
+                : 'bg-slate-900/90 text-cyan-300 border-slate-800 hover:bg-cyan-950/30'
                 }`}
             >
               <div className="flex items-center gap-1.5">
@@ -342,8 +342,8 @@ const ComplaintMap = ({
                 type="button"
                 onClick={handleFullIndiaView}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${!isZoomedIn
-                    ? 'bg-amber-500 text-slate-950 shadow-md'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                   }`}
                 title="View entire map of India"
               >
@@ -355,8 +355,8 @@ const ComplaintMap = ({
                 type="button"
                 onClick={handleMaharashtraZoom}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${isZoomedIn
-                    ? 'bg-amber-500 text-slate-950 shadow-md'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                   }`}
                 title="Zoom into Maharashtra state"
               >

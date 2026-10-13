@@ -245,8 +245,8 @@ const CitizenDashboard = () => {
                 key={div.key}
                 onClick={() => setActiveDivision(isSelected ? 'ALL' : div.key)}
                 className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${isSelected
-                    ? `${div.activeClass} border-transparent scale-[1.02]`
-                    : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
+                  ? `${div.activeClass} border-transparent scale-[1.02]`
+                  : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
                   }`}
               >
                 <div className="flex items-center justify-between">
@@ -438,8 +438,8 @@ const CitizenDashboard = () => {
                         {c.primary_damage_type || c.damage_type || 'Road Defect'}
                       </span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' :
-                          c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
-                            'bg-amber-500/20 text-amber-300'
+                        c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
+                          'bg-amber-500/20 text-amber-300'
                         }`}>
                         {c.priority} Priority
                       </span>
@@ -538,8 +538,8 @@ const CitizenDashboard = () => {
                       {selectedComplaint.primary_damage_type || selectedComplaint.damage_type || 'Road Defect'}
                     </strong>
                     <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded border ${selectedComplaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
-                        selectedComplaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
-                          'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      selectedComplaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
+                        'bg-amber-500/20 text-amber-300 border-amber-500/40'
                       }`}>
                       {selectedComplaint.priority} Priority
                     </span>
