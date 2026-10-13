@@ -335,74 +335,7 @@ const CitizenDashboard = () => {
         </div>
       </div>
 
-      {/* 3. ROAD DIVISION SELECTION & METRICS BAR (NH, STATE, RURAL, MUNCI) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
-              <Layers className="h-4 w-4 text-amber-400" />
-              Maharashtra Road Network Divisions
-            </h2>
-            <p className="text-xs text-slate-400">
-              Categorized administrative jurisdictions for automated authority routing
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {ROAD_DIVISIONS.map((div) => {
-            const isSelected = activeDivision === div.key;
-            let count = 0;
-            if (div.key === 'NH') count = divisionCounts.nh;
-            else if (div.key === 'STATE') count = divisionCounts.state;
-            else if (div.key === 'RURAL') count = divisionCounts.rural;
-            else if (div.key === 'MUNCI') count = divisionCounts.munci;
-
-            return (
-              <div
-                key={div.key}
-                onClick={() => setActiveDivision(isSelected ? 'ALL' : div.key)}
-                className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${isSelected
-                  ? `${div.activeClass} border-transparent scale-[1.02]`
-                  : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl">{div.icon}</span>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'
-                    }`}>
-                    {count} Reported
-                  </span>
-                </div>
-
-                <div className="mt-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono font-bold text-xs uppercase opacity-80">
-                      {div.shortLabel}
-                    </span>
-                    <h3 className="text-sm font-extrabold truncate">
-                      {div.value}
-                    </h3>
-                  </div>
-                  <p className={`text-[11px] mt-1 line-clamp-2 ${isSelected ? 'text-slate-900/80 font-medium' : 'text-slate-400'
-                    }`}>
-                    {div.authority}
-                  </p>
-                </div>
-
-                <div className="mt-3 pt-2 border-t border-black/10 flex items-center justify-between text-[10px]">
-                  <span className={isSelected ? 'font-bold' : 'text-slate-500'}>
-                    {isSelected ? '✓ Filter Active' : 'Click to filter'}
-                  </span>
-                  <span className="font-mono">{div.key}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. CITIZEN COMPLAINT LIFECYCLE & RESOLUTION BREAKDOWN PIE CHART */}
+      {/* 3. CITIZEN COMPLAINT LIFECYCLE & RESOLUTION BREAKDOWN PIE CHART */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* 1. Interactive Donut / Pie Chart */}
@@ -548,6 +481,73 @@ const CitizenDashboard = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* 4. ROAD DIVISION SELECTION & METRICS BAR (NH, STATE, RURAL, MUNCI) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
+              <Layers className="h-4 w-4 text-amber-400" />
+              Maharashtra Road Network Divisions
+            </h2>
+            <p className="text-xs text-slate-400">
+              Categorized administrative jurisdictions for automated authority routing
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {ROAD_DIVISIONS.map((div) => {
+            const isSelected = activeDivision === div.key;
+            let count = 0;
+            if (div.key === 'NH') count = divisionCounts.nh;
+            else if (div.key === 'STATE') count = divisionCounts.state;
+            else if (div.key === 'RURAL') count = divisionCounts.rural;
+            else if (div.key === 'MUNCI') count = divisionCounts.munci;
+
+            return (
+              <div
+                key={div.key}
+                onClick={() => setActiveDivision(isSelected ? 'ALL' : div.key)}
+                className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${isSelected
+                  ? `${div.activeClass} border-transparent scale-[1.02]`
+                  : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl">{div.icon}</span>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                    {count} Reported
+                  </span>
+                </div>
+
+                <div className="mt-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono font-bold text-xs uppercase opacity-80">
+                      {div.shortLabel}
+                    </span>
+                    <h3 className="text-sm font-extrabold truncate">
+                      {div.value}
+                    </h3>
+                  </div>
+                  <p className={`text-[11px] mt-1 line-clamp-2 ${isSelected ? 'text-slate-900/80 font-medium' : 'text-slate-400'
+                    }`}>
+                    {div.authority}
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2 border-t border-black/10 flex items-center justify-between text-[10px]">
+                  <span className={isSelected ? 'font-bold' : 'text-slate-500'}>
+                    {isSelected ? '✓ Filter Active' : 'Click to filter'}
+                  </span>
+                  <span className="font-mono">{div.key}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* 5. KPI STATS CARDS (CLICKABLE) */}
