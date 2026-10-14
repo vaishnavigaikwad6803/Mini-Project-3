@@ -40,6 +40,9 @@ class Repair(Base):
     estimated_cost = Column(Float, nullable=True)
     actual_cost = Column(Float, nullable=True)
     
+    # Work order deadline
+    deadline = Column(DateTime, nullable=True)
+    
     # Authority verification phase
     verified_by_authority_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     verification_remarks = Column(Text, nullable=True)

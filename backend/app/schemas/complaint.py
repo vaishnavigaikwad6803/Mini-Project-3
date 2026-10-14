@@ -60,6 +60,7 @@ class ComplaintResponse(ComplaintBase):
     engineer_phone: Optional[str] = None
     repair_id: Optional[int] = None
     repair: Optional[RepairResponse] = None
+    deadline: Optional[datetime] = None
 
     class Config:
         from_attributes = True

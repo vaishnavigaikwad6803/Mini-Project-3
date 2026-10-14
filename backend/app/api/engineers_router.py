@@ -176,13 +176,14 @@ def update_engineer(
 def assign_engineer_to_complaint(
     complaint_id: str = Query(...),
     request: EngineerAssignmentRequest = Depends(),
+    deadline: Optional[str] = Query(None),
     current_user: User = Depends(require_authority),
     db: Session = Depends(get_db)
 ):
     """
     Authority Officer or Admin assigns an Engineer to a road complaint:
     1. Updates complaint status to 'Engineer Assigned'
-    2. Creates or links Repair tracking record
+    2. Creates or links Repair tracking record with target deadline
     3. Increments engineer's active workload
     4. Appends audit log to timeline
     5. Dispatches notifications to Engineer and Citizen
@@ -198,23 +199,50 @@ def assign_engineer_to_complaint(
     old_status = complaint.status.value
     complaint.status = ComplaintStatus.ENGINEER_ASSIGNED
     
+    # Parse deadline if provided
+    deadline_val = request.deadline or deadline
+    parsed_deadline = None
+    if deadline_val:
+        try:
+            if isinstance(deadline_val, str):
+                cleaned = deadline_val.strip()
+                if 'T' in cleaned:
+                    parsed_deadline = datetime.fromisoformat(cleaned.replace('Z', '+00:00'))
+                else:
+                    parsed_deadline = datetime.strptime(cleaned[:10], "%Y-%m-%d")
+        except Exception as e:
+            logger.warning(f"Error parsing deadline '{deadline_val}': {e}")
+
     # Check or create repair record
     repair = db.query(Repair).filter(Repair.complaint_id == complaint_id).first()
     if not repair:
         repair = Repair(
             complaint_id=complaint_id,
             engineer_id=engineer.id,
-            current_stage=RepairStage.ASSIGNED
+            current_stage=RepairStage.ASSIGNED,
+            deadline=parsed_deadline
         )
         db.add(repair)
     else:
         repair.engineer_id = engineer.id
         repair.current_stage = RepairStage.ASSIGNED
+        if parsed_deadline:
+            repair.deadline = parsed_deadline
+
+    if parsed_deadline:
+        complaint.deadline = parsed_deadline
 
     engineer.active_workload = (engineer.active_workload or 0) + 1
     db.commit()
 
+    deadline_str = parsed_deadline.strftime('%b %d, %Y') if parsed_deadline else None
+
     # Timeline entry
+    timeline_remarks = f"Assigned to Engineer {engineer.user.full_name} ({engineer.employee_id})."
+    if deadline_str:
+        timeline_remarks += f" Deadline: {deadline_str}."
+    timeline_remarks += f" Remarks: {request.remarks or 'Assigned for site inspection and repair schedule.'}"
+
     record_status_change(
         db=db,
         complaint_id=complaint.id,
@@ -222,15 +250,19 @@ def assign_engineer_to_complaint(
         to_status=ComplaintStatus.ENGINEER_ASSIGNED.value,
         user_id=current_user.id,
         role_name=current_user.role.value,
-        remarks=f"Assigned to Engineer {engineer.user.full_name} ({engineer.employee_id}). Remarks: {request.remarks or 'Assigned for site inspection and repair schedule.'}"
+        remarks=timeline_remarks
     )
 
     # Notify Engineer
+    eng_msg = f"You have been assigned to inspect and repair {complaint.road_name} ({complaint.district}). Priority: {complaint.priority.value}."
+    if deadline_str:
+        eng_msg += f" Target Deadline: {deadline_str}."
+
     create_notification(
         db=db,
         user_id=engineer.user_id,
         title=f"New Assignment: Complaint #{complaint.id}",
-        message=f"You have been assigned to inspect and repair {complaint.road_name} ({complaint.district}). Priority: {complaint.priority.value}.",
+        message=eng_msg,
         complaint_id=complaint.id,
         notif_type=NotificationType.WARNING
     )
@@ -240,12 +272,12 @@ def assign_engineer_to_complaint(
         db=db,
         user_id=complaint.citizen_id,
         title=f"Engineer Assigned for #{complaint.id}",
-        message=f"Engineer {engineer.user.full_name} from {complaint.authority.name if complaint.authority else 'the Authority'} has been assigned to your complaint.",
+        message=f"Engineer {engineer.user.full_name} from {complaint.authority.name if complaint.authority else 'the Authority'} has been assigned to your complaint." + (f" Target Deadline: {deadline_str}." if deadline_str else ""),
         complaint_id=complaint.id,
         notif_type=NotificationType.INFO
     )
 
-    return {"message": "Engineer assigned successfully.", "complaint_id": complaint.id, "engineer_id": engineer.id}
+    return {"message": "Engineer assigned successfully.", "complaint_id": complaint.id, "engineer_id": engineer.id, "deadline": deadline_str}
 
 @router.get("/{engineer_id}/assignments", response_model=List[ComplaintResponse])
 def get_engineer_assignments(

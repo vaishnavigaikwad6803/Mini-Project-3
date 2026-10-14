@@ -55,6 +55,7 @@ class Complaint(Base):
     
     # Auto-routing notes or rejection reasons
     routing_notes = Column(Text, nullable=True)
+    deadline = Column(DateTime, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

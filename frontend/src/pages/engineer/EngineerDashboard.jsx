@@ -19,7 +19,8 @@ import {
   MapPin,
   ArrowRight,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Calendar
 } from 'lucide-react';
 
 const REPAIR_STAGES = [
@@ -243,11 +244,13 @@ const EngineerDashboard = () => {
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
                     <th className="py-3 px-4">ID</th>
+                    <th className="py-3 px-4">Date</th>
                     <th className="py-3 px-4">Road Name</th>
+                    <th className="py-3 px-4">Location</th>
                     <th className="py-3 px-4">Road Type</th>
                     <th className="py-3 px-4">Defect Classification</th>
                     <th className="py-3 px-4">Priority</th>
-                    <th className="py-3 px-4">Stage</th>
+                    <th className="py-3 px-4">Stage & Deadline</th>
                     <th className="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
@@ -259,9 +262,35 @@ const EngineerDashboard = () => {
                     return (
                       <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
                         <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
+                        <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                          <span className="font-medium text-slate-200 block">
+                            {c.created_at ? new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                          </span>
+                          {c.created_at && (
+                            <span className="text-[10px] text-slate-400 block">
+                              {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </td>
                         <td className="py-3.5 px-4">
                           <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                          <span className="text-[11px] text-slate-400">📍 {c.district}</span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-300">
+                          <div className="flex items-start gap-1.5">
+                            <MapPin className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                            <div>
+                              <span className="text-white font-medium block">
+                                {c.district ? `${c.district}, ${c.state || ''}` : 'Location Pin'}
+                              </span>
+                              {c.landmark ? (
+                                <span className="text-[10px] text-slate-400 block truncate max-w-[140px]">{c.landmark}</span>
+                              ) : (
+                                <span className="text-[10px] text-slate-500 font-mono block">
+                                  {c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3.5 px-4">
                           <RoadTypeBadge roadType={c.road_type} />
@@ -284,6 +313,12 @@ const EngineerDashboard = () => {
                         </td>
                         <td className="py-3.5 px-4">
                           <StatusBadge status={c.status} />
+                          {(c.deadline || c.repair?.deadline) && (
+                            <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400 font-semibold">
+                              <Calendar className="h-3 w-3 shrink-0" />
+                              <span>Due: {new Date(c.deadline || c.repair?.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                            </div>
+                          )}
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           {isDamageCompleted ? (

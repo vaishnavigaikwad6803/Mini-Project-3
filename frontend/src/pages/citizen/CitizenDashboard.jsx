@@ -698,8 +698,9 @@ const CitizenDashboard = () => {
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
                     <th className="py-3 px-4">Complaint ID</th>
-                    <th className="py-3 px-4">Road Name & Location</th>
                     <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Road Name</th>
+                    <th className="py-3 px-4">Location</th>
                     <th className="py-3 px-4">Road Division</th>
                     <th className="py-3 px-4">Damage Type & Priority</th>
                     <th className="py-3 px-4">Assigned Authority</th>
@@ -712,10 +713,6 @@ const CitizenDashboard = () => {
                     <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-amber-400">
                         {c.id}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                        <span className="text-[11px] text-slate-400">📍 {c.district}, {c.state}</span>
                       </td>
                       <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
                         <span className="font-medium text-slate-200 block">
@@ -732,6 +729,26 @@ const CitizenDashboard = () => {
                             {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                          <div>
+                            <span className="text-white font-medium block">
+                              {c.district ? `${c.district}, ${c.state || ''}` : 'Location Pin'}
+                            </span>
+                            {c.landmark ? (
+                              <span className="text-[10px] text-slate-400 block truncate max-w-[130px]">{c.landmark}</span>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 font-mono block">
+                                {c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4">
                         <RoadTypeBadge roadType={c.road_type} />

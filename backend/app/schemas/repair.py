@@ -10,6 +10,7 @@ class RepairBase(BaseModel):
     materials_used: Optional[str] = None
     estimated_cost: Optional[float] = None
     actual_cost: Optional[float] = None
+    deadline: Optional[datetime] = None
 
 class RepairUpdateStage(BaseModel):
     current_stage: RepairStage

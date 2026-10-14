@@ -240,23 +240,6 @@ const Home = () => {
             Intelligent road maintenance powered by YOLOv8 computer vision. Report potholes and surface cracks with precise GPS coordinates, automatically route complaints to the responsible road authority, and track field repairs through real-time milestone verification.
           </p>
 
-          {/* Primary Action Buttons */}
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5">
-            <Link
-              to="/citizen/report"
-              className="btn-primary text-sm px-6 py-3 shadow-lg shadow-amber-500/25 inline-flex items-center gap-2"
-            >
-              <Camera className="h-4 w-4" />
-              <span>Report Road Damage</span>
-            </Link>
-            <Link
-              to="/map"
-              className="btn-secondary text-sm px-6 py-3 inline-flex items-center gap-2"
-            >
-              <MapPin className="h-4 w-4 text-amber-400" />
-              <span>Explore Live Map</span>
-            </Link>
-          </div>
 
           {/* Live System Analytics: Pie Chart & Bar Chart */}
           <div className="mt-10 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
@@ -431,42 +414,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 4. DEFECT DETECTION SHOWCASE */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/70 border border-slate-800 shadow-xl">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div>
-              <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Computer Vision Classification</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-white font-['Outfit'] mt-1">
-                Trained Damage Defect Classes
-              </h2>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <Cpu className="h-4 w-4 text-cyan-400" />
-              <span>YOLOv8 Detection Pipeline</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {DAMAGE_CATEGORIES.map((cat) => (
-              <div key={cat.code} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-[10px] text-slate-500 uppercase font-bold">{cat.code}</span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cat.severityColor}`}>
-                    {cat.severity}
-                  </span>
-                </div>
-                <h4 className="text-sm font-bold text-white font-['Outfit']">{cat.name}</h4>
-                <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{cat.description}</p>
-                <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 font-medium flex items-center justify-between">
-                  <span>Remediation</span>
-                  <span className="text-amber-400 font-semibold">{cat.tag}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* 5. COVERED ROAD AUTHORITIES SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

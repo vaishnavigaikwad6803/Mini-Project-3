@@ -85,11 +85,13 @@ def enrich_complaint_response(complaint: Complaint) -> dict:
         "engineer_employee_id": eng_emp_id,
         "engineer_phone": eng_phone,
         "repair_id": complaint.repair.id if complaint.repair else None,
+        "deadline": complaint.deadline or (complaint.repair.deadline if complaint.repair else None),
         "repair": {
             "id": complaint.repair.id,
             "complaint_id": complaint.repair.complaint_id,
             "engineer_id": complaint.repair.engineer_id,
             "current_stage": complaint.repair.current_stage,
+            "deadline": complaint.repair.deadline,
             "inspection_remarks": complaint.repair.inspection_remarks,
             "inspection_date": complaint.repair.inspection_date,
             "inspection_image": complaint.repair.inspection_image,

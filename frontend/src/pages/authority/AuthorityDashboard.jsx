@@ -30,7 +30,8 @@ import {
   X,
   AlertCircle,
   RotateCcw,
-  Filter
+  Filter,
+  Calendar
 } from 'lucide-react';
 
 const AuthorityDashboard = () => {
@@ -53,6 +54,7 @@ const AuthorityDashboard = () => {
   const [activeComplaint, setActiveComplaint] = useState(null);
   const [selectedEngineerId, setSelectedEngineerId] = useState('');
   const [assignRemarks, setAssignRemarks] = useState('');
+  const [assignDeadline, setAssignDeadline] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   // Authority Repair Verification Modal
@@ -103,6 +105,9 @@ const AuthorityDashboard = () => {
   const openAssignModal = (complaint) => {
     setActiveComplaint(complaint);
     setAssignRemarks(`Assigned for urgent inspection & repair on ${complaint.road_name}.`);
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 7);
+    setAssignDeadline(defaultDate.toISOString().split('T')[0]);
     setAssignModalOpen(true);
   };
 
@@ -114,7 +119,8 @@ const AuthorityDashboard = () => {
       await engineerService.assignEngineerToComplaint(
         activeComplaint.id,
         selectedEngineerId,
-        assignRemarks
+        assignRemarks,
+        assignDeadline
       );
       showToast(`Engineer assigned to #${activeComplaint.id} successfully!`, 'success');
       setAssignModalOpen(false);
@@ -483,9 +489,11 @@ const AuthorityDashboard = () => {
                   <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                     <tr>
                       <th className="py-3 px-4">ID</th>
-                      <th className="py-3 px-4">Road Name & Location</th>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4">Road Name</th>
+                      <th className="py-3 px-4">Location</th>
                       <th className="py-3 px-4">Classification & Severity</th>
-                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Status & Deadline</th>
                       <th className="py-3 px-4">Assigned Engineer</th>
                       <th className="py-3 px-4">Proof / Cost</th>
                       <th className="py-3 px-4 text-right">Actions</th>
@@ -499,11 +507,35 @@ const AuthorityDashboard = () => {
                       return (
                         <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
                           <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
+                          <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                            <span className="font-medium text-slate-200 block">
+                              {c.created_at ? new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                            </span>
+                            {c.created_at && (
+                              <span className="text-[10px] text-slate-400 block">
+                                {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </td>
                           <td className="py-3.5 px-4">
                             <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] text-slate-400">📍 {c.district}</span>
-                              {c.road_type && <RoadTypeBadge roadType={c.road_type} />}
+                            {c.road_type && <RoadTypeBadge roadType={c.road_type} />}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-300">
+                            <div className="flex items-start gap-1.5">
+                              <MapPin className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                              <div>
+                                <span className="text-white font-medium block">
+                                  {c.district ? `${c.district}, ${c.state || ''}` : 'Location Pin'}
+                                </span>
+                                {c.landmark ? (
+                                  <span className="text-[10px] text-slate-400 block truncate max-w-[150px]">{c.landmark}</span>
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 font-mono block">
+                                    {c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="py-3.5 px-4">
@@ -525,6 +557,12 @@ const AuthorityDashboard = () => {
                           </td>
                           <td className="py-3.5 px-4">
                             <StatusBadge status={c.status} />
+                            {(c.deadline || c.repair?.deadline) && (
+                              <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400 font-medium">
+                                <Calendar className="h-3 w-3 shrink-0" />
+                                <span>Due: {new Date(c.deadline || c.repair?.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                              </div>
+                            )}
                           </td>
                           <td className="py-3.5 px-4 text-slate-300">
                             {c.engineer_name ? (
@@ -708,6 +746,41 @@ const AuthorityDashboard = () => {
               onChange={(e) => setAssignRemarks(e.target.value)}
               className="input-field"
             />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block font-semibold text-slate-300">
+                Repair Completion Deadline <span className="text-amber-400">*</span>
+              </label>
+              <div className="flex items-center gap-1.5">
+                {[3, 7, 14, 30].map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => {
+                      const dt = new Date();
+                      dt.setDate(dt.getDate() + days);
+                      setAssignDeadline(dt.toISOString().split('T')[0]);
+                    }}
+                    className="px-2 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition-colors"
+                  >
+                    +{days}d
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input
+              type="date"
+              min={new Date().toISOString().split('T')[0]}
+              value={assignDeadline}
+              onChange={(e) => setAssignDeadline(e.target.value)}
+              className="input-field"
+              required
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Designated completion target for site inspection, material procurement, and road surface restoration.
+            </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

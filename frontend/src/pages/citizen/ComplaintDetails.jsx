@@ -53,6 +53,7 @@ const ComplaintDetails = () => {
   const [engineersList, setEngineersList] = useState([]);
   const [selectedEngineerId, setSelectedEngineerId] = useState('');
   const [assignRemarks, setAssignRemarks] = useState('');
+  const [assignDeadline, setAssignDeadline] = useState('');
 
   // Engineer repair update & resolve modal
   const [engineerModalOpen, setEngineerModalOpen] = useState(false);
@@ -141,6 +142,9 @@ const ComplaintDetails = () => {
       const engs = await engineerService.getEngineers({ authority_id: complaint.authority_id });
       setEngineersList(engs);
       if (engs.length > 0) setSelectedEngineerId(engs[0].id);
+      const defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 7);
+      setAssignDeadline(defaultDate.toISOString().split('T')[0]);
       setAssignModalOpen(true);
     } catch (err) {
       console.error("Failed to load engineers:", err);
@@ -152,8 +156,8 @@ const ComplaintDetails = () => {
     if (!selectedEngineerId) return;
     setActionLoading(true);
     try {
-      await engineerService.assignEngineerToComplaint(complaint.id, selectedEngineerId, assignRemarks);
-      showToast('Engineer assigned successfully!', 'success');
+      await engineerService.assignEngineerToComplaint(complaint.id, selectedEngineerId, assignRemarks, assignDeadline);
+      showToast('Engineer assigned successfully with deadline!', 'success');
       setAssignModalOpen(false);
       fetchComplaint();
     } catch (err) {
@@ -400,6 +404,12 @@ const ComplaintDetails = () => {
                 Badge: {complaint.repair.engineer_employee_id}
               </p>
             )}
+            {(complaint.deadline || complaint.repair?.deadline) && (
+              <p className="text-[11px] text-amber-400 font-semibold mt-1.5 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                Target Deadline: {new Date(complaint.deadline || complaint.repair?.deadline).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
+            )}
           </div>
 
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
@@ -605,6 +615,41 @@ const ComplaintDetails = () => {
               placeholder="e.g. Conduct site inspection, check subgrade damage, and apply bituminous overlay..."
               className="input-field"
             />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block font-semibold text-slate-300">
+                Repair Completion Deadline <span className="text-amber-400">*</span>
+              </label>
+              <div className="flex items-center gap-1.5">
+                {[3, 7, 14, 30].map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => {
+                      const dt = new Date();
+                      dt.setDate(dt.getDate() + days);
+                      setAssignDeadline(dt.toISOString().split('T')[0]);
+                    }}
+                    className="px-2 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700"
+                  >
+                    +{days}d
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input
+              type="date"
+              min={new Date().toISOString().split('T')[0]}
+              value={assignDeadline}
+              onChange={(e) => setAssignDeadline(e.target.value)}
+              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              required
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Set the required completion timeline for field repair and safety clearance.
+            </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
