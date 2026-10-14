@@ -114,10 +114,9 @@ const Navbar = () => {
   };
 
   const getNavLinkClass = (isActive) =>
-    `px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-      isActive
-        ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30 shadow-sm shadow-amber-500/10'
-        : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent active:scale-95'
+    `px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${isActive
+      ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30 shadow-sm shadow-amber-500/10'
+      : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent active:scale-95'
     }`;
 
   return (
@@ -190,14 +189,16 @@ const Navbar = () => {
             {/* Dark / Light Mode Theme Toggle */}
             <ThemeToggle />
 
-            {/* Quick "Report Damage" CTA Button */}
-            <Link
-              to="/citizen/report"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Report Damage</span>
-            </Link>
+            {/* Quick "Report Damage" CTA Button — Citizen only */}
+            {isCitizen && (
+              <Link
+                to="/citizen/report"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>Report Damage</span>
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <>
@@ -209,9 +210,8 @@ const Navbar = () => {
                       setShowNotifications((prev) => !prev);
                       setShowUserMenu(false);
                     }}
-                    className={`p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 relative transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-                      showNotifications ? 'bg-slate-800 text-amber-400' : ''
-                    }`}
+                    className={`p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 relative transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${showNotifications ? 'bg-slate-800 text-amber-400' : ''
+                      }`}
                     aria-label="Open notifications"
                     aria-expanded={showNotifications}
                   >
@@ -274,9 +274,8 @@ const Navbar = () => {
                                   setShowNotifications(false);
                                 }
                               }}
-                              className={`p-3 text-left hover:bg-slate-800/60 cursor-pointer transition-colors focus:outline-none focus:bg-slate-800/60 ${
-                                !notif.is_read ? 'bg-amber-500/5' : ''
-                              }`}
+                              className={`p-3 text-left hover:bg-slate-800/60 cursor-pointer transition-colors focus:outline-none focus:bg-slate-800/60 ${!notif.is_read ? 'bg-amber-500/5' : ''
+                                }`}
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <span className={`text-xs font-semibold ${!notif.is_read ? 'text-amber-300' : 'text-slate-200'}`}>
@@ -305,9 +304,8 @@ const Navbar = () => {
                       setShowUserMenu((prev) => !prev);
                       setShowNotifications(false);
                     }}
-                    className={`flex items-center gap-2 p-1.5 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-                      showUserMenu ? 'ring-2 ring-amber-500/50 border-amber-500/50' : ''
-                    }`}
+                    className={`flex items-center gap-2 p-1.5 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${showUserMenu ? 'ring-2 ring-amber-500/50 border-amber-500/50' : ''
+                      }`}
                     aria-label="User account menu"
                     aria-expanded={showUserMenu}
                   >
@@ -392,15 +390,14 @@ const Navbar = () => {
       {/* 4. RESPONSIVE MOBILE MENU DROPDOWN */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-slate-900/95 border-b border-slate-800 px-4 pt-3 pb-5 space-y-2 backdrop-blur-xl animate-in slide-in-from-top-2 duration-150 shadow-2xl">
-          
+
           {/* Navigation Links */}
           <div className="space-y-1">
             <Link
               to="/"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                isActiveRoute('/') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('/') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                }`}
             >
               <Home className="h-4 w-4" />
               <span>Home</span>
@@ -409,9 +406,8 @@ const Navbar = () => {
             <Link
               to="/map"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                isActiveRoute('/map') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('/map') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                }`}
             >
               <MapPin className="h-4 w-4 text-amber-500" />
               <span>Live Map</span>
@@ -420,9 +416,8 @@ const Navbar = () => {
             <Link
               to="/track"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                isActiveRoute('/track') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('/track') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                }`}
             >
               <Search className="h-4 w-4 text-cyan-400" />
               <span>Track Complaint</span>
@@ -432,9 +427,8 @@ const Navbar = () => {
               <Link
                 to={getDashboardPath()}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                  isActiveRoute('dashboard') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-                }`}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('dashboard') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                  }`}
               >
                 <LayoutDashboard className="h-4 w-4 text-indigo-400" />
                 <span>Portal Dashboard</span>
@@ -442,17 +436,19 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Prominent Action Button: Report Road Damage */}
-          <div className="pt-2">
-            <Link
-              to="/citizen/report"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-md shadow-amber-500/20 active:scale-95 transition-all text-center"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Report Road Damage</span>
-            </Link>
-          </div>
+          {/* Prominent Action Button: Report Road Damage — Citizen only */}
+          {isCitizen && (
+            <div className="pt-2">
+              <Link
+                to="/citizen/report"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-md shadow-amber-500/20 active:scale-95 transition-all text-center"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>Report Road Damage</span>
+              </Link>
+            </div>
+          )}
 
           {/* Theme & Appearance Row */}
           <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300 mt-2">
