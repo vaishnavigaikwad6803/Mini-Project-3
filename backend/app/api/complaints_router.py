@@ -353,12 +353,16 @@ def get_complaints(
 
 @router.get("/public/analytics")
 def get_public_analytics(db: Session = Depends(get_db)):
-    """Returns aggregated road classification and AI damage type distributions for public charts."""
+    """Returns aggregated road classification, AI damage types, status breakdown, monthly trends, and stats."""
     from app.services.analytics_service import get_admin_dashboard_metrics
     metrics = get_admin_dashboard_metrics(db)
     return {
         "road_type_distribution": metrics.get("road_type_distribution", []),
         "damage_type_distribution": metrics.get("damage_type_distribution", []),
+        "status_distribution": metrics.get("status_distribution", []),
+        "monthly_trends": metrics.get("monthly_trends", []),
+        "authority_performance": metrics.get("authority_performance", []),
+        "district_distribution": metrics.get("district_distribution", []),
         "stats": metrics.get("stats", {})
     }
 
