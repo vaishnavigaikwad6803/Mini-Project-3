@@ -223,6 +223,8 @@ const ComplaintMap = ({
   showFilters = true,
   initialRoadDivision = 'ALL',
   startWithIndia = true,
+  initialComplaintId = null,
+  initialCoordinates = null,
   onMapClick = null,
   onViewDetails = null
 }) => {
@@ -240,9 +242,19 @@ const ComplaintMap = ({
   const [showListPanel, setShowListPanel] = useState(true);
 
   // Map View State
-  const [mapCenter, setMapCenter] = useState(startWithIndia ? INDIA_CENTER : MAHARASHTRA_CENTER);
-  const [mapZoom, setMapZoom] = useState(startWithIndia ? INDIA_DEFAULT_ZOOM : MAHARASHTRA_DEFAULT_ZOOM);
-  const [isZoomedIn, setIsZoomedIn] = useState(!startWithIndia);
+  const [mapCenter, setMapCenter] = useState(() => {
+    if (initialCoordinates && isValidCoordinate(initialCoordinates[0], initialCoordinates[1])) {
+      return initialCoordinates;
+    }
+    return startWithIndia ? INDIA_CENTER : MAHARASHTRA_CENTER;
+  });
+  const [mapZoom, setMapZoom] = useState(() => {
+    if (initialCoordinates && isValidCoordinate(initialCoordinates[0], initialCoordinates[1])) {
+      return 15;
+    }
+    return startWithIndia ? INDIA_DEFAULT_ZOOM : MAHARASHTRA_DEFAULT_ZOOM;
+  });
+  const [isZoomedIn, setIsZoomedIn] = useState(!startWithIndia || Boolean(initialCoordinates));
 
   // Safe extraction of complaint list
   const safeComplaintsList = useMemo(() => {
@@ -406,6 +418,20 @@ const ComplaintMap = ({
       setIsZoomedIn(true);
     }
   };
+
+  // Auto-focus complaint if initialComplaintId or initialCoordinates is passed
+  useEffect(() => {
+    if (initialComplaintId && validComplaints.length > 0) {
+      const match = validComplaints.find(c => String(c.id).toLowerCase() === String(initialComplaintId).toLowerCase());
+      if (match) {
+        handleSelectComplaint(match);
+      }
+    } else if (initialCoordinates && isValidCoordinate(initialCoordinates[0], initialCoordinates[1])) {
+      setMapCenter(initialCoordinates);
+      setMapZoom(15);
+      setIsZoomedIn(true);
+    }
+  }, [initialComplaintId, initialCoordinates, validComplaints]);
 
   // Reset all filters
   const handleResetFilters = () => {
@@ -748,6 +774,15 @@ const ComplaintMap = ({
                     key={c.id}
                     position={[c.latitude, c.longitude]}
                     icon={markerIcon}
+                    ref={(markerRef) => {
+                      if (isSelected && markerRef) {
+                        setTimeout(() => {
+                          if (markerRef && !markerRef.isPopupOpen()) {
+                            markerRef.openPopup();
+                          }
+                        }, 250);
+                      }
+                    }}
                     eventHandlers={{
                       click: () => {
                         handleSelectComplaint(c);

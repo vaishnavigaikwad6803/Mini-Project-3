@@ -250,21 +250,25 @@ const ManageComplaints = () => {
                         <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
                       </td>
                       <td className="py-3.5 px-4 text-slate-300">
-                        <div className="flex items-start gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                        <Link
+                          to={`/map?id=${encodeURIComponent(c.id)}${c.latitude && c.longitude ? `&lat=${c.latitude}&lng=${c.longitude}` : ''}`}
+                          className="flex items-start gap-1.5 group cursor-pointer hover:bg-slate-800/80 p-1.5 -m-1.5 rounded-xl transition-all"
+                          title="Click to locate on Live GIS Map"
+                        >
+                          <MapPin className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0 group-hover:scale-110 group-hover:text-amber-300 transition-transform" />
                           <div>
-                            <span className="text-white font-medium block">
+                            <span className="text-white font-medium block group-hover:text-amber-400 group-hover:underline underline-offset-2 transition-colors">
                               {c.district ? `${c.district}, ${c.state || ''}` : 'Location Pin'}
                             </span>
                             {c.landmark ? (
-                              <span className="text-[10px] text-slate-400 block truncate max-w-[130px]">{c.landmark}</span>
+                              <span className="text-[10px] text-slate-400 block truncate max-w-[130px] group-hover:text-slate-300">{c.landmark}</span>
                             ) : (
-                              <span className="text-[10px] text-slate-500 font-mono block">
+                              <span className="text-[10px] text-slate-500 font-mono block group-hover:text-slate-400">
                                 {c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}
                               </span>
                             )}
                           </div>
-                        </div>
+                        </Link>
                       </td>
                       <td className="py-3.5 px-4">
                         <RoadTypeBadge roadType={c.road_type} />

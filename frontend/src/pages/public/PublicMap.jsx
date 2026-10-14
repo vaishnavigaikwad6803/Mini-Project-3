@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import { authorityService } from '../../services/authorityService';
 import ComplaintMap, { isValidCoordinate } from '../../components/map/ComplaintMap';
@@ -18,6 +19,11 @@ import {
 } from 'lucide-react';
 
 const PublicMap = () => {
+  const [searchParams] = useSearchParams();
+  const targetId = searchParams.get('id') || searchParams.get('complaint_id');
+  const targetLat = searchParams.get('lat');
+  const targetLng = searchParams.get('lng');
+
   const [complaints, setComplaints] = useState([]);
   const [authorities, setAuthorities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -205,7 +211,9 @@ const PublicMap = () => {
           authorities={authorities}
           height="h-[620px]"
           showFilters={true}
-          startWithIndia={true}
+          startWithIndia={!targetId && !targetLat}
+          initialComplaintId={targetId}
+          initialCoordinates={targetLat && targetLng ? [parseFloat(targetLat), parseFloat(targetLng)] : null}
         />
       )}
 
