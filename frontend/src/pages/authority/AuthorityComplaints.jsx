@@ -35,10 +35,13 @@ import {
   ClipboardCheck,
   CheckCircle2,
 } from 'lucide-react';
+import { formatDateToDDMMYY } from '../../utils/dateUtils';
+import { useLanguage } from '../../context/LanguageContext';
 
 const AuthorityComplaints = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -139,10 +142,10 @@ const AuthorityComplaints = () => {
   const resolutionRate = total > 0 ? Math.round((resolvedCount / total) * 100) : 0;
 
   const barData = [
-    { name: 'Damage Reported', count: pendingCount,  fill: '#f59e0b', bg: 'from-amber-500/20 to-amber-500/5',   border: 'border-amber-500/30',   text: 'text-amber-400',   status: 'Authority Assigned' },
-    { name: 'Under Repair',    count: repairCount,   fill: '#a855f7', bg: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30',  text: 'text-purple-400',  status: 'Engineer Assigned' },
-    { name: 'Ready for Sign-Off', count: signOffCount, fill: '#06b6d4', bg: 'from-cyan-500/20 to-cyan-500/5',   border: 'border-cyan-500/30',    text: 'text-cyan-400',    status: 'Authority Verification' },
-    { name: 'Resolved & Closed',  count: resolvedCount, fill: '#10b981', bg: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400', status: 'Closed' },
+    { name: t('authority.damageReported', 'Damage Reported'), count: pendingCount,  fill: '#f59e0b', bg: 'from-amber-500/20 to-amber-500/5',   border: 'border-amber-500/30',   text: 'text-amber-400',   status: 'Authority Assigned' },
+    { name: t('authority.underRepair', 'Under Repair'),    count: repairCount,   fill: '#a855f7', bg: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30',  text: 'text-purple-400',  status: 'Engineer Assigned' },
+    { name: t('authority.readySignOff', 'Ready for Sign-Off'), count: signOffCount, fill: '#06b6d4', bg: 'from-cyan-500/20 to-cyan-500/5',   border: 'border-cyan-500/30',    text: 'text-cyan-400',    status: 'Authority Verification' },
+    { name: t('authority.resolvedClosed', 'Resolved & Closed'),  count: resolvedCount, fill: '#10b981', bg: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400', status: 'Closed' },
   ];
 
   const pieData = barData.filter((d) => d.count > 0).map((d) => ({
@@ -209,13 +212,13 @@ const AuthorityComplaints = () => {
       {/* Header */}
       <div>
         <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold border border-indigo-500/30">
-          Authority Records
+          {t('authority.complaintsBadge', 'Authority Records')}
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
-          Jurisdiction Road Complaints
+          {t('authority.complaintsTitle', 'Jurisdiction Road Complaints')}
         </h1>
         <p className="text-xs text-slate-400 mt-1">
-          Manage all incoming, in-repair, and verified road damage reports assigned to your division.
+          {t('authority.complaintsSubtitle', 'Manage all incoming, in-repair, and verified road damage reports assigned to your division.')}
         </p>
       </div>
 
@@ -394,7 +397,7 @@ const AuthorityComplaints = () => {
           <Search className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Search by Complaint ID, Road Name, Engineer, or Location..."
+            placeholder={t('authority.searchPlaceholder', 'Search by Complaint ID, Road Name, Engineer, or Location...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-950 rounded-xl border border-slate-700 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
@@ -406,14 +409,14 @@ const AuthorityComplaints = () => {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
         >
-          <option value="ALL">All Statuses</option>
-          <option value="Authority Assigned">Authority Assigned</option>
-          <option value="Engineer Assigned">Engineer Assigned</option>
-          <option value="Inspection Completed">Inspected</option>
-          <option value="Repair In Progress">In Repair</option>
-          <option value="Repair Completed">Repair Completed</option>
-          <option value="Authority Verification">Under Verification</option>
-          <option value="Closed">Closed</option>
+          <option value="ALL">{t('common.all', 'All Statuses')}</option>
+          <option value="Authority Assigned">{t('status.PENDING', 'Authority Assigned')}</option>
+          <option value="Engineer Assigned">{t('status.ENGINEER_ASSIGNED', 'Engineer Assigned')}</option>
+          <option value="Inspection Completed">{t('status.VERIFIED', 'Inspected')}</option>
+          <option value="Repair In Progress">{t('status.IN_PROGRESS', 'In Repair')}</option>
+          <option value="Repair Completed">{t('status.REPAIR_COMPLETED', 'Repair Completed')}</option>
+          <option value="Authority Verification">{t('status.AUTHORITY_VERIFICATION', 'Under Verification')}</option>
+          <option value="Closed">{t('status.CLOSED', 'Closed')}</option>
         </select>
 
         {(statusFilter !== 'ALL' || searchTerm) && (
@@ -422,7 +425,7 @@ const AuthorityComplaints = () => {
             onClick={() => { setStatusFilter('ALL'); setSearchTerm(''); }}
             className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors flex items-center gap-1.5"
           >
-            <RefreshCw className="h-3.5 w-3.5" /> Clear Filters
+            <RefreshCw className="h-3.5 w-3.5" /> {t('common.clearFilters', 'Clear Filters')}
           </button>
         )}
       </div>
@@ -450,16 +453,16 @@ const AuthorityComplaints = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Road Name</th>
-                    <th className="py-3 px-4">Location</th>
-                    <th className="py-3 px-4">Road Type</th>
-                    <th className="py-3 px-4">AI Defect & Severity</th>
-                    <th className="py-3 px-4">Engineer Name</th>
-                    <th className="py-3 px-4">Citizen</th>
-                    <th className="py-3 px-4">Status & Deadline</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4">{t('table.id', 'ID')}</th>
+                    <th className="py-3 px-4">{t('common.date', 'Date')}</th>
+                    <th className="py-3 px-4">{t('table.road', 'Road Name')}</th>
+                    <th className="py-3 px-4">{t('table.location', 'Location')}</th>
+                    <th className="py-3 px-4">{t('table.roadType', 'Road Type')}</th>
+                    <th className="py-3 px-4">{t('table.damageType', 'AI Defect & Severity')}</th>
+                    <th className="py-3 px-4">{t('common.assignedTo', 'Engineer Name')}</th>
+                    <th className="py-3 px-4">{t('auth.citizen', 'Citizen')}</th>
+                    <th className="py-3 px-4">{t('table.status', 'Status & Deadline')}</th>
+                    <th className="py-3 px-4 text-right">{t('table.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -535,7 +538,7 @@ const AuthorityComplaints = () => {
                         {(c.deadline || c.repair?.deadline) && (
                           <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400 font-medium">
                             <Calendar className="h-3 w-3 shrink-0" />
-                            <span>Due: {new Date(c.deadline || c.repair?.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                            <span>Due: {formatDateToDDMMYY(c.deadline || c.repair?.deadline)}</span>
                           </div>
                         )}
                       </td>
@@ -662,7 +665,7 @@ const AuthorityComplaints = () => {
               onClick={() => setDeleteModalOpen(false)}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
             >
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
@@ -670,7 +673,7 @@ const AuthorityComplaints = () => {
               className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-md disabled:opacity-50 flex items-center gap-1.5"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              {deleting ? 'Deleting...' : 'Confirm Delete'}
+              {deleting ? t('authority.deleting', 'Deleting...') : t('authority.confirmDelete', 'Confirm Delete')}
             </button>
           </div>
         </form>

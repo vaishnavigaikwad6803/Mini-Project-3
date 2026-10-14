@@ -10,6 +10,8 @@ import StatsCard from '../../components/common/StatsCard';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import CameraCapture from '../../components/common/CameraCapture';
+import { formatDateToDDMMYY } from '../../utils/dateUtils';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   ResponsiveContainer,
   PieChart,
@@ -71,6 +73,7 @@ const FILTER_COMPLETED = 'completed';
 const EngineerDashboard = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -248,14 +251,14 @@ const EngineerDashboard = () => {
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-purple-950/50 border border-slate-800 shadow-2xl space-y-3">
         <div className="flex items-center gap-2">
           <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
-            Field Operations
+            {t('engineer.portalTitle')}
           </span>
           <span className="text-xs font-mono text-slate-400">
             Badge: {user?.employee_id || 'ENG-101'}
           </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit']">
-          Field Engineer Workstation
+          {t('engineer.workstationTitle')}
         </h1>
         <p className="text-xs text-slate-400">
           Execute site inspections, update repair milestones, and upload photo proof to resolve road damage.
@@ -358,7 +361,7 @@ const EngineerDashboard = () => {
       {/* ── Clickable Stats Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title="Total Assigned"
+          title={t('engineer.assignedRepairs')}
           value={assignments.length}
           subtitle="All tasks"
           icon={HardHat}
@@ -367,7 +370,7 @@ const EngineerDashboard = () => {
           isActive={activeFilter === FILTER_ALL}
         />
         <StatsCard
-          title="Inspection Needed"
+          title={t('status.VERIFIED')}
           value={pendingInspection.length}
           subtitle="Awaiting site visit"
           icon={Clock}
@@ -376,7 +379,7 @@ const EngineerDashboard = () => {
           isActive={activeFilter === FILTER_INSPECTION}
         />
         <StatsCard
-          title="Repairs in Progress"
+          title={t('status.IN_PROGRESS')}
           value={inRepair.length}
           subtitle="Work underway"
           icon={Wrench}
@@ -385,7 +388,7 @@ const EngineerDashboard = () => {
           isActive={activeFilter === FILTER_IN_REPAIR}
         />
         <StatsCard
-          title="Completed / Closed"
+          title={t('status.CLOSED')}
           value={completed.length}
           subtitle="Signed off"
           icon={CheckCircle2}
@@ -412,7 +415,7 @@ const EngineerDashboard = () => {
                 onClick={() => setActiveFilter(FILTER_ALL)}
                 className="flex items-center gap-1 text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
               >
-                <X className="h-3.5 w-3.5" /> Clear Filter
+                <X className="h-3.5 w-3.5" /> {t('common.clearFilters')}
               </button>
             )}
             <Link
@@ -441,15 +444,15 @@ const EngineerDashboard = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Road Name</th>
-                    <th className="py-3 px-4">Location</th>
-                    <th className="py-3 px-4">Road Type</th>
-                    <th className="py-3 px-4">Defect Classification</th>
-                    <th className="py-3 px-4">Priority</th>
-                    <th className="py-3 px-4">Stage & Deadline</th>
-                    <th className="py-3 px-4 text-right">Action</th>
+                    <th className="py-3 px-4">{t('table.id')}</th>
+                    <th className="py-3 px-4">{t('table.date')}</th>
+                    <th className="py-3 px-4">{t('table.roadName')}</th>
+                    <th className="py-3 px-4">{t('table.location')}</th>
+                    <th className="py-3 px-4">{t('table.roadType')}</th>
+                    <th className="py-3 px-4">{t('table.aiDetection')}</th>
+                    <th className="py-3 px-4">{t('table.priority')}</th>
+                    <th className="py-3 px-4">{t('table.status')} & {t('common.deadline')}</th>
+                    <th className="py-3 px-4 text-right">{t('table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -518,7 +521,7 @@ const EngineerDashboard = () => {
                           {(c.deadline || c.repair?.deadline) && (
                             <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400 font-semibold">
                               <Calendar className="h-3 w-3 shrink-0" />
-                              <span>Due: {new Date(c.deadline || c.repair?.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                              <span>Due: {formatDateToDDMMYY(c.deadline || c.repair?.deadline)}</span>
                             </div>
                           )}
                         </td>

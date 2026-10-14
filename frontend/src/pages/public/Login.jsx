@@ -48,6 +48,7 @@ import {
   CartesianGrid
 } from 'recharts';
 import { validateEmail, parseAuthError } from '../../utils/authValidation';
+import { useLanguage } from '../../context/LanguageContext';
 
 const AUTHORITIES = [
   {
@@ -122,6 +123,7 @@ const SAVED_EMAIL_KEY = 'roadguard_saved_email';
 
 const Login = () => {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -521,10 +523,10 @@ const Login = () => {
             <ShieldAlert className="h-6 w-6 text-amber-400 stroke-[2.2]" />
           </div>
           <h1 className="text-2xl font-extrabold text-white font-['Outfit'] tracking-tight">
-            Welcome to RoadGuard<span className="text-amber-500 ml-1">AI</span>
+            {t('auth.brandTitle', 'Welcome to RoadGuard AI')}
           </h1>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Civil Infrastructure & AI-Driven Road Damage Management System
+            {t('auth.brandSubtitle', 'Civil Infrastructure & AI-Driven Road Damage Management System')}
           </p>
         </div>
 
@@ -540,10 +542,10 @@ const Login = () => {
                 <ShieldAlert className="h-6 w-6 text-amber-400 stroke-[2.2]" />
               </div>
               <h1 className="text-2xl xl:text-3xl font-extrabold text-white font-['Outfit'] tracking-tight">
-                Welcome to RoadGuard<span className="text-amber-500 ml-1">AI</span>
+                {t('auth.brandTitle', 'Welcome to RoadGuard AI')}
               </h1>
               <p className="text-xs text-slate-400">
-                Civil Infrastructure & AI-Driven Road Damage Management System
+                {t('auth.brandSubtitle', 'Civil Infrastructure & AI-Driven Road Damage Management System')}
               </p>
             </div>
 
@@ -570,7 +572,7 @@ const Login = () => {
                   }`}
                 >
                   <User className="h-4 w-4" />
-                  <span>Citizen Portal</span>
+                  <span>{t('auth.roleCitizen')}</span>
                 </button>
 
                 <button
@@ -587,7 +589,7 @@ const Login = () => {
                   }`}
                 >
                   <Building2 className="h-4 w-4" />
-                  <span>Authority & Staff</span>
+                  <span>{t('auth.roleAuthority')}</span>
                 </button>
               </div>
 
@@ -599,13 +601,13 @@ const Login = () => {
                     <div className="space-y-0.5 min-w-0">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-400 uppercase tracking-wider">
                         <Building2 className="h-3.5 w-3.5 shrink-0" />
-                        <span>Signing in as Authority:</span>
+                        <span>{t('auth.signingInAs', 'Signing in as Authority:')}</span>
                       </div>
                       <div className="text-xs sm:text-sm font-bold text-white truncate" title={selectedAuthority.name}>
                         {selectedAuthority.name}
                       </div>
                       <div className="text-[11px] text-slate-400">
-                        Official Account: <span className="text-slate-300 font-mono">{selectedAuthority.email}</span>
+                        {t('auth.officialAccount', 'Official Account:')} <span className="text-slate-300 font-mono">{selectedAuthority.email}</span>
                       </div>
                     </div>
                     <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -616,7 +618,7 @@ const Login = () => {
                   {/* Authority Selection Grid */}
                   <div className="space-y-1.5">
                     <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                      Quick Select Department / Role:
+                      {t('auth.quickSelectDept', 'Quick Select Department / Role:')}
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                       {AUTHORITIES.map((auth) => {
@@ -651,8 +653,8 @@ const Login = () => {
                       <User className="h-4 w-4" />
                     </div>
                     <div>
-                      <span className="font-semibold text-slate-200 block">Citizen Portal</span>
-                      <span className="text-[11px]">Report road hazards, view AI metrics & track municipal repairs</span>
+                      <span className="font-semibold text-slate-200 block">{t('citizen.portalTitle', 'Citizen Portal')}</span>
+                      <span className="text-[11px]">{t('auth.citizenPortalDesc', 'Report road hazards, view AI metrics & track municipal repairs')}</span>
                     </div>
                   </div>
                   <button
@@ -661,7 +663,7 @@ const Login = () => {
                     className="shrink-0 px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                     title="Fill demo credentials for instant testing"
                   >
-                    Demo Fill
+                    {t('auth.demoFill', 'Demo Fill')}
                   </button>
                 </div>
               )}
@@ -706,7 +708,7 @@ const Login = () => {
                       htmlFor="login-email"
                       className="block text-xs font-semibold text-slate-300"
                     >
-                      {loginType === 'authority' ? 'Official Authority Email' : 'Citizen Email Address'}
+                      {loginType === 'authority' ? 'Official Authority Email' : t('auth.emailLabel')}
                       <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                     </label>
                     {touched.email && !errors.email && email && (
@@ -761,7 +763,7 @@ const Login = () => {
                       htmlFor="login-password"
                       className="block text-xs font-semibold text-slate-300"
                     >
-                      Password
+                      {t('auth.passwordLabel')}
                       <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                     </label>
                     <span className="text-[11px] text-slate-400">
@@ -831,10 +833,10 @@ const Login = () => {
                       onChange={(e) => setRememberEmail(e.target.checked)}
                       className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-500/20 focus:ring-offset-0 cursor-pointer"
                     />
-                    <span>Remember my email</span>
+                    <span>{t('auth.rememberEmail', 'Remember my email')}</span>
                   </label>
                   <span className="text-[11px] text-slate-500">
-                    Encrypted JWT session
+                    {t('auth.encryptedSession', 'Encrypted JWT session')}
                   </span>
                 </div>
 
@@ -848,15 +850,15 @@ const Login = () => {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-slate-950" />
-                      <span>Authenticating with RoadGuard...</span>
+                      <span>{t('auth.loggingIn')}</span>
                     </>
                   ) : (
                     <>
                       <LogIn className="h-4 w-4 text-slate-950" />
                       <span>
                         {loginType === 'authority'
-                          ? `Sign In as ${selectedAuthority.label}`
-                          : 'Sign In to Citizen Portal'}
+                          ? `${t('nav.login')} as ${selectedAuthority.label}`
+                          : t('auth.loginButton')}
                       </span>
                     </>
                   )}
@@ -867,23 +869,23 @@ const Login = () => {
               {/* Footer Navigation */}
               {loginType === 'citizen' ? (
                 <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-                  Don't have a citizen account yet?{' '}
+                  {t('auth.noAccount')}{' '}
                   <Link
                     to="/register"
                     className="text-amber-400 hover:text-amber-300 font-semibold focus:outline-none focus-visible:underline"
                   >
-                    Register Here
+                    {t('nav.register')}
                   </Link>
                 </div>
               ) : (
                 <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800/80 flex items-center justify-center gap-2">
-                  <span>Citizen reporting defects?</span>
+                  <span>{t('auth.citizenReporting', 'Citizen reporting defects?')}</span>
                   <button
                     type="button"
                     onClick={() => handleSelectLoginType('citizen')}
                     className="text-amber-400 hover:text-amber-300 font-semibold inline-flex items-center gap-1 focus:outline-none focus-visible:underline"
                   >
-                    Switch to Citizen Login <ChevronRight className="h-3 w-3" />
+                    {t('auth.switchCitizen', 'Switch to Citizen Login')} <ChevronRight className="h-3 w-3" />
                   </button>
                 </div>
               )}

@@ -17,8 +17,10 @@ import {
   HardHat,
   Compass
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PublicMap = () => {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const targetId = searchParams.get('id') || searchParams.get('complaint_id');
   const targetLat = searchParams.get('lat');
@@ -99,15 +101,15 @@ const PublicMap = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1">
-              <Shield className="h-3 w-3" /> Maharashtra State GIS Network
+              <Shield className="h-3 w-3" /> {t('publicMap.stateNetwork', 'Maharashtra State GIS Network')}
             </span>
-            <span className="text-xs text-slate-400">Road Divisions: NHAI • PWD • PMGSY • Municipal</span>
+            <span className="text-xs text-slate-400">{t('publicMap.roadDivisions', 'Road Divisions: NHAI • PWD • PMGSY • Municipal')}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
-            Live Road Defect GIS Spatial Map
+            {t('publicMap.title', 'Live Road Defect GIS Spatial Map')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl">
-            Real-time geospatial tracking of road surface defects across Maharashtra's <strong>National Highways (NHAI)</strong>, <strong>State Corridors (PWD)</strong>, <strong>Rural Links (PMGSY)</strong>, and <strong>Municipal Wards</strong>.
+            {t('publicMap.subtitle', "Real-time geospatial tracking of road surface defects across Maharashtra's National Highways (NHAI), State Corridors (PWD), Rural Links (PMGSY), and Municipal Wards.")}
           </p>
         </div>
 
@@ -119,7 +121,7 @@ const PublicMap = () => {
             className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-xs font-bold text-slate-200 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 text-amber-400 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{isRefreshing ? 'Syncing...' : 'Refresh GIS'}</span>
+            <span>{isRefreshing ? t('publicMap.syncing', 'Syncing...') : t('publicMap.refreshGis', 'Refresh GIS')}</span>
           </button>
         </div>
       </div>
@@ -128,46 +130,46 @@ const PublicMap = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-xs font-semibold">Active Incidents</span>
+            <span className="text-xs font-semibold">{t('publicMap.activeIncidents', 'Active Incidents')}</span>
             <AlertTriangle className="h-4 w-4 text-rose-400" />
           </div>
           <div className="text-xl sm:text-2xl font-black text-rose-400 font-['Outfit']">
             {metrics.active}
           </div>
-          <span className="text-[11px] text-slate-400">Awaiting inspection/dispatch</span>
+          <span className="text-[11px] text-slate-400">{t('publicMap.awaitingInspection', 'Awaiting inspection/dispatch')}</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-xs font-semibold">In Repair Work</span>
+            <span className="text-xs font-semibold">{t('publicMap.inRepairWork', 'In Repair Work')}</span>
             <HardHat className="h-4 w-4 text-orange-400" />
           </div>
           <div className="text-xl sm:text-2xl font-black text-orange-400 font-['Outfit']">
             {metrics.inRepair}
           </div>
-          <span className="text-[11px] text-slate-400">Assigned field engineers</span>
+          <span className="text-[11px] text-slate-400">{t('publicMap.assignedEngineers', 'Assigned field engineers')}</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-xs font-semibold">Repaired & Resolved</span>
+            <span className="text-xs font-semibold">{t('publicMap.repairedResolved', 'Repaired & Resolved')}</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           </div>
           <div className="text-xl sm:text-2xl font-black text-emerald-400 font-['Outfit']">
             {metrics.resolved}
           </div>
-          <span className="text-[11px] text-slate-400">Verified road restorations</span>
+          <span className="text-[11px] text-slate-400">{t('publicMap.verifiedRestorations', 'Verified road restorations')}</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-xs font-semibold">Spatial Coverage</span>
+            <span className="text-xs font-semibold">{t('publicMap.spatialCoverage', 'Spatial Coverage')}</span>
             <MapPin className="h-4 w-4 text-amber-400" />
           </div>
           <div className="text-xl sm:text-2xl font-black text-amber-400 font-['Outfit']">
             {metrics.valid} <span className="text-xs font-normal text-slate-400">/ {metrics.total}</span>
           </div>
-          <span className="text-[11px] text-slate-400">GPS geocoded coordinates</span>
+          <span className="text-[11px] text-slate-400">{t('publicMap.gpsGeocoded', 'GPS geocoded coordinates')}</span>
         </div>
       </div>
 

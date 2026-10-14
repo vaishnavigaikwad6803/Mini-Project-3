@@ -199,7 +199,7 @@ def assign_engineer_to_complaint(
     old_status = complaint.status.value
     complaint.status = ComplaintStatus.ENGINEER_ASSIGNED
     
-    # Parse deadline if provided
+    # Parse deadline if provided (supports dd/mm/yy, dd/mm/yyyy, ISO, and YYYY-MM-DD)
     deadline_val = request.deadline or deadline
     parsed_deadline = None
     if deadline_val:
@@ -208,6 +208,13 @@ def assign_engineer_to_complaint(
                 cleaned = deadline_val.strip()
                 if 'T' in cleaned:
                     parsed_deadline = datetime.fromisoformat(cleaned.replace('Z', '+00:00'))
+                elif '/' in cleaned:
+                    parts = cleaned.split('/')
+                    if len(parts) == 3:
+                        d, m, y = parts
+                        if len(y) == 2:
+                            y = "20" + y
+                        parsed_deadline = datetime.strptime(f"{d.zfill(2)}/{m.zfill(2)}/{y}", "%d/%m/%Y")
                 else:
                     parsed_deadline = datetime.strptime(cleaned[:10], "%Y-%m-%d")
         except Exception as e:
@@ -235,7 +242,7 @@ def assign_engineer_to_complaint(
     engineer.active_workload = (engineer.active_workload or 0) + 1
     db.commit()
 
-    deadline_str = parsed_deadline.strftime('%b %d, %Y') if parsed_deadline else None
+    deadline_str = parsed_deadline.strftime('%d/%m/%y') if parsed_deadline else None
 
     # Timeline entry
     timeline_remarks = f"Assigned to Engineer {engineer.user.full_name} ({engineer.employee_id})."

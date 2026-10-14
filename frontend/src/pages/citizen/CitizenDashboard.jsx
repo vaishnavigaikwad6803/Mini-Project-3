@@ -58,6 +58,7 @@ import {
   Flame,
   Activity
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   ROAD_DIVISIONS,
   detectCurrentLocation,
@@ -71,6 +72,7 @@ import {
 const CitizenDashboard = () => {
   const navigate = useNavigate();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
 
   const [stats, setStats] = useState(null);
   const [recentComplaints, setRecentComplaints] = useState([]);
@@ -219,11 +221,30 @@ const CitizenDashboard = () => {
     ? Math.round((resolvedCount / totalCitizenComplaints) * 100)
     : 0;
 
+  const getDamageLabel = (name) => {
+    const lower = (name || '').toLowerCase();
+    if (lower.includes('pothole')) return t('damage.pothole');
+    if (lower.includes('longitudinal')) return t('damage.longitudinalCrack');
+    if (lower.includes('transverse')) return t('damage.transverseCrack');
+    if (lower.includes('alligator')) return t('damage.alligatorCrack');
+    if (lower.includes('surface') || lower.includes('degradation')) return t('damage.surfaceDegradation');
+    return name;
+  };
+
+  const getRoadTypeLabel = (name) => {
+    const lower = (name || '').toLowerCase();
+    if (lower.includes('national')) return t('roadTypes.nationalHighway');
+    if (lower.includes('state')) return t('roadTypes.stateHighway');
+    if (lower.includes('muncipal') || lower.includes('municipal') || lower.includes('city')) return t('roadTypes.municipalRoad');
+    if (lower.includes('rural') || lower.includes('village')) return t('roadTypes.ruralRoad');
+    return name;
+  };
+
   const citizenPieData = [
-    { name: 'Damage Reported', count: reportedCount, color: '#f59e0b', key: 'PENDING' },
-    { name: 'Complaints Under Review', count: reviewCount, color: '#6366f1', key: 'UNDER_REVIEW' },
-    { name: 'In Repair', count: repairCount, color: '#a855f7', key: 'IN_REPAIR' },
-    { name: 'Complaints Resolved', count: resolvedCount, color: '#10b981', key: 'RESOLVED' },
+    { name: t('status.PENDING') || 'Damage Reported', count: reportedCount, color: '#f59e0b', key: 'PENDING' },
+    { name: t('status.AUTHORITY_VERIFICATION') || 'Complaints Under Review', count: reviewCount, color: '#6366f1', key: 'UNDER_REVIEW' },
+    { name: t('status.IN_PROGRESS') || 'In Repair', count: repairCount, color: '#a855f7', key: 'IN_REPAIR' },
+    { name: t('status.CLOSED') || 'Complaints Resolved', count: resolvedCount, color: '#10b981', key: 'RESOLVED' },
   ].filter(item => item.count > 0);
 
   // 1. AI Damage Type Distribution Data
@@ -234,11 +255,11 @@ const CitizenDashboard = () => {
   });
 
   const citizenDamageList = Object.entries(damageTypeCounts).map(([name, count]) => ({
-    name,
+    name: getDamageLabel(name),
     count
   }));
 
-  const damageChartData = citizenDamageList.length > 0
+  const rawDamageData = citizenDamageList.length > 0
     ? citizenDamageList
     : (publicAnalytics?.damage_type_distribution && publicAnalytics.damage_type_distribution.length > 0
       ? publicAnalytics.damage_type_distribution
@@ -249,6 +270,11 @@ const CitizenDashboard = () => {
           { name: 'Longitudinal Crack', count: 1 },
           { name: 'Transverse Crack', count: 1 }
         ]);
+
+  const damageChartData = rawDamageData.map(d => ({
+    ...d,
+    name: getDamageLabel(d.name)
+  }));
 
   // 2. Road Network Classification Distribution Data
   const ROAD_COLORS = ['#f59e0b', '#6366f1', '#06b6d4', '#10b981'];
@@ -264,21 +290,21 @@ const CitizenDashboard = () => {
     ? Object.entries(roadCounts)
         .filter(([_, count]) => count > 0)
         .map(([name, count], idx) => ({
-          name,
+          name: getRoadTypeLabel(name),
           count,
           color: ROAD_COLORS[idx % ROAD_COLORS.length]
         }))
     : (publicAnalytics?.road_type_distribution && publicAnalytics.road_type_distribution.length > 0
       ? publicAnalytics.road_type_distribution.map((item, idx) => ({
-          name: item.name.split('/')[0],
+          name: getRoadTypeLabel(item.name.split('/')[0]),
           count: item.count,
           color: ROAD_COLORS[idx % ROAD_COLORS.length]
         }))
       : [
-          { name: 'National Highway', count: 2, color: '#f59e0b' },
-          { name: 'State Highway', count: 2, color: '#6366f1' },
-          { name: 'Municipal Road', count: 3, color: '#06b6d4' },
-          { name: 'Rural Road', count: 1, color: '#10b981' }
+          { name: t('roadTypes.nationalHighway'), count: 2, color: '#f59e0b' },
+          { name: t('roadTypes.stateHighway'), count: 2, color: '#6366f1' },
+          { name: t('roadTypes.municipalRoad'), count: 3, color: '#06b6d4' },
+          { name: t('roadTypes.ruralRoad'), count: 1, color: '#10b981' }
         ]);
 
   // 3. Hazard Urgency & Priority Breakdown Data
@@ -300,16 +326,16 @@ const CitizenDashboard = () => {
   const hasPriorityStats = Object.values(priorityCountMap).some(v => v > 0);
   const priorityChartData = hasPriorityStats
     ? [
-        { name: 'Critical', count: priorityCountMap.Critical, color: '#ef4444' },
-        { name: 'High', count: priorityCountMap.High, color: '#f97316' },
-        { name: 'Medium', count: priorityCountMap.Medium, color: '#eab308' },
-        { name: 'Low', count: priorityCountMap.Low, color: '#10b981' },
+        { name: t('priority.Critical') || 'Critical', count: priorityCountMap.Critical, color: '#ef4444' },
+        { name: t('priority.High') || 'High', count: priorityCountMap.High, color: '#f97316' },
+        { name: t('priority.Medium') || 'Medium', count: priorityCountMap.Medium, color: '#eab308' },
+        { name: t('priority.Low') || 'Low', count: priorityCountMap.Low, color: '#10b981' },
       ].filter(item => item.count > 0)
     : [
-        { name: 'Critical', count: 2, color: '#ef4444' },
-        { name: 'High', count: 3, color: '#f97316' },
-        { name: 'Medium', count: 2, color: '#eab308' },
-        { name: 'Low', count: 1, color: '#10b981' },
+        { name: t('priority.Critical') || 'Critical', count: 2, color: '#ef4444' },
+        { name: t('priority.High') || 'High', count: 3, color: '#f97316' },
+        { name: t('priority.Medium') || 'Medium', count: 2, color: '#eab308' },
+        { name: t('priority.Low') || 'Low', count: 1, color: '#10b981' },
       ];
 
   // 4. Monthly Reporting Velocity & Repair Trend Data
@@ -390,24 +416,24 @@ const CitizenDashboard = () => {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Live Auto-Location
+                {t('citizen.liveLocation')}
               </span>
-              <span className="text-xs text-slate-400">Device GPS Source of Truth</span>
+              <span className="text-xs text-slate-400">{t('citizen.sourceOfTruth')}</span>
               {userLocation.accuracyLevel === 'good' && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">High Accuracy</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">{t('citizen.highAccuracy')}</span>
               )}
               {userLocation.accuracyLevel === 'poor' && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono">Low Accuracy</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono">{t('citizen.lowAccuracy')}</span>
               )}
             </div>
             <h3 className="text-sm sm:text-base font-bold text-white">
-              {userLocation.isLocating ? 'Acquiring Live Device GPS Coordinates...' : `📍 ${userLocation.displayName || `${userLocation.district}, Maharashtra`}`}
+              {userLocation.isLocating ? t('citizen.detecting') : `📍 ${userLocation.displayName || `${userLocation.district}, Maharashtra`}`}
             </h3>
             <p className="text-xs font-mono text-slate-400">
-              Coordinates: <strong className="text-amber-400">{userLocation.latitude.toFixed(6)}° N, {userLocation.longitude.toFixed(6)}° E</strong>
+              {t('citizen.coordinates')}: <strong className="text-amber-400">{userLocation.latitude.toFixed(6)}° N, {userLocation.longitude.toFixed(6)}° E</strong>
               {userLocation.accuracy !== null && (
                 <span className="text-slate-400 text-xs ml-2 font-mono">
-                  (GPS Accuracy: ±<strong>{userLocation.accuracy}m</strong>)
+                  ({t('citizen.gpsAccuracy')}: ±<strong>{userLocation.accuracy}m</strong>)
                 </span>
               )}
             </p>
@@ -426,14 +452,14 @@ const CitizenDashboard = () => {
             className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5"
           >
             <MapIcon className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Live Map</span>
+            <span>{t('nav.liveMap')}</span>
           </Link>
           <Link
             to="/citizen/report"
             className="btn-primary py-2 px-3.5 text-xs font-bold shadow-md shadow-amber-500/20"
           >
             <PlusCircle className="h-4 w-4" />
-            <span>Report Road Hazard</span>
+            <span>{t('citizen.reportRoadHazard')}</span>
           </Link>
           <button
             type="button"
@@ -443,7 +469,7 @@ const CitizenDashboard = () => {
             aria-label="Refresh GPS coordinates"
           >
             <Navigation className={`h-3.5 w-3.5 text-amber-400 ${userLocation.isLocating ? 'animate-spin' : ''}`} />
-            {userLocation.isLocating ? 'Detecting...' : 'Refresh GPS'}
+            {userLocation.isLocating ? t('citizen.detecting') : t('citizen.refreshGps')}
           </button>
         </div>
       </div>
@@ -459,15 +485,15 @@ const CitizenDashboard = () => {
                 <BarChart3 className="h-4 w-4" />
               </span>
               <h2 className="text-lg font-bold text-white font-['Outfit']">
-                Road Infrastructure & Analytics Intelligence
+                {t('citizen.analyticsTitle')}
               </h2>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live AI Telemetry
+                {t('citizen.liveTelemetry')}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Interactive insights on complaint lifecycle, AI defect classification, road networks, and repair velocity
+              {t('citizen.analyticsSubtitle')}
             </p>
           </div>
         </div>
@@ -481,14 +507,14 @@ const CitizenDashboard = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-white font-['Outfit']">
-                    Complaint Status & Resolution Breakdown
+                    {t('citizen.statusBreakdown')}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
-                    Lifecycle Distribution
+                    {t('citizen.lifecycleDist')}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Visualizing damage reported, complaints under review, and completed road repairs
+                  {t('citizen.statusBreakdownDesc')}
                 </p>
               </div>
               <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -561,7 +587,7 @@ const CitizenDashboard = () => {
                 <p>No complaints reported yet.</p>
                 <Link to="/citizen/report" className="btn-primary py-2 px-4 text-xs inline-flex items-center gap-1.5">
                   <PlusCircle className="h-3.5 w-3.5" />
-                  <span>Report Road Damage</span>
+                  <span>{t('citizen.reportRoadHazard')}</span>
                 </Link>
               </div>
             )}
@@ -571,14 +597,14 @@ const CitizenDashboard = () => {
           <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Resolution Velocity</span>
+                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">{t('citizen.resolutionVelocity')}</span>
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
               </div>
               <h4 className="text-3xl font-extrabold text-white font-['Outfit']">
-                {resolutionRate}% Resolved
+                {resolutionRate}% {t('citizen.resolved')}
               </h4>
               <p className="text-xs text-slate-400 mt-1.5">
-                {resolvedCount} of {totalCitizenComplaints} road defect submissions verified & repaired
+                {resolvedCount} of {totalCitizenComplaints} {t('citizen.verifiedRepaired')}
               </p>
 
               {/* Progress Bar */}
@@ -593,7 +619,7 @@ const CitizenDashboard = () => {
               {statusFilter !== 'ALL' && (
                 <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
                   <div className="text-xs text-amber-300">
-                    <span className="text-slate-400 block text-[10px] uppercase">Active KPI Filter:</span>
+                    <span className="text-slate-400 block text-[10px] uppercase">{t('citizen.activeKpiFilter')}</span>
                     <strong className="font-semibold">{statusFilter.replace('_', ' ')}</strong>
                   </div>
                   <button
@@ -601,7 +627,7 @@ const CitizenDashboard = () => {
                     onClick={() => setStatusFilter('ALL')}
                     className="text-[11px] text-amber-400 hover:text-white underline font-semibold"
                   >
-                    Clear Filter
+                    {t('citizen.clearFilter')}
                   </button>
                 </div>
               )}
@@ -613,7 +639,7 @@ const CitizenDashboard = () => {
                 className="btn-primary w-full py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-amber-500/20"
               >
                 <Camera className="h-4 w-4" />
-                <span>Report New Damage</span>
+                <span>{t('citizen.reportNew')}</span>
               </Link>
             </div>
           </div>
@@ -629,7 +655,7 @@ const CitizenDashboard = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-white font-['Outfit']">
-                    AI-Detected Road Defect Types
+                    {t('citizen.aiDefectsTitle')}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-[10px] font-bold border border-orange-500/30 flex items-center gap-1">
                     <Cpu className="h-3 w-3 text-orange-400" />
@@ -637,7 +663,7 @@ const CitizenDashboard = () => {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Automated computer vision classification of potholes, cracks, and surface degradation
+                  {t('citizen.aiDefectsSubtitle')}
                 </p>
               </div>
               <span className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
@@ -670,7 +696,7 @@ const CitizenDashboard = () => {
                   />
                   <Bar
                     dataKey="count"
-                    name="Defects Identified"
+                    name={t('common.complaints') || "Defects Identified"}
                     fill="url(#citizenDamageGrad)"
                     radius={[6, 6, 0, 0]}
                   />
@@ -695,14 +721,14 @@ const CitizenDashboard = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-white font-['Outfit']">
-                    Road Network Jurisdiction Distribution
+                    {t('citizen.roadNetworkTitle')}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30">
                     Jurisdiction Split
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Defects mapped across National, State, Municipal, and Rural road authorities
+                  {t('citizen.roadNetworkSubtitle')}
                 </p>
               </div>
               <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -776,7 +802,7 @@ const CitizenDashboard = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-white font-['Outfit']">
-                    Monthly Reporting & Resolution Trajectory
+                    {t('citizen.monthlyTrendsTitle')}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3 text-emerald-400" />
@@ -784,7 +810,7 @@ const CitizenDashboard = () => {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Tracking hazard submission volume against completed civil road restorations over time
+                  {t('citizen.monthlyTrendsSubtitle')}
                 </p>
               </div>
               <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -820,7 +846,7 @@ const CitizenDashboard = () => {
                   <Area
                     type="monotone"
                     dataKey="complaints"
-                    name="Reported Defects"
+                    name={t('citizen.myReports') || "Reported Defects"}
                     stroke="#f59e0b"
                     strokeWidth={2.5}
                     fillOpacity={1}
@@ -829,7 +855,7 @@ const CitizenDashboard = () => {
                   <Area
                     type="monotone"
                     dataKey="resolved"
-                    name="Repairs Completed"
+                    name={t('home.statsResolved') || "Repairs Completed"}
                     stroke="#10b981"
                     strokeWidth={2.5}
                     fillOpacity={1}
@@ -854,7 +880,7 @@ const CitizenDashboard = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-white font-['Outfit']">
-                    Hazard Severity & SLA
+                    {t('citizen.urgencyTitle')}
                   </h3>
                   <span className="p-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
                     <Flame className="h-3.5 w-3.5" />
@@ -865,7 +891,7 @@ const CitizenDashboard = () => {
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
-                Prioritization tiers calculated from defect depth, road traffic density, and safety risk
+                {t('citizen.urgencySubtitle')}
               </p>
 
               {/* Severity Levels */}
@@ -984,7 +1010,7 @@ const CitizenDashboard = () => {
       {/* 5. KPI STATS CARDS (CLICKABLE) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatsCard
-          title="Total Reports"
+          title={t('home.statsTotalComplaints')}
           value={stats?.total_complaints || 0}
           subtitle="All-time submissions"
           icon={FileText}
@@ -993,7 +1019,7 @@ const CitizenDashboard = () => {
           isActive={statusFilter === 'ALL'}
         />
         <StatsCard
-          title="Pending Review"
+          title={t('status.PENDING')}
           value={stats?.pending_complaints || 0}
           subtitle="Under authority triage"
           icon={Clock}
@@ -1002,7 +1028,7 @@ const CitizenDashboard = () => {
           isActive={statusFilter === 'PENDING'}
         />
         <StatsCard
-          title="Under Review"
+          title={t('status.AUTHORITY_VERIFICATION')}
           value={stats?.under_review_complaints || 0}
           subtitle="Authority assigned"
           icon={Search}
@@ -1011,7 +1037,7 @@ const CitizenDashboard = () => {
           isActive={statusFilter === 'UNDER_REVIEW'}
         />
         <StatsCard
-          title="In Repair"
+          title={t('status.IN_PROGRESS')}
           value={stats?.in_repair_complaints || 0}
           subtitle="Field engineer active"
           icon={Wrench}
@@ -1020,7 +1046,7 @@ const CitizenDashboard = () => {
           isActive={statusFilter === 'IN_REPAIR'}
         />
         <StatsCard
-          title="Resolved"
+          title={t('status.CLOSED')}
           value={stats?.completed_complaints || 0}
           subtitle="Verified & closed"
           icon={CheckCircle2}
@@ -1036,7 +1062,7 @@ const CitizenDashboard = () => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-white font-['Outfit']">
-                My Reported Complaints
+                {t('citizen.myReports')}
               </h2>
               {activeDivision !== 'ALL' && (
                 <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
@@ -1064,7 +1090,7 @@ const CitizenDashboard = () => {
                 }}
                 className="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700"
               >
-                Clear All Filters
+                {t('common.clearFilters')}
               </button>
             )}
           </div>
@@ -1116,7 +1142,7 @@ const CitizenDashboard = () => {
                       className="btn-secondary py-1.5 px-3 text-xs"
                     >
                       <Eye className="h-3.5 w-3.5 text-amber-400" />
-                      <span>Details</span>
+                      <span>{t('common.details')}</span>
                     </Link>
                   </div>
                 </div>
@@ -1128,15 +1154,15 @@ const CitizenDashboard = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
-                    <th className="py-3 px-4">Complaint ID</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Road Name</th>
-                    <th className="py-3 px-4">Location</th>
-                    <th className="py-3 px-4">Road Division</th>
-                    <th className="py-3 px-4">Damage Type & Priority</th>
-                    <th className="py-3 px-4">Assigned Authority</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4">{t('table.id')}</th>
+                    <th className="py-3 px-4">{t('table.date')}</th>
+                    <th className="py-3 px-4">{t('table.roadName')}</th>
+                    <th className="py-3 px-4">{t('table.location')}</th>
+                    <th className="py-3 px-4">{t('table.roadType')}</th>
+                    <th className="py-3 px-4">{t('table.aiDetection')}</th>
+                    <th className="py-3 px-4">{t('table.authority')}</th>
+                    <th className="py-3 px-4">{t('table.status')}</th>
+                    <th className="py-3 px-4 text-right">{t('table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -1196,7 +1222,7 @@ const CitizenDashboard = () => {
                             c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
                               'bg-amber-500/20 text-amber-300'
                           }`}>
-                          {c.priority} Priority
+                          {t(`priority.${c.priority}`) || c.priority} {t('common.priority')}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-slate-300">
@@ -1210,7 +1236,7 @@ const CitizenDashboard = () => {
                           to={`/complaints/${c.id}`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors"
                         >
-                          <Eye className="h-3.5 w-3.5" /> Details
+                          <Eye className="h-3.5 w-3.5" /> {t('common.details')}
                         </Link>
                       </td>
                     </tr>

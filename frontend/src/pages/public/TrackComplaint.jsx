@@ -17,8 +17,10 @@ import {
   Eye,
   FileText
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TrackComplaint = () => {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialId = searchParams.get('id') || '';
 
@@ -62,12 +64,14 @@ const TrackComplaint = () => {
 
       {/* Header & Search Bar */}
       <div className="text-center max-w-2xl mx-auto space-y-4">
-        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Public Status Portal</span>
+        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+          {t('track.badge', 'Public Status Portal')}
+        </span>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-['Outfit']">
-          Track Road Damage Complaint
+          {t('track.title', 'Track Road Damage Complaint')}
         </h1>
         <p className="text-xs sm:text-sm text-slate-400">
-          Enter your unique Complaint Tracking ID (e.g. <code className="text-amber-400 font-bold">RGD-2026-1001</code>) to view real-time AI damage results and progress timeline.
+          {t('track.subtitle', 'Enter your unique Complaint Tracking ID (e.g. RGD-2026-1001) to view real-time AI damage results and progress timeline.')}
         </p>
 
         <form onSubmit={handleSearch} className="flex items-center rounded-2xl bg-slate-900 border border-slate-700/80 p-1.5 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 shadow-2xl transition-all">
@@ -77,7 +81,7 @@ const TrackComplaint = () => {
             required
             value={complaintId}
             onChange={(e) => setComplaintId(e.target.value)}
-            placeholder="e.g. RGD-2026-1001"
+            placeholder={t('track.placeholder', 'e.g. RGD-2026-1001')}
             className="w-full bg-transparent px-3 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none uppercase font-mono"
           />
           <button
@@ -85,13 +89,13 @@ const TrackComplaint = () => {
             disabled={loading}
             className="btn-primary py-2.5 px-5 font-bold text-xs shrink-0"
           >
-            {loading ? 'Searching...' : 'Search'}
+            {loading ? t('track.searching', 'Searching...') : t('track.searchBtn', 'Search')}
           </button>
         </form>
 
         {/* Demo Quick ID pills */}
         <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-slate-400">
-          <span>Try Demo IDs:</span>
+          <span>{t('track.demoIds', 'Try Demo IDs:')}</span>
           {['RGD-2026-1001', 'RGD-2026-1002', 'RGD-2026-1003'].map((demoId) => (
             <button
               key={demoId}
@@ -109,18 +113,15 @@ const TrackComplaint = () => {
       </div>
 
       {/* Loading state */}
-      {loading && <Loader text="Querying complaint lifecycle audit log..." />}
+      {loading && <Loader text={t('common.loading', 'Querying complaint lifecycle audit log...')} />}
 
       {/* Error state */}
       {error && (
         <div className="max-w-xl mx-auto p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-xs text-rose-300">
           <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
           <div>
-            <strong className="font-bold">Record Not Found:</strong>
+            <strong className="font-bold">{t('track.recordNotFound', 'Record Not Found')}:</strong>
             <p className="mt-0.5">{error}</p>
-            <p className="mt-2 text-slate-400">
-              Please check the tracking ID or try one of the demo IDs above.
-            </p>
           </div>
         </div>
       )}
@@ -132,10 +133,10 @@ const TrackComplaint = () => {
             <FileText className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-white font-['Outfit']">
-            Search Any Public Road Damage Report
+            {t('track.emptyTitle', 'Search Any Public Road Damage Report')}
           </h3>
           <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-            Enter your 12-character Complaint ID to check real-time progress: computer vision severity score, assigned jurisdiction (NHAI / PWD / BMC / PMGSY), and engineer repair certifications.
+            {t('track.emptyDesc', 'Enter your 12-character Complaint ID to check real-time progress: computer vision severity score, assigned jurisdiction (NHAI / PWD / BMC / PMGSY), and engineer repair certifications.')}
           </p>
         </div>
       )}
@@ -166,13 +167,15 @@ const TrackComplaint = () => {
               </div>
 
               <div className="text-right">
-                <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Submitted On</span>
+                <span className="text-[11px] text-slate-400 uppercase tracking-wider block">
+                  {t('track.submittedOn', 'Submitted On')}
+                </span>
                 <span className="text-xs font-semibold text-slate-200">
                   {new Date(complaint.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
                 {complaint.priority && (
                   <div className="mt-2 text-xs">
-                    <span className="text-slate-400">Priority: </span>
+                    <span className="text-slate-400">{t('common.priority', 'Priority')}: </span>
                     <strong className="text-rose-400 font-bold">{complaint.priority}</strong>
                   </div>
                 )}
@@ -182,7 +185,9 @@ const TrackComplaint = () => {
             {/* Meta details grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Assigned Authority</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  {t('track.assignedAuthority', 'Assigned Authority')}
+                </span>
                 <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
                   <Building2 className="h-4 w-4 text-amber-400" />
                   {complaint.authority_name || 'Pending Assignment'}
@@ -190,7 +195,9 @@ const TrackComplaint = () => {
               </div>
 
               <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Field Engineer</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  {t('track.fieldEngineer', 'Field Engineer')}
+                </span>
                 <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
                   <HardHat className="h-4 w-4 text-cyan-400" />
                   {complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}
@@ -198,7 +205,9 @@ const TrackComplaint = () => {
               </div>
 
               <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">GPS Coordinates</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  {t('citizen.coordinates', 'GPS Coordinates')}
+                </span>
                 <p className="text-sm font-bold text-white mt-1 font-mono">
                   {complaint.latitude}, {complaint.longitude}
                 </p>
@@ -207,7 +216,7 @@ const TrackComplaint = () => {
 
             {complaint.description && (
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300">
-                <strong className="text-slate-200">Citizen Description: </strong>
+                <strong className="text-slate-200">{t('common.details', 'Citizen Description')}: </strong>
                 {complaint.description}
               </div>
             )}
@@ -222,16 +231,16 @@ const TrackComplaint = () => {
             <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
               <h3 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
                 <HardHat className="h-5 w-5 text-amber-500" />
-                Field Inspection & Repair Status
+                {t('engineer.updateStage', 'Field Inspection & Repair Status')}
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
                 <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block">Current Repair Stage</span>
+                  <span className="text-slate-400 block">{t('engineer.currentStage', 'Current Repair Stage')}</span>
                   <strong className="text-amber-400 text-sm">{complaint.repair.current_stage}</strong>
                 </div>
                 <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block">Assigned Engineer</span>
+                  <span className="text-slate-400 block">{t('common.assignedTo', 'Assigned Engineer')}</span>
                   <strong className="text-white text-sm">{complaint.repair.engineer_name || 'N/A'}</strong>
                 </div>
                 <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-800">

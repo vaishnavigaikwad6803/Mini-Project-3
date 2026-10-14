@@ -3,11 +3,13 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Sidebar from '../components/common/Sidebar';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import Loader from '../components/common/Loader';
 import { PanelLeft, Shield, Building2, Wrench, Car } from 'lucide-react';
 
 const DashboardLayout = ({ allowedRoles = [] }) => {
   const { user, isAuthenticated, loading, isAdmin, isAuthority, isEngineer } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -32,10 +34,10 @@ const DashboardLayout = ({ allowedRoles = [] }) => {
   }
 
   const getPortalLabel = () => {
-    if (isAdmin) return 'Admin Console';
-    if (isAuthority) return user?.authority_name || 'Authority Portal';
-    if (isEngineer) return 'Engineer Portal';
-    return 'Citizen Portal';
+    if (isAdmin) return t('admin.portalTitle');
+    if (isAuthority) return user?.authority_name || t('authority.portalTitle');
+    if (isEngineer) return t('engineer.portalTitle');
+    return t('citizen.portalTitle');
   };
 
   return (
@@ -55,7 +57,7 @@ const DashboardLayout = ({ allowedRoles = [] }) => {
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-colors"
         >
           <PanelLeft className="h-4 w-4 text-amber-400" />
-          <span>Menu</span>
+          <span>{t('nav.menu')}</span>
         </button>
       </div>
 

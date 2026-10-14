@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { engineerService } from '../../services/engineerService';
 import { authorityService } from '../../services/authorityService';
 import Modal from '../../components/common/Modal';
@@ -25,6 +26,7 @@ import {
 const AuthorityEngineers = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
   const [engineers, setEngineers] = useState([]);
   const [authorities, setAuthorities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,13 +129,13 @@ const AuthorityEngineers = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold border border-indigo-500/30">
-            Maintenance Personnel
+            {t('authority.engineersBadge', 'Maintenance Personnel')}
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
-            Authority Field Engineers
+            {t('authority.engineersTitle', 'Authority Field Engineers')}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Monitor active work orders, asphalt specializations, and staff workloads.
+            {t('authority.engineersSubtitle', 'Monitor active work orders, asphalt specializations, and staff workloads.')}
           </p>
         </div>
 
@@ -144,7 +146,7 @@ const AuthorityEngineers = () => {
           className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 active:scale-95"
         >
           <UserPlus className="h-4 w-4" />
-          Register New Engineer
+          {t('authority.registerNewEngineer', 'Register New Engineer')}
         </button>
       </div>
 
@@ -154,7 +156,7 @@ const AuthorityEngineers = () => {
           <Search className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Search by Engineer Name, Employee ID, Specialization, or District..."
+            placeholder={t('authority.searchEngineersPlaceholder', 'Search by Engineer Name, Employee ID, Specialization, or District...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-950 rounded-xl border border-slate-700 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
@@ -167,13 +169,17 @@ const AuthorityEngineers = () => {
       ) : filtered.length === 0 ? (
         <div className="p-8 text-center bg-slate-900 rounded-3xl border border-slate-800 space-y-3">
           <HardHat className="h-10 w-10 text-slate-600 mx-auto" />
-          <h3 className="text-sm font-semibold text-slate-300">No engineers found in jurisdiction</h3>
-          <p className="text-xs text-slate-500">Register field engineers to assign incoming road damage repair orders.</p>
+          <h3 className="text-sm font-semibold text-slate-300">
+            {t('authority.noEngineersFound', 'No engineers found in jurisdiction')}
+          </h3>
+          <p className="text-xs text-slate-500">
+            {t('authority.noEngineersDesc', 'Register field engineers to assign incoming road damage repair orders.')}
+          </p>
           <button
             onClick={openRegisterModal}
             className="btn-primary text-xs inline-flex items-center gap-1.5 shadow-md shadow-amber-500/20"
           >
-            <UserPlus className="h-4 w-4" /> Register First Engineer
+            <UserPlus className="h-4 w-4" /> {t('authority.registerFirstEngineer', 'Register First Engineer')}
           </button>
         </div>
       ) : (

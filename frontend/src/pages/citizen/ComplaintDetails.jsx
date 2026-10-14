@@ -12,6 +12,7 @@ import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import CameraCapture from '../../components/common/CameraCapture';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   MapPin,
   Building2,
@@ -27,8 +28,16 @@ import {
   FileText,
   Clock,
   ShieldCheck,
-  Trash2
+  Trash2,
+  Check
 } from 'lucide-react';
+import {
+  formatDateToDDMMYY,
+  isoToDDMMYY,
+  ddmmyyToISO,
+  formatDDMMYYInput,
+  isValidDDMMYY
+} from '../../utils/dateUtils';
 
 const REPAIR_STAGES = [
   { value: 'Inspection Pending', label: '1. Inspection Pending' },
@@ -42,6 +51,7 @@ const ComplaintDetails = () => {
   const { id } = useParams();
   const { user, isAuthority, isEngineer, isAdmin } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [complaint, setComplaint] = useState(null);
@@ -144,7 +154,7 @@ const ComplaintDetails = () => {
       if (engs.length > 0) setSelectedEngineerId(engs[0].id);
       const defaultDate = new Date();
       defaultDate.setDate(defaultDate.getDate() + 7);
-      setAssignDeadline(defaultDate.toISOString().split('T')[0]);
+      setAssignDeadline(formatDateToDDMMYY(defaultDate));
       setAssignModalOpen(true);
     } catch (err) {
       console.error("Failed to load engineers:", err);
@@ -154,10 +164,14 @@ const ComplaintDetails = () => {
   const handleAssignEngineer = async (e) => {
     e.preventDefault();
     if (!selectedEngineerId) return;
+    if (assignDeadline && !isValidDDMMYY(assignDeadline)) {
+      showToast('Please enter a valid deadline in DD/MM/YY format (e.g. 21/10/26)', 'warning');
+      return;
+    }
     setActionLoading(true);
     try {
       await engineerService.assignEngineerToComplaint(complaint.id, selectedEngineerId, assignRemarks, assignDeadline);
-      showToast('Engineer assigned successfully with deadline!', 'success');
+      showToast(`Engineer assigned successfully with deadline (${assignDeadline})!`, 'success');
       setAssignModalOpen(false);
       fetchComplaint();
     } catch (err) {
@@ -243,11 +257,11 @@ const ComplaintDetails = () => {
     }
   };
 
-  if (loading) return <Loader text="Loading complaint details & AI data..." />;
+  if (loading) return <Loader text={t('details.loadingData')} />;
 
   if (error || !complaint) {
     const errorObj = typeof error === 'object' && error !== null ? error : {
-      title: 'Complaint Not Found',
+      title: t('details.notFound'),
       message: error || `The requested complaint ID #${id} does not exist in the database.`
     };
     return (
@@ -263,14 +277,14 @@ const ComplaintDetails = () => {
             onClick={() => fetchComplaint()}
             className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-colors"
           >
-            Retry Loading
+            {t('details.retryLoading')}
           </button>
           <button
             type="button"
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all"
           >
-            <ArrowLeft className="h-4 w-4" /> Go Back
+            <ArrowLeft className="h-4 w-4" /> {t('details.goBack')}
           </button>
         </div>
       </div>
@@ -289,7 +303,7 @@ const ComplaintDetails = () => {
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> {t('common.back')}
         </button>
 
         {/* Quick Role Actions */}
@@ -299,7 +313,7 @@ const ComplaintDetails = () => {
               onClick={openAssignModal}
               className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
             >
-              <HardHat className="h-4 w-4" /> Assign Field Engineer
+              <HardHat className="h-4 w-4" /> {t('details.assignFieldEngineer')}
             </button>
           )}
 
@@ -308,7 +322,7 @@ const ComplaintDetails = () => {
               onClick={() => setVerifyModalOpen(true)}
               className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
             >
-              <ShieldCheck className="h-4 w-4" /> Verify & Close Complaint
+              <ShieldCheck className="h-4 w-4" /> {t('details.verifyClose')}
             </button>
           )}
 
@@ -317,7 +331,7 @@ const ComplaintDetails = () => {
               onClick={() => { setDeleteReason(''); setDeleteModalOpen(true); }}
               className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white font-bold text-xs border border-rose-500/30 transition-all flex items-center gap-1.5"
             >
-              <Trash2 className="h-4 w-4" /> Delete Complaint
+              <Trash2 className="h-4 w-4" /> {t('details.deleteComplaint')}
             </button>
           )}
 
@@ -327,14 +341,14 @@ const ComplaintDetails = () => {
                 onClick={() => openEngineerModal()}
                 className="px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
               >
-                <Wrench className="h-4 w-4" /> Update Stage
+                <Wrench className="h-4 w-4" /> {t('details.updateStage')}
               </button>
               {['Repair Started', 'Repair In Progress', 'Inspection Completed'].includes(complaint.status) && (
                 <button
                   onClick={() => openEngineerModal('Repair Completed')}
                   className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5"
                 >
-                  <CheckCircle2 className="h-4 w-4" /> Resolve Damage
+                  <CheckCircle2 className="h-4 w-4" /> {t('details.resolveDamage')}
                 </button>
               )}
             </div>
@@ -364,9 +378,9 @@ const ComplaintDetails = () => {
           </div>
 
           <div className="text-right">
-            <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Submitted By</span>
+            <span className="text-[11px] text-slate-400 uppercase tracking-wider block">{t('details.submittedBy')}</span>
             <span className="text-xs font-semibold text-white">
-              {complaint.citizen_name || 'Citizen'}
+              {complaint.citizen_name || t('details.citizen')}
             </span>
             <span className="text-[11px] text-slate-500 block mt-0.5">
               {new Date(complaint.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
@@ -378,11 +392,11 @@ const ComplaintDetails = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Responsible Authority
+              {t('details.responsibleAuthority')}
             </span>
             <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
               <Building2 className="h-4 w-4 text-amber-400" />
-              {complaint.authority_name || 'Pending Assignment'}
+              {complaint.authority_name || t('details.pendingAssignment')}
             </p>
             {complaint.routing_notes && (
               <p className="text-[11px] text-slate-400 mt-1">
@@ -393,46 +407,46 @@ const ComplaintDetails = () => {
 
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Assigned Field Engineer
+              {t('details.assignedEngineer')}
             </span>
             <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
               <HardHat className="h-4 w-4 text-cyan-400" />
-              {complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}
+              {complaint.repair?.engineer_name || t('details.pendingDispatch')}
             </p>
             {complaint.repair?.engineer_employee_id && (
               <p className="text-[11px] text-slate-400 mt-1">
-                Badge: {complaint.repair.engineer_employee_id}
+                {t('details.badge')} {complaint.repair.engineer_employee_id}
               </p>
             )}
             {(complaint.deadline || complaint.repair?.deadline) && (
               <p className="text-[11px] text-amber-400 font-semibold mt-1.5 flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 shrink-0" />
-                Target Deadline: {new Date(complaint.deadline || complaint.repair?.deadline).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                {t('common.targetDeadline')}: {formatDateToDDMMYY(complaint.deadline || complaint.repair?.deadline)}
               </p>
             )}
           </div>
 
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Damage Priority & GPS
+              {t('common.priority')} & GPS
             </span>
             <div className="flex items-center gap-2 mt-1">
               <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${complaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
                 complaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
                   'bg-amber-500/20 text-amber-300 border-amber-500/40'
                 }`}>
-                {complaint.priority} Priority
+                {complaint.priority}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-1 font-mono">
-              Coords: {complaint.latitude}, {complaint.longitude}
+              {t('details.coords')} {complaint.latitude}, {complaint.longitude}
             </p>
           </div>
         </div>
 
         {complaint.description && (
           <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300">
-            <strong className="text-slate-200">Citizen Description: </strong>
+            <strong className="text-slate-200">{t('details.citizenDesc')} </strong>
             {complaint.description}
           </div>
         )}
@@ -451,32 +465,32 @@ const ComplaintDetails = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white font-['Outfit']">
-                  GIS Map Location & Damage Summary
+                  {t('details.gisSummaryTitle')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Damage report submitted via interactive Maharashtra GIS Map Pin
+                  {t('details.gisSummaryDesc')}
                 </p>
               </div>
             </div>
             <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-              📍 Map Verified
+              {t('details.mapVerified')}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-2">
             <div className="p-3.5 bg-slate-800/40 rounded-2xl border border-slate-800">
-              <span className="text-slate-400 block text-[11px] font-semibold uppercase">Reported Defect</span>
+              <span className="text-slate-400 block text-[11px] font-semibold uppercase">{t('details.reportedDefect')}</span>
               <strong className="text-white block mt-1 text-sm">{complaint.primary_damage_type || 'Road Defect'}</strong>
               <p className="text-[11px] text-slate-400 mt-0.5">{complaint.road_name}</p>
             </div>
             <div className="p-3.5 bg-slate-800/40 rounded-2xl border border-slate-800">
-              <span className="text-slate-400 block text-[11px] font-semibold uppercase">Jurisdiction</span>
+              <span className="text-slate-400 block text-[11px] font-semibold uppercase">{t('table.roadType')}</span>
               <strong className="text-white block mt-1 text-sm">{complaint.road_type}</strong>
               <p className="text-[11px] text-amber-400 mt-0.5">{complaint.authority_name || 'Routing...'}</p>
             </div>
             <div className="p-3.5 bg-slate-800/40 rounded-2xl border border-slate-800">
-              <span className="text-slate-400 block text-[11px] font-semibold uppercase">Current Priority</span>
-              <strong className="text-white block mt-1 text-sm">{complaint.priority} Priority</strong>
+              <span className="text-slate-400 block text-[11px] font-semibold uppercase">{t('common.priority')}</span>
+              <strong className="text-white block mt-1 text-sm">{complaint.priority}</strong>
               <p className="text-[11px] text-cyan-400 mt-0.5 font-mono">{complaint.latitude}, {complaint.longitude}</p>
             </div>
           </div>
@@ -630,25 +644,57 @@ const ComplaintDetails = () => {
                     onClick={() => {
                       const dt = new Date();
                       dt.setDate(dt.getDate() + days);
-                      setAssignDeadline(dt.toISOString().split('T')[0]);
+                      setAssignDeadline(formatDateToDDMMYY(dt));
                     }}
-                    className="px-2 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700"
+                    className="px-2 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition-colors"
                   >
                     +{days}d
                   </button>
                 ))}
               </div>
             </div>
-            <input
-              type="date"
-              min={new Date().toISOString().split('T')[0]}
-              value={assignDeadline}
-              onChange={(e) => setAssignDeadline(e.target.value)}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
-              required
-            />
-            <p className="text-[11px] text-slate-400 mt-1">
-              Set the required completion timeline for field repair and safety clearance.
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="DD/MM/YY (e.g. 21/10/26)"
+                value={assignDeadline}
+                onChange={(e) => setAssignDeadline(formatDDMMYYInput(e.target.value))}
+                className="w-full rounded-xl bg-slate-950 border border-slate-700 p-2.5 pr-24 text-xs font-mono text-white tracking-wider focus:outline-none focus:border-amber-500"
+                required
+                maxLength={8}
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  DD/MM/YY
+                </span>
+                <label className="cursor-pointer p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors" title="Pick date from calendar">
+                  <Calendar className="h-4 w-4" />
+                  <input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={ddmmyyToISO(assignDeadline)}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setAssignDeadline(isoToDDMMYY(e.target.value));
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1.5">
+              <span>Format: <strong className="text-amber-400 font-mono">DD/MM/YY</strong></span>
+              {assignDeadline && isValidDDMMYY(assignDeadline) && (
+                <span className="text-emerald-400 font-mono font-semibold flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Due: {assignDeadline}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Set the required completion timeline in DD/MM/YY format for field repair and safety clearance.
             </p>
           </div>
 

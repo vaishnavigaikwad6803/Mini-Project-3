@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   LayoutDashboard,
   FileText,
@@ -20,49 +21,50 @@ import {
 
 const Sidebar = ({ mobileOpen = false, onCloseMobile }) => {
   const { user, isCitizen, isAuthority, isEngineer, isAdmin } = useAuth();
+  const { t } = useLanguage();
 
   const citizenNav = [
-    { to: '/citizen', icon: LayoutDashboard, label: 'Overview' },
-    { to: '/map', icon: MapPin, label: 'Live Road Map' },
+    { to: '/citizen', icon: LayoutDashboard, label: t('common.overview') },
+    { to: '/map', icon: MapPin, label: t('nav.liveMap') },
   ];
 
   const authorityNav = [
-    { to: '/authority', icon: LayoutDashboard, label: 'Authority Overview' },
-    { to: '/authority/complaints', icon: FileText, label: 'Road Complaints' },
-    { to: '/authority/engineers', icon: HardHat, label: 'Field Engineers' },
-    { to: '/map', icon: MapPin, label: 'Jurisdiction Map' },
+    { to: '/authority', icon: LayoutDashboard, label: t('authority.overview') },
+    { to: '/authority/complaints', icon: FileText, label: t('authority.roadComplaints') },
+    { to: '/authority/engineers', icon: HardHat, label: t('authority.fieldEngineers') },
+    { to: '/map', icon: MapPin, label: t('authority.jurisdictionMap') },
   ];
 
   const engineerNav = [
-    { to: '/engineer', icon: LayoutDashboard, label: 'My Workstation' },
-    { to: '/engineer/assignments', icon: Wrench, label: 'Assigned Repairs' },
-    { to: '/map', icon: MapPin, label: 'Inspection Map' },
+    { to: '/engineer', icon: LayoutDashboard, label: t('engineer.workstationTitle') },
+    { to: '/engineer/assignments', icon: Wrench, label: t('engineer.assignedRepairs') },
+    { to: '/map', icon: MapPin, label: t('engineer.inspectionMap') },
   ];
 
   const adminNav = [
-    { to: '/admin', icon: LayoutDashboard, label: 'Executive Analytics' },
-    { to: '/admin/users', icon: Users, label: 'User Directory' },
-    { to: '/admin/authorities', icon: Building2, label: 'Road Authorities' },
-    { to: '/admin/engineers', icon: HardHat, label: 'Engineer Network' },
-    { to: '/admin/complaints', icon: FileText, label: 'All Complaints' },
-    { to: '/map', icon: MapPin, label: 'National GIS Map' },
+    { to: '/admin', icon: LayoutDashboard, label: t('admin.executiveAnalytics') },
+    { to: '/admin/users', icon: Users, label: t('admin.userDirectory') },
+    { to: '/admin/authorities', icon: Building2, label: t('admin.roadAuthorities') },
+    { to: '/admin/engineers', icon: HardHat, label: t('admin.engineerNetwork') },
+    { to: '/admin/complaints', icon: FileText, label: t('admin.allComplaints') },
+    { to: '/map', icon: MapPin, label: t('admin.nationalGisMap') },
   ];
 
   let currentNav = citizenNav;
-  let roleTitle = "Citizen Portal";
+  let roleTitle = t('citizen.portalTitle');
   let roleIcon = Car;
 
   if (isAdmin) {
     currentNav = adminNav;
-    roleTitle = "Admin Console";
+    roleTitle = t('admin.portalTitle');
     roleIcon = Shield;
   } else if (isAuthority) {
     currentNav = authorityNav;
-    roleTitle = user?.authority_name || "Authority Portal";
+    roleTitle = user?.authority_name || t('authority.portalTitle');
     roleIcon = Building2;
   } else if (isEngineer) {
     currentNav = engineerNav;
-    roleTitle = "Field Engineer Portal";
+    roleTitle = t('engineer.portalTitle');
     roleIcon = Wrench;
   }
 

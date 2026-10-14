@@ -5,6 +5,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   FileText,
   Search,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 
 const MyComplaints = () => {
+  const { t } = useLanguage();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -71,7 +73,7 @@ const MyComplaints = () => {
             onClick={() => { setLoading(true); fetchMyComplaints(); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold transition-colors"
           >
-            <RefreshCw className="h-3.5 w-3.5" /> Retry
+            <RefreshCw className="h-3.5 w-3.5" /> {t('common.retry')}
           </button>
         </div>
       )}
@@ -80,13 +82,13 @@ const MyComplaints = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30">
-            Citizen Grievance Records
+            {t('citizen.myReports')}
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
-            My Submitted Complaints
+            {t('citizen.myReports')}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Track status transitions, AI damage scores, and authority repair certifications.
+            {t('citizen.activeComplaintsSubtitle')}
           </p>
         </div>
 
@@ -95,7 +97,7 @@ const MyComplaints = () => {
           className="btn-primary flex items-center gap-2 text-xs shadow-lg shadow-amber-500/20"
         >
           <PlusCircle className="h-4 w-4" />
-          <span>Report New Defect</span>
+          <span>{t('citizen.reportNew')}</span>
         </Link>
       </div>
 
@@ -107,7 +109,7 @@ const MyComplaints = () => {
           <Search className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
           <input
             type="text"
-            placeholder="Search by ID, Road Name, or District..."
+            placeholder={t('common.search')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-950 rounded-xl border border-slate-700/80 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40"
@@ -122,15 +124,15 @@ const MyComplaints = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
           >
-            <option value="ALL">All Statuses</option>
-            <option value="Submitted">Submitted</option>
-            <option value="AI Analyzed">AI Analyzed</option>
-            <option value="Authority Assigned">Authority Assigned</option>
-            <option value="Engineer Assigned">Engineer Assigned</option>
-            <option value="Inspection Completed">Inspected</option>
-            <option value="Repair In Progress">In Repair</option>
-            <option value="Repair Completed">Repair Completed</option>
-            <option value="Closed">Closed</option>
+            <option value="ALL">{t('citizen.allStatuses') || t('common.all')}</option>
+            <option value="Submitted">{t('status.PENDING')}</option>
+            <option value="AI Analyzed">{t('status.VERIFIED')}</option>
+            <option value="Authority Assigned">{t('status.AUTHORITY_VERIFICATION')}</option>
+            <option value="Engineer Assigned">{t('status.ENGINEER_ASSIGNED')}</option>
+            <option value="Inspection Completed">{t('status.VERIFIED')}</option>
+            <option value="Repair In Progress">{t('status.IN_PROGRESS')}</option>
+            <option value="Repair Completed">{t('status.REPAIR_COMPLETED')}</option>
+            <option value="Closed">{t('status.CLOSED')}</option>
           </select>
 
           <select
@@ -138,11 +140,11 @@ const MyComplaints = () => {
             onChange={(e) => setRoadTypeFilter(e.target.value)}
             className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
           >
-            <option value="ALL">All Road Types</option>
-            <option value="National Highway">National Highway</option>
-            <option value="State Highway">State Highway</option>
-            <option value="Municipal/City Road">Municipal Road</option>
-            <option value="Rural/Village Road">Rural Road</option>
+            <option value="ALL">{t('roadTypes.allRoadTypes')}</option>
+            <option value="National Highway">{t('roadTypes.nationalHighway')}</option>
+            <option value="State Highway">{t('roadTypes.stateHighway')}</option>
+            <option value="Municipal/City Road">{t('roadTypes.municipalRoad')}</option>
+            <option value="Rural/Village Road">{t('roadTypes.ruralRoad')}</option>
           </select>
 
         </div>
@@ -151,7 +153,7 @@ const MyComplaints = () => {
 
       {/* Complaints List */}
       {loading ? (
-        <Loader text="Retrieving your complaints..." />
+        <Loader text={t('common.loading')} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={FileText}
@@ -161,7 +163,7 @@ const MyComplaints = () => {
               ? "You haven't reported any road damages yet. Help keep Maharashtra roads safe by reporting road hazards!"
               : "No records match your active search filter. Try clearing your filters or search keywords."
           }
-          actionLabel={complaints.length === 0 ? "Report Road Defect" : "Clear Filters"}
+          actionLabel={complaints.length === 0 ? t('citizen.reportRoadHazard') : t('common.clearFilters')}
           actionTo={complaints.length === 0 ? "/citizen/report" : undefined}
           onAction={complaints.length > 0 ? () => { setSearchTerm(''); setStatusFilter('ALL'); setRoadTypeFilter('ALL'); } : undefined}
         />
@@ -174,15 +176,15 @@ const MyComplaints = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
-                    <th className="py-3 px-4">Complaint ID</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Road Name</th>
-                    <th className="py-3 px-4">Location</th>
-                    <th className="py-3 px-4">Road Type</th>
-                    <th className="py-3 px-4">AI Detection & Severity</th>
-                    <th className="py-3 px-4">Authority</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Action</th>
+                    <th className="py-3 px-4">{t('table.id')}</th>
+                    <th className="py-3 px-4">{t('table.date')}</th>
+                    <th className="py-3 px-4">{t('table.roadName')}</th>
+                    <th className="py-3 px-4">{t('table.location')}</th>
+                    <th className="py-3 px-4">{t('table.roadType')}</th>
+                    <th className="py-3 px-4">{t('table.aiDetection')}</th>
+                    <th className="py-3 px-4">{t('table.authority')}</th>
+                    <th className="py-3 px-4">{t('table.status')}</th>
+                    <th className="py-3 px-4 text-right">{t('table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -237,7 +239,7 @@ const MyComplaints = () => {
                           c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
                           'bg-amber-500/20 text-amber-300'
                         }`}>
-                          {c.priority} Priority
+                          {t(`priority.${c.priority}`) || c.priority} {t('common.priority')}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-slate-300">
@@ -251,7 +253,7 @@ const MyComplaints = () => {
                           to={`/complaints/${c.id}`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors"
                         >
-                          <Eye className="h-3.5 w-3.5" /> Details
+                          <Eye className="h-3.5 w-3.5" /> {t('common.details')}
                         </Link>
                       </td>
                     </tr>
@@ -286,7 +288,7 @@ const MyComplaints = () => {
                     c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
                     'bg-amber-500/20 text-amber-300'
                   }`}>
-                    {c.priority} Priority
+                    {t(`priority.${c.priority}`) || c.priority} {t('common.priority')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
@@ -295,7 +297,7 @@ const MyComplaints = () => {
                     to={`/complaints/${c.id}`}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all active:scale-95"
                   >
-                    <Eye className="h-3 w-3" /> View Details
+                    <Eye className="h-3 w-3" /> {t('common.viewDetails')}
                   </Link>
                 </div>
               </div>

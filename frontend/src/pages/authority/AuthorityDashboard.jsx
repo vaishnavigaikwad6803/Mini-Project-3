@@ -33,10 +33,19 @@ import {
   Filter,
   Calendar
 } from 'lucide-react';
+import {
+  formatDateToDDMMYY,
+  isoToDDMMYY,
+  ddmmyyToISO,
+  formatDDMMYYInput,
+  isValidDDMMYY
+} from '../../utils/dateUtils';
+import { useLanguage } from '../../context/LanguageContext';
 
 const AuthorityDashboard = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
 
   const [authority, setAuthority] = useState(null);
   const [stats, setStats] = useState(null);
@@ -107,13 +116,17 @@ const AuthorityDashboard = () => {
     setAssignRemarks(`Assigned for urgent inspection & repair on ${complaint.road_name}.`);
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 7);
-    setAssignDeadline(defaultDate.toISOString().split('T')[0]);
+    setAssignDeadline(formatDateToDDMMYY(defaultDate));
     setAssignModalOpen(true);
   };
 
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
     if (!activeComplaint || !selectedEngineerId) return;
+    if (assignDeadline && !isValidDDMMYY(assignDeadline)) {
+      showToast('Please enter a valid deadline in DD/MM/YY format (e.g. 21/10/26)', 'warning');
+      return;
+    }
     setActionLoading(true);
     try {
       await engineerService.assignEngineerToComplaint(
@@ -122,7 +135,7 @@ const AuthorityDashboard = () => {
         assignRemarks,
         assignDeadline
       );
-      showToast(`Engineer assigned to #${activeComplaint.id} successfully!`, 'success');
+      showToast(`Engineer assigned to #${activeComplaint.id} with deadline (${assignDeadline}) successfully!`, 'success');
       setAssignModalOpen(false);
       loadAuthorityData();
     } catch (err) {
@@ -270,7 +283,7 @@ const AuthorityDashboard = () => {
       {/* KPI Cards (Clickable Filter Options) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <StatsCard
-          title="Assigned Complaints"
+          title={t('authority.roadComplaints')}
           value={stats?.total_complaints || complaints.length}
           subtitle="Total in jurisdiction"
           icon={FileText}
@@ -279,7 +292,7 @@ const AuthorityDashboard = () => {
           isActive={activeFilter === 'ALL'}
         />
         <StatsCard
-          title="Action Required"
+          title={t('status.PENDING')}
           value={pendingComplaints.length}
           subtitle="Needs engineer assignment"
           icon={AlertTriangle}
@@ -288,7 +301,7 @@ const AuthorityDashboard = () => {
           isActive={activeFilter === 'ACTION_REQUIRED'}
         />
         <StatsCard
-          title="Active Repairs"
+          title={t('status.IN_PROGRESS')}
           value={activeRepairs.length}
           subtitle="Underway in field"
           icon={Wrench}
@@ -297,7 +310,7 @@ const AuthorityDashboard = () => {
           isActive={activeFilter === 'ACTIVE_REPAIRS'}
         />
         <StatsCard
-          title="Ready for Sign-Off"
+          title={t('status.AUTHORITY_VERIFICATION')}
           value={awaitingVerification.length}
           subtitle="Repair photo proof submitted"
           icon={ClipboardCheck}
@@ -306,7 +319,7 @@ const AuthorityDashboard = () => {
           isActive={activeFilter === 'READY_FOR_SIGNOFF'}
         />
         <StatsCard
-          title="Resolved Cases"
+          title={t('status.CLOSED')}
           value={stats?.completed_complaints || resolvedComplaints.length}
           subtitle="Verified & closed"
           icon={CheckCircle2}
@@ -315,7 +328,7 @@ const AuthorityDashboard = () => {
           isActive={activeFilter === 'RESOLVED'}
         />
         <StatsCard
-          title="Field Engineers"
+          title={t('authority.fieldEngineers')}
           value={engineers.length}
           subtitle="Active maintenance staff"
           icon={HardHat}
@@ -488,15 +501,15 @@ const AuthorityDashboard = () => {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                     <tr>
-                      <th className="py-3 px-4">ID</th>
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Road Name</th>
-                      <th className="py-3 px-4">Location</th>
-                      <th className="py-3 px-4">Classification & Severity</th>
-                      <th className="py-3 px-4">Status & Deadline</th>
-                      <th className="py-3 px-4">Assigned Engineer</th>
+                      <th className="py-3 px-4">{t('table.id')}</th>
+                      <th className="py-3 px-4">{t('table.date')}</th>
+                      <th className="py-3 px-4">{t('table.roadName')}</th>
+                      <th className="py-3 px-4">{t('table.location')}</th>
+                      <th className="py-3 px-4">{t('table.aiDetection')}</th>
+                      <th className="py-3 px-4">{t('table.status')} & {t('common.deadline')}</th>
+                      <th className="py-3 px-4">{t('table.engineer')}</th>
                       <th className="py-3 px-4">Proof / Cost</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                      <th className="py-3 px-4 text-right">{t('table.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
@@ -564,7 +577,7 @@ const AuthorityDashboard = () => {
                             {(c.deadline || c.repair?.deadline) && (
                               <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400 font-medium">
                                 <Calendar className="h-3 w-3 shrink-0" />
-                                <span>Due: {new Date(c.deadline || c.repair?.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                                <span>Due: {formatDateToDDMMYY(c.deadline || c.repair?.deadline)}</span>
                               </div>
                             )}
                           </td>
@@ -724,11 +737,11 @@ const AuthorityDashboard = () => {
       <Modal
         isOpen={assignModalOpen}
         onClose={() => setAssignModalOpen(false)}
-        title={`Assign Field Engineer: ${activeComplaint?.id}`}
+        title={`${t('authority.assignEngineer')}: ${activeComplaint?.id}`}
       >
         <form onSubmit={handleAssignSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-300 mb-1.5">Select Engineer</label>
+            <label className="block font-semibold text-slate-300 mb-1.5">{t('authority.selectEngineer')}</label>
             <select
               value={selectedEngineerId}
               onChange={(e) => setSelectedEngineerId(e.target.value)}
@@ -736,14 +749,14 @@ const AuthorityDashboard = () => {
             >
               {engineers.map((eng) => (
                 <option key={eng.id} value={eng.id}>
-                  {eng.full_name} ({eng.employee_id}) - {eng.designation} [Workload: {eng.active_workload}]
+                  {eng.full_name} ({eng.employee_id}) - {eng.designation} [{t('authority.workload')}: {eng.active_workload}]
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1.5">Special Instructions / Work Order</label>
+            <label className="block font-semibold text-slate-300 mb-1.5">{t('authority.remarksLabel')}</label>
             <textarea
               rows={3}
               value={assignRemarks}
@@ -755,7 +768,7 @@ const AuthorityDashboard = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block font-semibold text-slate-300">
-                Repair Completion Deadline <span className="text-amber-400">*</span>
+                {t('authority.completionDeadline')} <span className="text-amber-400">*</span>
               </label>
               <div className="flex items-center gap-1.5">
                 {[3, 7, 14, 30].map((days) => (
@@ -765,7 +778,7 @@ const AuthorityDashboard = () => {
                     onClick={() => {
                       const dt = new Date();
                       dt.setDate(dt.getDate() + days);
-                      setAssignDeadline(dt.toISOString().split('T')[0]);
+                      setAssignDeadline(formatDateToDDMMYY(dt));
                     }}
                     className="px-2 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition-colors"
                   >
@@ -774,16 +787,48 @@ const AuthorityDashboard = () => {
                 ))}
               </div>
             </div>
-            <input
-              type="date"
-              min={new Date().toISOString().split('T')[0]}
-              value={assignDeadline}
-              onChange={(e) => setAssignDeadline(e.target.value)}
-              className="input-field"
-              required
-            />
-            <p className="text-[11px] text-slate-400 mt-1">
-              Designated completion target for site inspection, material procurement, and road surface restoration.
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="DD/MM/YY (e.g. 21/10/26)"
+                value={assignDeadline}
+                onChange={(e) => setAssignDeadline(formatDDMMYYInput(e.target.value))}
+                className="input-field pr-24 font-mono text-xs tracking-wider"
+                required
+                maxLength={8}
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  DD/MM/YY
+                </span>
+                <label className="cursor-pointer p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors" title="Pick date from calendar">
+                  <Calendar className="h-4 w-4" />
+                  <input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={ddmmyyToISO(assignDeadline)}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setAssignDeadline(isoToDDMMYY(e.target.value));
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1.5">
+              <span>{t('authority.deadlineFormatHint')}</span>
+              {assignDeadline && isValidDDMMYY(assignDeadline) && (
+                <span className="text-emerald-400 font-mono font-semibold flex items-center gap-1">
+                  <Check className="h-3 w-3" /> {t('common.due')}: {assignDeadline}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Designated completion target in DD/MM/YY format for site inspection, material procurement, and road restoration.
             </p>
           </div>
 
@@ -793,14 +838,14 @@ const AuthorityDashboard = () => {
               onClick={() => setAssignModalOpen(false)}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={actionLoading}
               className="px-5 py-2 rounded-xl btn-primary text-xs shadow-md shadow-amber-500/20"
             >
-              {actionLoading ? 'Assigning...' : 'Dispatch Engineer'}
+              {actionLoading ? t('common.loading') : t('authority.assignBtn')}
             </button>
           </div>
         </form>
