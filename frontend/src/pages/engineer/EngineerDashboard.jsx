@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -11,16 +11,30 @@ import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import CameraCapture from '../../components/common/CameraCapture';
 import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  AreaChart,
+  Area,
+} from 'recharts';
+import {
   HardHat,
   Wrench,
   Clock,
   CheckCircle2,
-  Eye,
   MapPin,
   ArrowRight,
   AlertCircle,
   RefreshCw,
-  Calendar
+  Calendar,
+  TrendingUp,
+  Activity,
+  X,
 } from 'lucide-react';
 
 const REPAIR_STAGES = [
@@ -31,12 +45,36 @@ const REPAIR_STAGES = [
   { value: 'Repair Completed', label: '5. Repair Completed (Damage Resolved - Photo Required)' },
 ];
 
+const CHART_COLORS = ['#a855f7', '#f59e0b', '#06b6d4', '#10b981', '#6366f1', '#ef4444'];
+
+const DarkTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs shadow-xl">
+        {label && <p className="text-slate-400 mb-1 font-medium">{label}</p>}
+        {payload.map((p, i) => (
+          <p key={i} style={{ color: p.color || p.fill }} className="font-bold">
+            {p.name}: {p.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const FILTER_ALL = 'all';
+const FILTER_INSPECTION = 'inspection';
+const FILTER_IN_REPAIR = 'inRepair';
+const FILTER_COMPLETED = 'completed';
+
 const EngineerDashboard = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeFilter, setActiveFilter] = useState(FILTER_ALL);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -135,12 +173,57 @@ const EngineerDashboard = () => {
 
   if (loading) return <Loader text="Loading engineer workstation..." />;
 
-  const pendingInspection = assignments.filter((a) => a.status === 'Engineer Assigned' || a.status === 'Inspection Pending');
-  const inRepair = assignments.filter((a) => a.status === 'Inspection Completed' || a.status === 'Repair Started' || a.status === 'Repair In Progress');
-  const completed = assignments.filter((a) => a.status === 'Repair Completed' || a.status === 'Authority Verification' || a.status === 'Closed');
+  // ── Derived filtered lists ──
+  const pendingInspection = assignments.filter(
+    (a) => a.status === 'Engineer Assigned' || a.status === 'Inspection Pending'
+  );
+  const inRepair = assignments.filter(
+    (a) => a.status === 'Inspection Completed' || a.status === 'Repair Started' || a.status === 'Repair In Progress'
+  );
+  const completed = assignments.filter(
+    (a) => a.status === 'Repair Completed' || a.status === 'Authority Verification' || a.status === 'Closed'
+  );
+
+  const filteredAssignments = (() => {
+    switch (activeFilter) {
+      case FILTER_INSPECTION: return pendingInspection;
+      case FILTER_IN_REPAIR:  return inRepair;
+      case FILTER_COMPLETED:  return completed;
+      default:                return assignments;
+    }
+  })();
+
+  // ── Chart data ──
+  const stageChartData = [
+    { name: 'Inspection Needed', value: pendingInspection.length, fill: '#f59e0b' },
+    { name: 'In Repair',         value: inRepair.length,          fill: '#06b6d4' },
+    { name: 'Completed',         value: completed.length,         fill: '#10b981' },
+  ].filter((d) => d.value > 0);
+
+
+
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  });
+  const activityMap = {};
+  assignments.forEach((a) => {
+    if (a.created_at) {
+      const key = new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      activityMap[key] = (activityMap[key] || 0) + 1;
+    }
+  });
+  const activityData = last7.map((day) => ({ day, tasks: activityMap[day] || 0 }));
 
   const isResolvedStage = repairData.stage === 'Repair Completed';
   const hasUploadedImage = Boolean(completionImage || imagePreview || selectedComplaint?.repair?.repair_after_image);
+
+  const filterLabel = {
+    [FILTER_ALL]:        `All Assignments (${assignments.length})`,
+    [FILTER_INSPECTION]: `Inspection Needed (${pendingInspection.length})`,
+    [FILTER_IN_REPAIR]:  `Repairs in Progress (${inRepair.length})`,
+    [FILTER_COMPLETED]:  `Completed / Closed (${completed.length})`,
+  }[activeFilter];
 
   return (
     <div className="space-y-8 pb-12">
@@ -179,7 +262,100 @@ const EngineerDashboard = () => {
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* ── Data Visualizations (charts row first) ── */}
+      {assignments.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          {/* 1. Repair Stage Donut */}
+          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white font-['Outfit']">Repair Stages</h3>
+                <p className="text-[11px] text-slate-400">Current workload breakdown</p>
+              </div>
+              <span className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <Activity className="h-4 w-4" />
+              </span>
+            </div>
+            {stageChartData.length > 0 ? (
+              <>
+                <div className="h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stageChartData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={4}
+                      >
+                        {stageChartData.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<DarkTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1">
+                  {stageChartData.map((d) => (
+                    <div key={d.name} className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: d.fill }} />
+                        <span className="text-slate-400">{d.name}</span>
+                      </div>
+                      <span className="font-bold text-white">{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-52 flex items-center justify-center text-xs text-slate-500">No data yet</div>
+            )}
+          </div>
+
+          {/* 2. 7-Day Activity Sparkline */}
+          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white font-['Outfit']">Task Activity</h3>
+                <p className="text-[11px] text-slate-400">Assignments over last 7 days</p>
+              </div>
+              <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <TrendingUp className="h-4 w-4" />
+              </span>
+            </div>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={activityData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#10b981" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={9} />
+                  <YAxis stroke="#64748b" fontSize={10} allowDecimals={false} />
+                  <Tooltip content={<DarkTooltip />} />
+                  <Area
+                    type="monotone" dataKey="tasks" name="Tasks"
+                    stroke="#10b981" strokeWidth={2}
+                    fill="url(#actGrad)"
+                    dot={{ fill: '#10b981', r: 3 }}
+                    activeDot={{ r: 5, fill: '#10b981' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Clickable Stats Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Assigned"
@@ -187,6 +363,8 @@ const EngineerDashboard = () => {
           subtitle="All tasks"
           icon={HardHat}
           color="purple"
+          onClick={() => setActiveFilter(FILTER_ALL)}
+          isActive={activeFilter === FILTER_ALL}
         />
         <StatsCard
           title="Inspection Needed"
@@ -194,6 +372,8 @@ const EngineerDashboard = () => {
           subtitle="Awaiting site visit"
           icon={Clock}
           color="amber"
+          onClick={() => setActiveFilter(activeFilter === FILTER_INSPECTION ? FILTER_ALL : FILTER_INSPECTION)}
+          isActive={activeFilter === FILTER_INSPECTION}
         />
         <StatsCard
           title="Repairs in Progress"
@@ -201,6 +381,8 @@ const EngineerDashboard = () => {
           subtitle="Work underway"
           icon={Wrench}
           color="cyan"
+          onClick={() => setActiveFilter(activeFilter === FILTER_IN_REPAIR ? FILTER_ALL : FILTER_IN_REPAIR)}
+          isActive={activeFilter === FILTER_IN_REPAIR}
         />
         <StatsCard
           title="Completed / Closed"
@@ -208,33 +390,49 @@ const EngineerDashboard = () => {
           subtitle="Signed off"
           icon={CheckCircle2}
           color="emerald"
+          onClick={() => setActiveFilter(activeFilter === FILTER_COMPLETED ? FILTER_ALL : FILTER_COMPLETED)}
+          isActive={activeFilter === FILTER_COMPLETED}
         />
       </div>
 
-      {/* Assigned Tasks Table */}
+      {/* ── Filtered Assignments Table ── */}
       <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="text-base font-bold text-white font-['Outfit']">
-              My Active Repair Assignments ({assignments.length})
-            </h2>
+            <h2 className="text-base font-bold text-white font-['Outfit']">{filterLabel}</h2>
             <p className="text-xs text-slate-400">
-              Select any assignment to update stage progress or upload proof to resolve damage
+              {activeFilter === FILTER_ALL
+                ? 'Click a stat card above to filter by category'
+                : 'Click the active card again or use Clear Filter to show all'}
             </p>
           </div>
-          <Link
-            to="/engineer/assignments"
-            className="text-xs text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1"
-          >
-            Manage Operations <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            {activeFilter !== FILTER_ALL && (
+              <button
+                onClick={() => setActiveFilter(FILTER_ALL)}
+                className="flex items-center gap-1 text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" /> Clear Filter
+              </button>
+            )}
+            <Link
+              to="/engineer/assignments"
+              className="text-xs text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1"
+            >
+              Manage Operations <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
 
-        {assignments.length === 0 ? (
+        {filteredAssignments.length === 0 ? (
           <div className="p-12 text-center bg-slate-950/40 rounded-2xl border border-slate-800/80">
             <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
-            <p className="text-xs text-slate-300 font-semibold mt-2">No active repair tasks assigned.</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Tasks dispatched by road authorities will appear here.</p>
+            <p className="text-xs text-slate-300 font-semibold mt-2">
+              {activeFilter === FILTER_ALL ? 'No active repair tasks assigned.' : 'No tasks match this filter.'}
+            </p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {activeFilter === FILTER_ALL ? 'Tasks dispatched by road authorities will appear here.' : 'Try a different category or clear the filter.'}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -255,7 +453,7 @@ const EngineerDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {assignments.map((c) => {
+                  {filteredAssignments.map((c) => {
                     const canDirectResolve = ['Repair Started', 'Repair In Progress', 'Inspection Completed'].includes(c.status);
                     const isDamageCompleted = ['Repair Completed', 'Authority Verification', 'Closed'].includes(c.status);
 
@@ -355,9 +553,9 @@ const EngineerDashboard = () => {
               </table>
             </div>
 
-            {/* Mobile Card View (sm:hidden) */}
+            {/* Mobile Card View */}
             <div className="sm:hidden space-y-3">
-              {assignments.map((c) => {
+              {filteredAssignments.map((c) => {
                 const canDirectResolve = ['Repair Started', 'Repair In Progress', 'Inspection Completed'].includes(c.status);
                 const isDamageCompleted = ['Repair Completed', 'Authority Verification', 'Closed'].includes(c.status);
 
