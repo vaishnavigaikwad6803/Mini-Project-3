@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { authorityService } from '../../services/authorityService';
 import { complaintService } from '../../services/complaintService';
+import { engineerService } from '../../services/engineerService';
 import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Modal from '../../components/common/Modal';
@@ -34,6 +35,9 @@ import {
   RefreshCw,
   ClipboardCheck,
   CheckCircle2,
+  UserCog,
+  UserCheck,
+  ChevronDown,
 } from 'lucide-react';
 import { formatDateToDDMMYY } from '../../utils/dateUtils';
 import { useLanguage } from '../../context/LanguageContext';
@@ -54,6 +58,15 @@ const AuthorityComplaints = () => {
   const [deleteReason, setDeleteReason] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  // Reassign Engineer modal state
+  const [reassignModalOpen, setReassignModalOpen] = useState(false);
+  const [selectedComplaintForReassign, setSelectedComplaintForReassign] = useState(null);
+  const [engineers, setEngineers] = useState([]);
+  const [engLoading, setEngLoading] = useState(false);
+  const [selectedEngineerId, setSelectedEngineerId] = useState('');
+  const [reassignRemarks, setReassignRemarks] = useState('');
+  const [reassigning, setReassigning] = useState(false);
+
   const fetchComplaints = async () => {
     try {
       setError('');
@@ -71,6 +84,61 @@ const AuthorityComplaints = () => {
       setError('Unable to load complaints for your authority. Please check your network.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openReassignModal = async (complaint) => {
+    setSelectedComplaintForReassign(complaint);
+    setSelectedEngineerId('');
+    setReassignRemarks('');
+    setReassignModalOpen(true);
+    setEngLoading(true);
+    try {
+      let authId = user?.authority_id;
+      if (!authId) {
+        const auths = await authorityService.getAuthorities();
+        if (auths.length > 0) authId = auths[0].id;
+      }
+      const params = authId ? { authority_id: authId } : {};
+      const engs = await engineerService.getEngineers(params);
+      setEngineers(engs);
+    } catch (err) {
+      showToast('Failed to load engineers list.', 'error');
+    } finally {
+      setEngLoading(false);
+    }
+  };
+
+  const handleReassignSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedEngineerId) {
+      showToast('Please select an engineer to reassign.', 'error');
+      return;
+    }
+    if (selectedComplaintForReassign?.engineer_id && String(selectedEngineerId) === String(selectedComplaintForReassign.engineer_id)) {
+      showToast('This engineer is already assigned to the complaint.', 'error');
+      return;
+    }
+    setReassigning(true);
+    try {
+      await engineerService.assignEngineerToComplaint(
+        selectedComplaintForReassign.id,
+        selectedEngineerId,
+        reassignRemarks || 'Engineer reassigned by authority.',
+        null
+      );
+      const prevName = selectedComplaintForReassign?.engineer_name || 'previous engineer';
+      const newEng = engineers.find(e => String(e.id) === String(selectedEngineerId));
+      showToast(
+        `Engineer reassigned from ${prevName} to ${newEng?.full_name || 'new engineer'} successfully.`,
+        'success'
+      );
+      setReassignModalOpen(false);
+      fetchComplaints();
+    } catch (err) {
+      showToast(err.response?.data?.detail || 'Failed to reassign engineer.', 'error');
+    } finally {
+      setReassigning(false);
     }
   };
 
@@ -460,6 +528,7 @@ const AuthorityComplaints = () => {
                     <th className="py-3 px-4">{t('table.roadType', 'Road Type')}</th>
                     <th className="py-3 px-4">{t('table.damageType', 'AI Defect & Severity')}</th>
                     <th className="py-3 px-4">{t('common.assignedTo', 'Engineer Name')}</th>
+                    <th className="py-3 px-4 text-violet-300">Reassign Engineer</th>
                     <th className="py-3 px-4">{t('auth.citizen', 'Citizen')}</th>
                     <th className="py-3 px-4">{t('table.status', 'Status & Deadline')}</th>
                     <th className="py-3 px-4 text-right">{t('table.actions', 'Actions')}</th>
@@ -530,6 +599,18 @@ const AuthorityComplaints = () => {
                           <span className="text-slate-500 italic">Unassigned</span>
                         )}
                       </td>
+                      {/* Reassign Engineer column */}
+                      <td className="py-3.5 px-4">
+                        <button
+                          type="button"
+                          onClick={() => openReassignModal(c)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 hover:text-violet-100 font-semibold text-xs border border-violet-500/30 hover:border-violet-400/50 transition-all shadow-sm"
+                          title="Reassign to a different engineer"
+                        >
+                          <UserCog className="h-3.5 w-3.5 shrink-0" />
+                          {c.engineer_name ? 'Reassign' : 'Assign'}
+                        </button>
+                      </td>
                       <td className="py-3.5 px-4 text-slate-300">
                         {c.citizen_name || 'Citizen'}
                       </td>
@@ -597,7 +678,18 @@ const AuthorityComplaints = () => {
                 </div>
                 <div className="flex items-center justify-between gap-2 text-xs pt-1 border-t border-slate-800">
                   <span className="text-slate-400">Engineer:</span>
-                  <span className="font-semibold text-cyan-300">{c.engineer_name || 'Unassigned'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-cyan-300">{c.engineer_name || 'Unassigned'}</span>
+                    <button
+                      type="button"
+                      onClick={() => openReassignModal(c)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 font-semibold text-[10px] border border-violet-500/30 transition-colors"
+                      title="Reassign Engineer"
+                    >
+                      <UserCog className="h-3 w-3" />
+                      {c.engineer_name ? 'Reassign' : 'Assign'}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
                   {(c.status === 'Authority Verification' || c.status === 'Repair Completed') && (
@@ -674,6 +766,119 @@ const AuthorityComplaints = () => {
             >
               <Trash2 className="h-3.5 w-3.5" />
               {deleting ? t('authority.deleting', 'Deleting...') : t('authority.confirmDelete', 'Confirm Delete')}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Reassign Engineer Modal */}
+      <Modal
+        isOpen={reassignModalOpen}
+        onClose={() => setReassignModalOpen(false)}
+        title={`Reassign Engineer — ${selectedComplaintForReassign?.id}`}
+      >
+        <form onSubmit={handleReassignSubmit} className="space-y-4 text-xs">
+          {/* Current engineer info */}
+          <div className="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/30 space-y-1">
+            <p className="font-bold text-violet-300 flex items-center gap-1.5">
+              <UserCog className="h-4 w-4 shrink-0" />
+              Reassign Engineer for Complaint
+            </p>
+            <p className="text-[11px] text-slate-300">
+              Road: <strong className="text-white">{selectedComplaintForReassign?.road_name}</strong>
+              {' '}· {selectedComplaintForReassign?.district}
+            </p>
+            {selectedComplaintForReassign?.engineer_name ? (
+              <div className="mt-1.5 flex items-center gap-2 p-2 rounded-lg bg-slate-800/60 border border-slate-700">
+                <HardHat className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                <span className="text-slate-400">Current Engineer:</span>
+                <span className="font-bold text-cyan-300">{selectedComplaintForReassign.engineer_name}</span>
+                <span className="ml-auto text-[10px] text-rose-400 font-semibold">Will be removed</span>
+              </div>
+            ) : (
+              <p className="text-[11px] text-amber-400 mt-1">⚠ No engineer currently assigned.</p>
+            )}
+          </div>
+
+          {/* Engineer selector */}
+          <div>
+            <label className="block font-semibold text-slate-300 mb-1.5">
+              Select New Engineer * <span className="text-violet-400 font-normal">(Required)</span>
+            </label>
+            {engLoading ? (
+              <div className="flex items-center gap-2 py-3 text-slate-400">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading engineers...
+              </div>
+            ) : engineers.length === 0 ? (
+              <p className="text-amber-400 py-2">No engineers available for this authority.</p>
+            ) : (
+              <div className="relative">
+                <select
+                  value={selectedEngineerId}
+                  onChange={(e) => setSelectedEngineerId(e.target.value)}
+                  required
+                  className="w-full bg-slate-950 rounded-xl border border-slate-700 px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-violet-500 appearance-none pr-8"
+                >
+                  <option value="">-- Select an Engineer --</option>
+                  {engineers.map((eng) => (
+                    <option
+                      key={eng.id}
+                      value={eng.id}
+                      disabled={String(eng.id) === String(selectedComplaintForReassign?.engineer_id)}
+                    >
+                      {eng.full_name} ({eng.employee_id})
+                      {eng.active_workload !== undefined ? ` · ${eng.active_workload} active` : ''}
+                      {String(eng.id) === String(selectedComplaintForReassign?.engineer_id) ? ' [Current]' : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-3 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+              </div>
+            )}
+          </div>
+
+          {/* Preview new assignment */}
+          {selectedEngineerId && (() => {
+            const newEng = engineers.find(e => String(e.id) === String(selectedEngineerId));
+            return newEng ? (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                <UserCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                <div>
+                  <p className="text-emerald-300 font-bold text-xs">{newEng.full_name}</p>
+                  <p className="text-[10px] text-slate-400">{newEng.employee_id} · {newEng.active_workload ?? 0} active assignments</p>
+                </div>
+              </div>
+            ) : null;
+          })()}
+
+          {/* Remarks */}
+          <div>
+            <label className="block font-semibold text-slate-300 mb-1.5">Remarks <span className="text-slate-500 font-normal">(Optional)</span></label>
+            <textarea
+              rows={2}
+              value={reassignRemarks}
+              onChange={(e) => setReassignRemarks(e.target.value)}
+              placeholder="e.g. Previous engineer unavailable, reassigning based on district proximity..."
+              className="w-full bg-slate-950 rounded-xl border border-slate-700 px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-violet-500 resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setReassignModalOpen(false)}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={reassigning || !selectedEngineerId}
+              className="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-md disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+            >
+              <UserCog className="h-3.5 w-3.5" />
+              {reassigning ? 'Reassigning...' : 'Confirm Reassignment'}
             </button>
           </div>
         </form>

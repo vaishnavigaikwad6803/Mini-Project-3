@@ -222,6 +222,15 @@ def assign_engineer_to_complaint(
 
     # Check or create repair record
     repair = db.query(Repair).filter(Repair.complaint_id == complaint_id).first()
+
+    # Decrement old engineer's workload and track for notification before reassigning
+    old_eng_for_notif = None
+    if repair and repair.engineer_id and repair.engineer_id != engineer.id:
+        old_engineer = db.query(Engineer).filter(Engineer.id == repair.engineer_id).first()
+        if old_engineer:
+            old_engineer.active_workload = max(0, (old_engineer.active_workload or 1) - 1)
+            old_eng_for_notif = old_engineer
+
     if not repair:
         repair = Repair(
             complaint_id=complaint_id,
@@ -246,6 +255,8 @@ def assign_engineer_to_complaint(
 
     # Timeline entry
     timeline_remarks = f"Assigned to Engineer {engineer.user.full_name} ({engineer.employee_id})."
+    if old_eng_for_notif and old_eng_for_notif.user:
+        timeline_remarks = f"Reassigned from Engineer {old_eng_for_notif.user.full_name} ({old_eng_for_notif.employee_id}) to Engineer {engineer.user.full_name} ({engineer.employee_id})."
     if deadline_str:
         timeline_remarks += f" Deadline: {deadline_str}."
     timeline_remarks += f" Remarks: {request.remarks or 'Assigned for site inspection and repair schedule.'}"
@@ -259,6 +270,17 @@ def assign_engineer_to_complaint(
         role_name=current_user.role.value,
         remarks=timeline_remarks
     )
+
+    # Notify Old Engineer if reassigned
+    if old_eng_for_notif and old_eng_for_notif.user_id:
+        create_notification(
+            db=db,
+            user_id=old_eng_for_notif.user_id,
+            title=f"Complaint #{complaint.id} Reassigned",
+            message=f"Complaint #{complaint.id} ({complaint.road_name}) has been reassigned to Engineer {engineer.user.full_name}.",
+            complaint_id=complaint.id,
+            notif_type=NotificationType.INFO
+        )
 
     # Notify Engineer
     eng_msg = f"You have been assigned to inspect and repair {complaint.road_name} ({complaint.district}). Priority: {complaint.priority.value}."
