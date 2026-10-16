@@ -16,6 +16,7 @@ class StatusHistory(Base):
     changed_by_role = Column(String(50), nullable=True)  # System, Citizen, Authority, Engineer, Admin
     
     remarks = Column(Text, nullable=True)
+    image_url = Column(String(500), nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
 
     # Relationships

@@ -18,6 +18,7 @@ class RepairUpdateStage(BaseModel):
     materials_used: Optional[str] = None
     estimated_cost: Optional[float] = None
     actual_cost: Optional[float] = None
+    stage_image: Optional[str] = None
 
 class RepairCompletionRequest(BaseModel):
     completion_remarks: str
@@ -38,6 +39,7 @@ class RepairResponse(RepairBase):
     repair_before_image: Optional[str] = None
     repair_after_image: Optional[str] = None
     inspection_image: Optional[str] = None
+    stage_image: Optional[str] = None
     verified_by_authority_id: Optional[int] = None
     verification_remarks: Optional[str] = None
     verification_date: Optional[datetime] = None

@@ -450,6 +450,7 @@ def get_complaint_by_id(
             "completion_remarks": r.completion_remarks,
             "repair_before_image": r.repair_before_image,
             "repair_after_image": r.repair_after_image,
+            "stage_image": r.stage_image,
             "materials_used": r.materials_used,
             "estimated_cost": r.estimated_cost,
             "actual_cost": r.actual_cost,
@@ -471,6 +472,7 @@ def get_complaint_by_id(
             "to_status": h.to_status,
             "changed_by_role": h.changed_by_role,
             "remarks": h.remarks,
+            "image_url": h.image_url,
             "timestamp": h.timestamp
         }
         for h in complaint.status_history

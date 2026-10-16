@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -34,6 +34,7 @@ def format_repair_response(r: Repair) -> dict:
         "completion_remarks": r.completion_remarks,
         "repair_before_image": r.repair_before_image,
         "repair_after_image": r.repair_after_image,
+        "stage_image": r.stage_image,
         "materials_used": r.materials_used,
         "estimated_cost": r.estimated_cost,
         "actual_cost": r.actual_cost,
@@ -56,13 +57,13 @@ def get_repair_by_id(repair_id: int, db: Session = Depends(get_db)):
     return format_repair_response(repair)
 
 @router.patch("/{repair_id}/stage", response_model=RepairResponse)
-def update_repair_stage(
+async def update_repair_stage(
     repair_id: int,
-    data: RepairUpdateStage,
+    request: Request,
     current_user: User = Depends(require_engineer),
     db: Session = Depends(get_db)
 ):
-    """Engineer transitions repair through progressive milestones."""
+    """Engineer transitions repair through progressive milestones with optional photo proof."""
     repair = db.query(Repair).filter(Repair.id == repair_id).first()
     if not repair:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repair record not found.")
@@ -70,12 +71,55 @@ def update_repair_stage(
     complaint = repair.complaint
     old_stage = repair.current_stage.value
 
+    # Parse request payload (supports both JSON and multipart/form-data)
+    content_type = request.headers.get("content-type", "")
+    stage_file: Optional[UploadFile] = None
+    data_dict: dict = {}
+
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        data_dict["current_stage"] = form.get("current_stage") or form.get("stage")
+        data_dict["remarks"] = form.get("remarks")
+        data_dict["materials_used"] = form.get("materials_used")
+        actual_cost_val = form.get("actual_cost")
+        if actual_cost_val not in (None, ""):
+            try:
+                data_dict["actual_cost"] = float(actual_cost_val)
+            except (ValueError, TypeError):
+                pass
+        est_cost_val = form.get("estimated_cost")
+        if est_cost_val not in (None, ""):
+            try:
+                data_dict["estimated_cost"] = float(est_cost_val)
+            except (ValueError, TypeError):
+                pass
+        
+        file_field = form.get("stage_image") or form.get("completion_image") or form.get("image")
+        if file_field and hasattr(file_field, "filename") and file_field.filename:
+            stage_file = file_field
+    else:
+        data_dict = await request.json()
+
+    data = RepairUpdateStage(**data_dict)
+
+    uploaded_stage_image_url = None
+    if stage_file:
+        _, uploaded_stage_image_url = await save_upload_image(stage_file, subfolder="repairs")
+        repair.stage_image = uploaded_stage_image_url
+    elif data.stage_image:
+        uploaded_stage_image_url = data.stage_image
+        repair.stage_image = uploaded_stage_image_url
+
     # Strict Requirement: If marking repair as completed, repair_after_image must be present
-    if data.current_stage == RepairStage.REPAIR_COMPLETED and not repair.repair_after_image:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A photograph of the completed repair is strictly mandatory to mark the repair completed."
-        )
+    if data.current_stage == RepairStage.REPAIR_COMPLETED:
+        if uploaded_stage_image_url:
+            repair.repair_after_image = uploaded_stage_image_url
+            repair.repair_completion_date = datetime.utcnow()
+        elif not repair.repair_after_image:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A photograph of the completed repair is strictly mandatory to mark the repair completed."
+            )
 
     repair.current_stage = data.current_stage
     
@@ -86,7 +130,17 @@ def update_repair_stage(
         elif data.current_stage in [RepairStage.REPAIR_STARTED, RepairStage.REPAIR_IN_PROGRESS]:
             if not repair.repair_start_date:
                 repair.repair_start_date = datetime.utcnow()
-                
+
+    # If photo uploaded during inspection or start/progress, associate with specific columns
+    if uploaded_stage_image_url:
+        if data.current_stage == RepairStage.INSPECTION_COMPLETED:
+            repair.inspection_image = uploaded_stage_image_url
+            if not repair.inspection_date:
+                repair.inspection_date = datetime.utcnow()
+        elif data.current_stage in [RepairStage.REPAIR_STARTED, RepairStage.REPAIR_IN_PROGRESS]:
+            if not repair.repair_before_image:
+                repair.repair_before_image = uploaded_stage_image_url
+
     if data.materials_used:
         repair.materials_used = data.materials_used
     if data.estimated_cost is not None:
@@ -110,7 +164,7 @@ def update_repair_stage(
 
     db.commit()
 
-    # Timeline entry
+    # Timeline entry with stage photo proof
     record_status_change(
         db=db,
         complaint_id=complaint.id,
@@ -118,7 +172,8 @@ def update_repair_stage(
         to_status=data.current_stage.value,
         user_id=current_user.id,
         role_name="Engineer",
-        remarks=data.remarks or f"Repair stage updated to {data.current_stage.value}"
+        remarks=data.remarks or f"Repair stage updated to {data.current_stage.value}",
+        image_url=uploaded_stage_image_url
     )
 
     # Notify Citizen
@@ -158,6 +213,7 @@ async def submit_repair_completion(
     old_status = complaint.status.value
 
     repair.repair_after_image = web_url
+    repair.stage_image = web_url
     repair.completion_remarks = completion_remarks
     repair.repair_completion_date = datetime.utcnow()
     repair.current_stage = RepairStage.REPAIR_COMPLETED
@@ -176,7 +232,8 @@ async def submit_repair_completion(
         to_status=ComplaintStatus.REPAIR_COMPLETED.value,
         user_id=current_user.id,
         role_name="Engineer",
-        remarks=f"Repair completed by Engineer. Completion remarks: {completion_remarks}"
+        remarks=f"Repair completed by Engineer. Completion remarks: {completion_remarks}",
+        image_url=web_url
     )
 
     # Notify Authority Officer for verification

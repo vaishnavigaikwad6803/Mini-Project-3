@@ -11,6 +11,7 @@ class StatusHistoryResponse(BaseModel):
     to_status: str
     changed_by_role: Optional[str] = None
     remarks: Optional[str] = None
+    image_url: Optional[str] = None
     timestamp: datetime
 
     class Config:

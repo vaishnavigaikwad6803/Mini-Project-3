@@ -11,7 +11,8 @@ def record_status_change(
     from_status: Optional[str] = None,
     user_id: Optional[int] = None,
     role_name: Optional[str] = None,
-    remarks: Optional[str] = None
+    remarks: Optional[str] = None,
+    image_url: Optional[str] = None
 ) -> StatusHistory:
     """Appends an immutable audit log entry to the complaint lifecycle timeline."""
     history_entry = StatusHistory(
@@ -21,6 +22,7 @@ def record_status_change(
         changed_by_user_id=user_id,
         changed_by_role=role_name or "System",
         remarks=remarks,
+        image_url=image_url,
         timestamp=datetime.utcnow()
     )
     db.add(history_entry)

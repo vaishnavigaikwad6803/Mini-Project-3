@@ -10,13 +10,14 @@ import {
   Loader2,
   ShieldCheck,
   AlertOctagon,
-  CheckCircle2
+  CheckCircle2,
+  Upload
 } from 'lucide-react';
 import { aiService } from '../../services/aiService';
 
 /**
- * CameraCapture Component for Citizen Dashboard
- * Exclusively provides live WebRTC camera capture.
+ * CameraCapture Component
+ * Provides live WebRTC camera capture with optional file upload fallback.
  * Features: live camera stream, viewfinder crosshairs, flip camera, instant shutter capture, preview, retake, and AI road validation.
  */
 const CameraCapture = ({
@@ -30,7 +31,8 @@ const CameraCapture = ({
   title = "Captured Road Damage Photo",
   subtitle = "Ready to attach with complaint report",
   capturePrompt = "Take Live Photo of Road Damage",
-  captureDescription = "Capture the road damage directly using your device camera for immediate AI inspection."
+  captureDescription = "Capture the road damage directly using your device camera for immediate AI inspection.",
+  allowFileUpload = true,
 }) => {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState('');
@@ -47,6 +49,26 @@ const CameraCapture = ({
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const renamedFile = new File([file], `road_proof_${timestamp}.jpg`, { type: file.type || 'image/jpeg' });
+      const objUrl = URL.createObjectURL(file);
+
+      setPreviewUrl(objUrl);
+      setCameraError('');
+      stopCameraStream();
+      if (onImageCapture) {
+        onImageCapture(renamedFile, objUrl);
+      }
+      validatePhotoWithAI(renamedFile);
+    }
+    // reset input so the same file can be selected again if needed
+    if (e.target) e.target.value = '';
+  };
 
   // Sync external capturedImage if provided or cleared
   useEffect(() => {
@@ -292,6 +314,16 @@ const CameraCapture = ({
       {/* Hidden canvas for taking snapshot */}
       <canvas ref={canvasRef} className="hidden" />
 
+      {/* Hidden file input for fallback upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileInputChange}
+      />
+
       {/* 1. STATE: IMAGE PREVIEW (AFTER PHOTO IS TAKEN) */}
       {previewUrl ? (
         <div className="space-y-3 rounded-2xl bg-slate-950/80 border border-slate-800 p-4">
@@ -498,11 +530,20 @@ const CameraCapture = ({
         <div className="rounded-2xl bg-slate-950/70 border border-slate-800 p-6 text-center space-y-4">
 
           {cameraError && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start gap-2 text-left mb-2">
-              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-1">
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start justify-between gap-2 text-left mb-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>{cameraError}</span>
               </div>
+              {allowFileUpload && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs shrink-0 border border-amber-500/40"
+                >
+                  Upload File
+                </button>
+              )}
             </div>
           )}
 
@@ -520,8 +561,8 @@ const CameraCapture = ({
               </p>
             </div>
 
-            {/* Action Button: ONLY Take Live Photo */}
-            <div className="pt-2">
+            {/* Action Buttons: Live Camera or File Upload Fallback */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={() => startCamera('environment')}
@@ -530,6 +571,17 @@ const CameraCapture = ({
                 <Camera className="h-4 w-4" />
                 <span>Take Live Photo</span>
               </button>
+
+              {allowFileUpload && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors flex items-center gap-1.5 hover:text-white"
+                >
+                  <Upload className="h-3.5 w-3.5 text-slate-400" />
+                  <span>Choose Photo File</span>
+                </button>
+              )}
             </div>
 
             <span className="text-[10px] text-slate-500 font-mono block pt-1">

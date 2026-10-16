@@ -90,6 +90,29 @@ const ComplaintTimeline = ({ history = [], currentStatus = 'Submitted' }) => {
                       {step.remarks}
                     </p>
                   )}
+
+                  {step.image_url && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-700/60">
+                      <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5 mb-1.5">
+                        📸 Stage Milestone Photo Proof:
+                      </span>
+                      <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-950/80 max-w-sm group/img">
+                        <img
+                          src={step.image_url}
+                          alt={`${step.to_status} stage proof`}
+                          className="h-36 w-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+                        />
+                        <a
+                          href={step.image_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold text-white"
+                        >
+                          🔍 View Full Photo
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
               </div>

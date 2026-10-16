@@ -95,6 +95,22 @@ def ensure_schema_migrations():
                     conn.commit()
                     logger.info("Auto-migrated: Added 'is_verified' column to users table.")
 
+            # 4. Ensure image_url column in status_history table
+            if "status_history" in existing_tables:
+                sh_cols = [c["name"] for c in inspector.get_columns("status_history")]
+                if "image_url" not in sh_cols:
+                    conn.execute(text("ALTER TABLE status_history ADD COLUMN image_url VARCHAR(500)"))
+                    conn.commit()
+                    logger.info("Auto-migrated: Added 'image_url' column to status_history table.")
+
+            # 5. Ensure stage_image column in repairs table
+            if "repairs" in existing_tables:
+                repair_cols = [c["name"] for c in inspector.get_columns("repairs")]
+                if "stage_image" not in repair_cols:
+                    conn.execute(text("ALTER TABLE repairs ADD COLUMN stage_image VARCHAR(500)"))
+                    conn.commit()
+                    logger.info("Auto-migrated: Added 'stage_image' column to repairs table.")
+
     except Exception as e:
         logger.warning(f"Schema auto-migration notice: {str(e)}")
 

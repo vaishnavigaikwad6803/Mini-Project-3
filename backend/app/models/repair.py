@@ -35,6 +35,7 @@ class Repair(Base):
     
     repair_before_image = Column(String(500), nullable=True)
     repair_after_image = Column(String(500), nullable=True)
+    stage_image = Column(String(500), nullable=True)
     
     materials_used = Column(String(255), nullable=True)  # e.g., "Cold Bituminous Mix, Tack Coat, Aggregate base"
     estimated_cost = Column(Float, nullable=True)

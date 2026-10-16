@@ -7,7 +7,10 @@ export const repairService = {
   },
 
   updateRepairStage: async (repairId, stageData) => {
-    const response = await api.patch(`/repairs/${repairId}/stage`, stageData);
+    const config = stageData instanceof FormData
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : undefined;
+    const response = await api.patch(`/repairs/${repairId}/stage`, stageData, config);
     return response.data;
   },
 

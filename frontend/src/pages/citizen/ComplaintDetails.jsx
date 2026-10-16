@@ -238,6 +238,16 @@ const ComplaintDetails = () => {
 
         await repairService.submitRepairCompletion(repairId, formData);
         showToast(`Repair marked Resolved with photo proof and submitted for Authority Verification!`, 'success');
+      } else if (completionImage) {
+        const formData = new FormData();
+        formData.append('current_stage', repairData.stage);
+        formData.append('remarks', repairData.remarks || `Stage progress updated to ${repairData.stage}`);
+        if (repairData.materials_used) formData.append('materials_used', repairData.materials_used);
+        if (repairData.actual_cost) formData.append('actual_cost', repairData.actual_cost);
+        formData.append('stage_image', completionImage);
+
+        await repairService.updateRepairStage(repairId, formData);
+        showToast(`Repair stage updated to '${repairData.stage}' with photo proof!`, 'success');
       } else {
         await repairService.updateRepairStage(repairId, {
           current_stage: repairData.stage,
@@ -883,62 +893,71 @@ const ComplaintDetails = () => {
             />
           </div>
 
-          {/* When damage is completed (Repair Completed), mandatory image upload */}
-          {isEngineerResolvedStage && (
-            <div className="p-4 rounded-2xl bg-slate-950 border-2 border-emerald-500/50 space-y-3 shadow-lg">
-              <div className="flex items-center justify-between">
-                <label className="block font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
-                  📸 Upload Repaired Road Image Proof *
-                </label>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-500/30">
-                  MANDATORY FOR RESOLUTION
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                When damage repair is completed, you must upload photographic evidence of the repaired road surface. The <strong>Resolved</strong> button will be displayed once the photo is attached.
-              </p>
+          {/* Photo Capture Section - Available for Every Stage */}
+          <div className={`p-4 rounded-2xl bg-slate-950 border-2 space-y-3 shadow-lg transition-all ${
+            isEngineerResolvedStage ? 'border-emerald-500/50' : 'border-purple-500/40'
+          }`}>
+            <div className="flex items-center justify-between">
+              <label className={`block font-bold flex items-center gap-1.5 text-xs ${
+                isEngineerResolvedStage ? 'text-emerald-400' : 'text-purple-300'
+              }`}>
+                📸 {isEngineerResolvedStage ? 'Upload Repaired Road Image Proof *' : `Click Photo for Current Stage: ${repairData.stage}`}
+              </label>
+              <span className={`text-[10px] px-2 py-0.5 rounded font-extrabold border ${
+                isEngineerResolvedStage
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+              }`}>
+                {isEngineerResolvedStage ? 'MANDATORY FOR RESOLUTION' : 'PHOTO PROOF OPTION'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              {isEngineerResolvedStage
+                ? 'When damage repair is completed, you must upload photographic evidence of the repaired road surface. The Resolved button will be displayed once the photo is attached.'
+                : `Capture a live photo using the camera or select an image file to document on-site status for stage "${repairData.stage}".`}
+            </p>
 
-              <div className="space-y-2">
-                {!completionImage && !imagePreview && (
-                  <CameraCapture
-                    enableAiValidation={false}
-                    title="Repaired Road Proof"
-                    subtitle="Verify work completion"
-                    capturePrompt="Click Image"
-                    captureDescription="Take a clear live photo of the repaired road surface"
-                    hideDeviceCameraFallback={true}
-                    onImageCapture={(file) => {
-                      setCompletionImage(file);
-                      setImagePreview(URL.createObjectURL(file));
-                    }}
-                    onImageClear={() => {
+            <div className="space-y-2">
+              {!completionImage && !imagePreview && (
+                <CameraCapture
+                  enableAiValidation={false}
+                  title={`${repairData.stage} Photo Proof`}
+                  subtitle={`Field evidence for stage: ${repairData.stage}`}
+                  capturePrompt={`Click Photo for ${repairData.stage}`}
+                  captureDescription={`Take a live photo of the road site to document milestone: ${repairData.stage}`}
+                  onImageCapture={(file) => {
+                    setCompletionImage(file);
+                    setImagePreview(URL.createObjectURL(file));
+                  }}
+                  onImageClear={() => {
+                    setCompletionImage(null);
+                    setImagePreview(null);
+                  }}
+                />
+              )}
+
+              {imagePreview && (
+                <div className={`relative mt-2 rounded-xl overflow-hidden border-2 shadow-md ${
+                  isEngineerResolvedStage ? 'border-emerald-500/60' : 'border-purple-500/60'
+                }`}>
+                  <img src={imagePreview} alt="Stage Progress Photo Proof" className="h-44 w-full object-cover" />
+                  <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-slate-700 text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Photo Attached for: {repairData.stage}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setCompletionImage(null);
                       setImagePreview(null);
                     }}
-                  />
-                )}
-
-                {imagePreview && (
-                  <div className="relative mt-2 rounded-xl overflow-hidden border-2 border-emerald-500/60 shadow-md">
-                    <img src={imagePreview} alt="Repaired Road Surface Proof" className="h-44 w-full object-cover" />
-                    <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Image Attached & Verified
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCompletionImage(null);
-                        setImagePreview(null);
-                      }}
-                      className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-rose-500/90 hover:bg-rose-500 text-white text-[10px] font-bold shadow-md"
-                    >
-                      Retake Photo
-                    </button>
-                  </div>
-                )}
-              </div>
+                    className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-rose-500/90 hover:bg-rose-500 text-white text-[10px] font-bold shadow-md"
+                  >
+                    Retake / Change Photo
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Action Buttons: Conditional Display of Resolved button */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800">
@@ -974,7 +993,11 @@ const ComplaintDetails = () => {
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
                   <Wrench className="h-3.5 w-3.5" />
-                  {engineerSubmitting ? 'Updating...' : 'Save Stage Progress'}
+                  {engineerSubmitting
+                    ? 'Updating...'
+                    : completionImage
+                    ? `Save Stage Progress (${repairData.stage} with Photo)`
+                    : 'Save Stage Progress'}
                 </button>
               )}
             </div>
