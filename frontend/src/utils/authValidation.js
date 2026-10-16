@@ -25,19 +25,21 @@ export const validateEmail = (email) => {
 /**
  * Validates password and computes strength metrics
  * @param {string} password
- * @returns {{ error: string|null, score: number, label: string, color: string, rules: { minLength: boolean, hasLetter: boolean, hasNumber: boolean, hasSpecial: boolean } }}
+ * @returns {{ error: string|null, score: number, label: string, color: string, rules: { minLength: boolean, hasLower: boolean, hasUpper: boolean, hasNumber: boolean, hasSpecial: boolean } }}
  */
 export const evaluatePassword = (password) => {
   const pwd = password || '';
-  const minLength = pwd.length >= 6;
-  const hasLetter = /[a-zA-Z]/.test(pwd);
+  const minLength = pwd.length >= 8;
+  const hasLower = /[a-z]/.test(pwd);
+  const hasUpper = /[A-Z]/.test(pwd);
   const hasNumber = /[0-9]/.test(pwd);
-  const hasSpecial = /[^a-zA-Z0-9]/.test(pwd);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
 
   let score = 0;
-  if (pwd.length >= 6) score += 1;
   if (pwd.length >= 8) score += 1;
-  if (hasLetter && hasNumber) score += 1;
+  if (hasLower) score += 1;
+  if (hasUpper) score += 1;
+  if (hasNumber) score += 1;
   if (hasSpecial) score += 1;
 
   let label = 'Weak';
@@ -46,21 +48,34 @@ export const evaluatePassword = (password) => {
   if (!pwd) {
     label = 'Empty';
     color = 'bg-slate-700 text-slate-500';
-  } else if (score === 1) {
+  } else if (score <= 2) {
     label = 'Weak';
     color = 'bg-rose-500 text-rose-400';
-  } else if (score === 2) {
+  } else if (score === 3) {
     label = 'Fair';
     color = 'bg-amber-500 text-amber-400';
-  } else if (score === 3) {
+  } else if (score === 4) {
     label = 'Good';
-    color = 'bg-yellow-400 text-yellow-300';
-  } else if (score >= 4) {
+    color = 'bg-cyan-500 text-cyan-400';
+  } else if (score === 5) {
     label = 'Strong';
     color = 'bg-emerald-500 text-emerald-400';
   }
 
-  const error = !pwd ? 'Password is required.' : !minLength ? 'Password must be at least 6 characters.' : null;
+  let error = null;
+  if (!pwd) {
+    error = 'Password is required.';
+  } else if (!minLength) {
+    error = 'Password must be at least 8 characters.';
+  } else if (!hasLower) {
+    error = 'Password must include at least one lowercase letter.';
+  } else if (!hasUpper) {
+    error = 'Password must include at least one uppercase letter.';
+  } else if (!hasNumber) {
+    error = 'Password must include at least one number.';
+  } else if (!hasSpecial) {
+    error = 'Password must include at least one special character.';
+  }
 
   return {
     error,
@@ -69,7 +84,8 @@ export const evaluatePassword = (password) => {
     color,
     rules: {
       minLength,
-      hasLetter,
+      hasLower,
+      hasUpper,
       hasNumber,
       hasSpecial,
     },
@@ -82,7 +98,7 @@ export const evaluatePassword = (password) => {
  * @returns {string|null}
  */
 export const validatePhone = (phone) => {
-  if (!phone || !phone.trim()) return null; // Phone is optional
+  if (!phone || !phone.trim()) return null;
   const clean = phone.replace(/[\s\-\(\)\+]/g, '');
   if (!/^\d{10,14}$/.test(clean)) {
     return 'Please enter a valid 10-digit mobile number.';
@@ -106,8 +122,10 @@ export const parseAuthError = (err, fallbackMsg = 'Authentication request failed
     if (typeof data.detail === 'string') {
       return data.detail;
     }
+    if (typeof data.detail === 'object' && data.detail.message) {
+      return data.detail.message;
+    }
     if (Array.isArray(data.detail)) {
-      // Pydantic validation error array
       return data.detail
         .map((item) => {
           const field = item.loc ? item.loc[item.loc.length - 1] : 'Field';
@@ -115,34 +133,25 @@ export const parseAuthError = (err, fallbackMsg = 'Authentication request failed
         })
         .join(' • ');
     }
-    if (typeof data.detail === 'object') {
-      try {
-        return JSON.stringify(data.detail);
-      } catch {
-        return fallbackMsg;
-      }
-    }
   }
 
-  // Handle HTTP status codes
   const status = err.response?.status;
   if (status === 401) {
     return 'Incorrect email or password. Please verify your credentials.';
   }
   if (status === 403) {
-    return 'Account access denied or deactivated. Please contact your system administrator.';
+    return data?.detail || 'Account access restricted. Please verify your email or contact support.';
   }
   if (status === 404) {
     return 'Authentication service endpoint not reachable.';
   }
   if (status === 429) {
-    return 'Too many login attempts. Please wait a few moments before trying again.';
+    return data?.detail || 'Too many attempts. Please wait a few moments before trying again.';
   }
   if (status && status >= 500) {
     return 'RoadGuard server error encountered. Please try again shortly.';
   }
 
-  // Network / client errors
   if (err.message === 'Network Error' || !err.response) {
     return 'Unable to connect to the RoadGuard server. Please ensure the backend is running.';
   }

@@ -11,3 +11,5 @@ pillow>=10.2.0
 opencv-python>=4.9.0.80
 ultralytics>=8.1.0
 requests>=2.31.0
+email-validator>=2.0.0
+pymysql>=1.1.0

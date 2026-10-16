@@ -8,7 +8,6 @@ import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import EmptyState from '../../components/common/EmptyState';
-import CitizenSafetyImpactBadge from '../../components/common/CitizenSafetyImpactBadge';
 import { useNotifications } from '../../context/NotificationContext';
 import {
   ResponsiveContainer,
@@ -475,8 +474,6 @@ const CitizenDashboard = () => {
         </div>
       </div>
 
-      {/* Citizen Safety & Community Impact Gauge */}
-      <CitizenSafetyImpactBadge complaints={recentComplaints} />
 
       {/* 3. CITIZEN VISUAL ANALYTICS & INFRASTRUCTURE INTELLIGENCE SUITE */}
       <div className="space-y-6">

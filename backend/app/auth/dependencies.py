@@ -35,7 +35,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user account")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been deactivated. Please contact the administrator."
+        )
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account email is not verified. Please verify your email with the OTP sent to your inbox."
+        )
         
     return user
 
@@ -51,7 +59,7 @@ def get_optional_current_user(token: Optional[str] = Depends(oauth2_optional_sch
             return None
         user_id = int(user_id_str)
         user = db.query(User).filter(User.id == user_id).first()
-        if user and user.is_active:
+        if user and user.is_active and user.is_verified:
             return user
     except Exception:
         pass

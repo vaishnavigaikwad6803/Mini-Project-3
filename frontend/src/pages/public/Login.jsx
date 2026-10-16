@@ -147,6 +147,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState('');
+  const [flashMessage, setFlashMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
   // Live Telemetry & Visual Analytics State
@@ -668,6 +669,27 @@ const Login = () => {
                 </div>
               )}
 
+              {/* FLASH SUCCESS BANNER */}
+              {flashMessage && (
+                <div
+                  role="status"
+                  className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-start justify-between gap-2.5 text-xs text-emerald-300 animate-in fade-in duration-200"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <p className="leading-relaxed font-medium">{flashMessage}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFlashMessage('')}
+                    className="text-emerald-400 hover:text-emerald-200 p-1 rounded-lg"
+                    aria-label="Dismiss message"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
               {/* SERVER ERROR ALERT BANNER */}
               {serverError && (
                 <div
@@ -766,9 +788,12 @@ const Login = () => {
                       {t('auth.passwordLabel')}
                       <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                     </label>
-                    <span className="text-[11px] text-slate-400">
-                      Min. 6 characters
-                    </span>
+                    <Link
+                      to="/forgot-password"
+                      className="text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                    >
+                      {t('auth.forgotPassword', 'Forgot Password?')}
+                    </Link>
                   </div>
 
                   <div

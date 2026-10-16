@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import { authorityService } from '../../services/authorityService';
 import ComplaintMap, { isValidCoordinate } from '../../components/map/ComplaintMap';
-import SpatialAnalyticsPanel from '../../components/map/SpatialAnalyticsPanel';
 import Loader from '../../components/common/Loader';
 import {
   MapPin,
@@ -32,9 +31,6 @@ const PublicMap = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedRoadType, setSelectedRoadType] = useState('');
-  const [selectedSeverity, setSelectedSeverity] = useState('');
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -96,25 +92,6 @@ const PublicMap = () => {
 
     return { total, valid, active, inRepair, resolved, critical };
   }, [complaints]);
-
-  // Filter complaints based on user interactions in Spatial Analytics Panel
-  const filteredMapComplaints = useMemo(() => {
-    return complaints.filter((c) => {
-      if (selectedDistrict && c.district && !c.district.toLowerCase().includes(selectedDistrict.toLowerCase())) {
-        return false;
-      }
-      if (selectedRoadType && c.road_type !== selectedRoadType) {
-        return false;
-      }
-      if (selectedSeverity) {
-        const s = (c.ai_severity || c.priority || 'Medium').toLowerCase();
-        if (s !== selectedSeverity.toLowerCase()) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [complaints, selectedDistrict, selectedRoadType, selectedSeverity]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -196,17 +173,6 @@ const PublicMap = () => {
         </div>
       </div>
 
-      {/* Spatial GIS Analytics Panel */}
-      <SpatialAnalyticsPanel
-        complaints={complaints}
-        selectedDistrict={selectedDistrict}
-        onSelectDistrict={setSelectedDistrict}
-        selectedRoadType={selectedRoadType}
-        onSelectRoadType={setSelectedRoadType}
-        selectedSeverity={selectedSeverity}
-        onSelectSeverity={setSelectedSeverity}
-      />
-
       {/* Error Banner with Retry */}
       {error && (
         <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-rose-300">
@@ -243,7 +209,7 @@ const PublicMap = () => {
         </div>
       ) : (
         <ComplaintMap
-          complaints={filteredMapComplaints}
+          complaints={complaints}
           authorities={authorities}
           height="h-[620px]"
           showFilters={true}
