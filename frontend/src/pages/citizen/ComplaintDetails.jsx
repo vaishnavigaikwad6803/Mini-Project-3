@@ -8,6 +8,8 @@ import { repairService } from '../../services/repairService';
 import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import AIResultCard from '../../components/ai/AIResultCard';
+import AIDetectionRadar from '../../components/ai/AIDetectionRadar';
+import RepairBeforeAfterSlider from '../../components/common/RepairBeforeAfterSlider';
 import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
@@ -455,7 +457,10 @@ const ComplaintDetails = () => {
 
       {/* AI Road Damage Detection Card or Map Location Card */}
       {complaint.ai_result ? (
-        <AIResultCard aiResult={complaint.ai_result} originalImageUrl={complaint.image_url} />
+        <div className="space-y-6">
+          <AIResultCard aiResult={complaint.ai_result} originalImageUrl={complaint.image_url} />
+          <AIDetectionRadar aiResult={complaint.ai_result} priority={complaint.priority} roadType={complaint.road_type} />
+        </div>
       ) : (
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
@@ -549,48 +554,63 @@ const ComplaintDetails = () => {
             </div>
           </div>
 
-          {/* Before & After Photo Comparison */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="p-3 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-rose-400 flex items-center gap-1">
-                📸 Before Repair (Damage Report)
-              </span>
-              <div className="h-48 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
-                {complaint.image_url ? (
-                  <img
-                    src={complaint.image_url}
-                    alt="Before Repair"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="p-4 text-center space-y-1 text-slate-400">
-                    <MapPin className="h-6 w-6 text-amber-400 mx-auto" />
-                    <p className="text-xs font-semibold text-white">Reported via Map Location</p>
-                    <p className="text-[10px] font-mono text-slate-500">📍 {complaint.district}, Maharashtra ({complaint.latitude}, {complaint.longitude})</p>
-                  </div>
-                )}
-              </div>
+          {/* Interactive Before & After Restoration Slider */}
+          {complaint.repair.repair_after_image && complaint.image_url ? (
+            <div className="pt-2">
+              <RepairBeforeAfterSlider
+                beforeImage={complaint.image_url}
+                afterImage={complaint.repair.repair_after_image}
+                damageType={complaint.primary_damage_type || 'Road Defect'}
+                repairDate={complaint.repair.inspection_date ? new Date(complaint.repair.inspection_date).toLocaleDateString() : 'Verified & Inspected'}
+                engineerName={complaint.repair.engineer_name}
+                cost={complaint.repair.actual_cost}
+                materialsUsed={complaint.repair.materials_used}
+              />
             </div>
+          ) : (
+            /* Fallback Before & After Photo View */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div className="p-3 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-2">
+                <span className="text-xs font-bold text-rose-400 flex items-center gap-1">
+                  📸 Before Repair (Damage Report)
+                </span>
+                <div className="h-48 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
+                  {complaint.image_url ? (
+                    <img
+                      src={complaint.image_url}
+                      alt="Before Repair"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="p-4 text-center space-y-1 text-slate-400">
+                      <MapPin className="h-6 w-6 text-amber-400 mx-auto" />
+                      <p className="text-xs font-semibold text-white">Reported via Map Location</p>
+                      <p className="text-[10px] font-mono text-slate-500">📍 {complaint.district}, Maharashtra ({complaint.latitude}, {complaint.longitude})</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-            <div className="p-3 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                📸 After Repair (Field Engineer Proof)
-              </span>
-              <div className="h-48 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
-                {complaint.repair.repair_after_image ? (
-                  <img
-                    src={complaint.repair.repair_after_image}
-                    alt="After Repair"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <p className="text-xs text-slate-500 text-center p-4">
-                    Repair work in progress. Repaired surface photo will be uploaded upon completion.
-                  </p>
-                )}
+              <div className="p-3 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-2">
+                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                  📸 After Repair (Field Engineer Proof)
+                </span>
+                <div className="h-48 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
+                  {complaint.repair.repair_after_image ? (
+                    <img
+                      src={complaint.repair.repair_after_image}
+                      alt="After Repair"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <p className="text-xs text-slate-500 text-center p-4">
+                      Repair work in progress. Repaired surface photo will be uploaded upon completion.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
         </div>
       )}

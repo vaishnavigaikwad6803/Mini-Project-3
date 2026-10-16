@@ -33,6 +33,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { complaintService } from '../../services/complaintService';
+import CivicImpactSimulator from '../../components/common/CivicImpactSimulator';
 import { useLanguage } from '../../context/LanguageContext';
 
 const DAMAGE_CATEGORIES = [
@@ -362,6 +363,11 @@ const Home = () => {
               </div>
             </div>
 
+          </div>
+
+          {/* Interactive Civic & Economic ROI Impact Simulator */}
+          <div className="mt-12 max-w-6xl mx-auto text-left">
+            <CivicImpactSimulator />
           </div>
 
         </div>

@@ -12,6 +12,7 @@ import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Modal from '../../components/common/Modal';
 import ComplaintMap from '../../components/map/ComplaintMap';
 import Loader from '../../components/common/Loader';
+import AuthorityVisualSuite from '../../components/authority/AuthorityVisualSuite';
 import {
   Building2,
   HardHat,
@@ -337,6 +338,13 @@ const AuthorityDashboard = () => {
           isActive={activeFilter === 'ENGINEERS'}
         />
       </div>
+
+      {/* Authority Visual Intelligence & Operational Suite */}
+      <AuthorityVisualSuite
+        complaints={complaints}
+        engineers={engineers}
+        activeFilter={activeFilter}
+      />
 
       {/* Dynamic View for Selected KPI Option */}
       {activeFilter === 'ENGINEERS' ? (
