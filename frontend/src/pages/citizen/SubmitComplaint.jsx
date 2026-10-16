@@ -7,6 +7,7 @@ import MapPicker from '../../components/map/MapPicker';
 import AIResultCard from '../../components/ai/AIResultCard';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import CameraCapture from '../../components/common/CameraCapture';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   MapPin,
   FileText,
@@ -63,6 +64,7 @@ const DAMAGE_TYPES = [
 const SubmitComplaint = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Form State
@@ -306,7 +308,7 @@ const SubmitComplaint = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-              Report Submitted & AI Analyzed
+              {t('submit.reportSubmittedAi')}
             </span>
             <span className="text-xs text-slate-400">
               {new Date(submittedComplaint.created_at).toLocaleString()}
@@ -315,17 +317,17 @@ const SubmitComplaint = () => {
 
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit']">
-              Complaint Successfully Lodged
+              {t('submit.successTitle')}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
-              Your report has been processed by our neural damage detection engine, validated against spatial road rules, and routed to the responsible maintenance authority.
+              {t('submit.successDesc')}
             </p>
           </div>
 
           {/* Complaint Tracking ID Bar */}
           <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-inner">
             <div>
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">Official Complaint ID</span>
+              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">{t('submit.officialId')}</span>
               <span className="text-lg sm:text-xl font-mono font-extrabold text-amber-400">
                 {submittedComplaint.id}
               </span>
@@ -336,7 +338,7 @@ const SubmitComplaint = () => {
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold transition-colors active:scale-95"
             >
               {copiedId ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-amber-400" />}
-              <span>{copiedId ? 'Copied to Clipboard!' : 'Copy ID'}</span>
+              <span>{copiedId ? t('submit.copied') : t('submit.copyId')}</span>
             </button>
           </div>
         </div>
@@ -346,27 +348,27 @@ const SubmitComplaint = () => {
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-indigo-400" />
             <h3 className="text-base font-bold text-white font-['Outfit']">
-              Jurisdictional Authority Assignment
+              {t('submit.assignedAuthTitle')}
             </h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
-              <span className="text-slate-400 block text-[11px] uppercase font-bold">Assigned Authority</span>
+              <span className="text-slate-400 block text-[11px] uppercase font-bold">{t('submit.assignedAuthority')}</span>
               <strong className="text-white text-sm mt-0.5 block">
                 {submittedComplaint.authority_name || 'Assigned Road Department'}
               </strong>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
-              <span className="text-slate-400 block text-[11px] uppercase font-bold">Road Classification</span>
+              <span className="text-slate-400 block text-[11px] uppercase font-bold">{t('citizen.roadType')}</span>
               <div className="mt-1">
                 <RoadTypeBadge roadType={submittedComplaint.road_type} size="sm" />
               </div>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
-              <span className="text-slate-400 block text-[11px] uppercase font-bold">Location Jurisdiction</span>
+              <span className="text-slate-400 block text-[11px] uppercase font-bold">{t('submit.locationJurisdiction')}</span>
               <strong className="text-slate-200 mt-0.5 block truncate">
                 📍 {submittedComplaint.district}, {submittedComplaint.state}
               </strong>
@@ -375,7 +377,7 @@ const SubmitComplaint = () => {
 
           {submittedComplaint.routing_notes && (
             <p className="text-xs text-slate-400 border-t border-slate-800 pt-2.5">
-              <strong className="text-amber-400 font-semibold">Routing Reason:</strong> {submittedComplaint.routing_notes}
+              <strong className="text-amber-400 font-semibold">{t('submit.routingReason')}</strong> {submittedComplaint.routing_notes}
             </p>
           )}
         </div>
@@ -403,7 +405,7 @@ const SubmitComplaint = () => {
             onClick={handleResetForm}
             className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-colors"
           >
-            Report Another Defect
+            {t('submit.reportAnother')}
           </button>
 
           <div className="flex items-center gap-3">
@@ -411,7 +413,7 @@ const SubmitComplaint = () => {
               to={`/track?id=${encodeURIComponent(submittedComplaint.id)}`}
               className="btn-secondary text-xs px-4 py-2.5 inline-flex items-center gap-1.5"
             >
-              <span>Track Status</span>
+              <span>{t('submit.trackStatus')}</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
 
@@ -420,7 +422,7 @@ const SubmitComplaint = () => {
               className="btn-primary text-xs px-5 py-2.5 inline-flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
             >
               <Eye className="h-3.5 w-3.5" />
-              <span>View Full Details</span>
+              <span>{t('submit.viewFullDetails')}</span>
             </Link>
           </div>
         </div>
@@ -439,15 +441,15 @@ const SubmitComplaint = () => {
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/40 border border-slate-800 shadow-2xl">
         <div className="flex items-center gap-2 mb-1">
           <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1">
-            <Shield className="h-3 w-3" /> Citizen Road Reporting
+            <Shield className="h-3 w-3" /> {t('submit.citizenRoadReporting')}
           </span>
-          <span className="text-xs text-slate-400">AI-Powered Verification</span>
+          <span className="text-xs text-slate-400">{t('submit.aiVerification')}</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
-          Report Road Damage
+          {t('citizen.reportNew')}
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Upload an image of potholes or cracks with accurate GPS coordinates. Our YOLOv8 neural model evaluates defect severity and dispatches the complaint to the competent road maintenance authority.
+          {t('submit.formDesc')}
         </p>
       </div>
 
@@ -456,7 +458,7 @@ const SubmitComplaint = () => {
         <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-xs text-rose-300 animate-in fade-in">
           <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <span className="font-semibold block">Submission Error</span>
+            <span className="font-semibold block">{t('common.error')}</span>
             <span>{error}</span>
           </div>
         </div>
@@ -470,15 +472,15 @@ const SubmitComplaint = () => {
             <div>
               <h3 className="text-sm font-bold text-white font-['Outfit'] flex items-center gap-2">
                 <Camera className="h-4 w-4 text-amber-400" />
-                1. Road Defect Photo (Required for AI Detection) *
+                {t('submit.defectPhotoTitle')}
               </h3>
               <p className="text-xs text-slate-400">
-                Capture a live on-site photo of the road defect using your device camera for real-time AI damage inspection.
+                {t('submit.defectPhotoDesc')}
               </p>
             </div>
             <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Camera Capture Only
+              {t('submit.liveCameraOnly')}
             </span>
           </div>
 
@@ -527,10 +529,10 @@ const SubmitComplaint = () => {
             <div>
               <h3 className="text-sm font-bold text-white font-['Outfit'] flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-amber-400" />
-                2. Defect Geolocation (GPS & Map Coordinates) *
+                {t('submit.geolocationTitle')}
               </h3>
               <p className="text-xs text-slate-400">
-                Use your device GPS or click anywhere on the map to manually set defect coordinates.
+                {t('submit.geolocationDesc')}
               </p>
             </div>
 
@@ -549,7 +551,7 @@ const SubmitComplaint = () => {
                 }`}
               >
                 <Lock className="h-3 w-3" />
-                <span>Live GPS</span>
+                <span>{t('submit.liveGps')}</span>
               </button>
               <button
                 type="button"
@@ -561,7 +563,7 @@ const SubmitComplaint = () => {
                 }`}
               >
                 <Unlock className="h-3 w-3" />
-                <span>Manual Map</span>
+                <span>{t('submit.manualMap')}</span>
               </button>
             </div>
           </div>
@@ -622,12 +624,12 @@ const SubmitComplaint = () => {
                 {locationMode === 'gps' && gpsSuccess ? (
                   <>
                     <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                    <span>Live GPS Verified</span>
+                    <span>{t('submit.gpsVerified')}</span>
                   </>
                 ) : (
                   <>
                     <MapPin className="h-3 w-3 text-amber-400" />
-                    <span>Map Selected Coordinates</span>
+                    <span>{t('submit.mapSelectedCoords')}</span>
                   </>
                 )}
               </span>
@@ -635,11 +637,11 @@ const SubmitComplaint = () => {
 
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400 pt-1 border-t border-slate-800/80">
               <span>
-                Coordinates: <strong className="text-amber-400">{formData.latitude?.toFixed(6)}° N, {formData.longitude?.toFixed(6)}° E</strong>
+                {t('submit.coordinates')}: <strong className="text-amber-400">{formData.latitude?.toFixed(6)}° N, {formData.longitude?.toFixed(6)}° E</strong>
               </span>
               {locationMode === 'gps' && formData.accuracy !== null ? (
                 <span>
-                  GPS Precision: <strong className={formData.accuracyLevel === 'poor' ? 'text-rose-400' : 'text-emerald-400'}>±{formData.accuracy}m</strong>
+                  {t('submit.gpsPrecision')}: <strong className={formData.accuracyLevel === 'poor' ? 'text-rose-400' : 'text-emerald-400'}>±{formData.accuracy}m</strong>
                 </span>
               ) : (
                 <span className="text-slate-400">
@@ -654,27 +656,27 @@ const SubmitComplaint = () => {
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
           <h3 className="text-sm font-bold text-white font-['Outfit'] flex items-center gap-2">
             <FileText className="h-4 w-4 text-amber-400" />
-            3. Road Classification & Defect Details
+            {t('submit.roadMetadataTitle')}
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Road / Street / Highway Name *
+                {t('submit.roadNameLabel')}
               </label>
               <input
                 type="text"
                 required
                 value={formData.road_name}
                 onChange={(e) => setFormData({ ...formData, road_name: e.target.value })}
-                placeholder="e.g. Western Express Highway, SV Road, Pune Bypass"
+                placeholder={t('submit.roadNamePlaceholder')}
                 className="input-field"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Jurisdiction District (Maharashtra) *
+                {t('submit.districtLabel')}
               </label>
               <select
                 value={formData.district}
@@ -693,7 +695,7 @@ const SubmitComplaint = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Road Type / Jurisdiction Classification *
+                {t('submit.roadTypeLabel')}
               </label>
               <select
                 value={formData.road_type}
@@ -707,19 +709,19 @@ const SubmitComplaint = () => {
                 ))}
               </select>
               <p className="text-[11px] text-slate-400 mt-1">
-                Routes to: <span className="text-amber-400 font-medium">{ROAD_TYPE_OPTIONS.find(o => o.value === formData.road_type)?.authority}</span>
+                {t('submit.routesTo')} <span className="text-amber-400 font-medium">{ROAD_TYPE_OPTIONS.find(o => o.value === formData.road_type)?.authority}</span>
               </p>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Nearby Landmark / Intersection (Optional)
+                {t('submit.landmarkLabel')}
               </label>
               <input
                 type="text"
                 value={formData.landmark}
                 onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
-                placeholder="e.g. Near Metro Pillar #42, Opp. Flyover Exit"
+                placeholder={t('submit.landmarkPlaceholder')}
                 className="input-field"
               />
             </div>
@@ -728,7 +730,7 @@ const SubmitComplaint = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Observed Defect Type *
+                {t('submit.observedDefectLabel')}
               </label>
               <select
                 value={formData.damage_type}
@@ -745,30 +747,30 @@ const SubmitComplaint = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Estimated Priority Level *
+                {t('submit.priorityLabel')}
               </label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                 className="input-field cursor-pointer"
               >
-                <option value="Critical">Critical (Immediate hazard to traffic/life)</option>
-                <option value="High">High (Deep pothole / structural failure)</option>
-                <option value="Medium">Medium (Moderate surface crack/rutting)</option>
-                <option value="Low">Low (Minor wear / preventive maintenance)</option>
+                <option value="Critical">{t('submit.priorityCritical')}</option>
+                <option value="High">{t('submit.priorityHigh')}</option>
+                <option value="Medium">{t('submit.priorityMedium')}</option>
+                <option value="Low">{t('submit.priorityLow')}</option>
               </select>
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Defect Description & Context Notes
+              {t('submit.descLabel')}
             </label>
             <textarea
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Provide additional details regarding pothole depth, waterlogging, or surrounding traffic hazards..."
+              placeholder={t('submit.descPlaceholder')}
               className="input-field"
             />
           </div>
@@ -784,12 +786,12 @@ const SubmitComplaint = () => {
             {loading ? (
               <span className="flex items-center gap-2 font-bold">
                 <span className="h-4 w-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                Analyzing Road Defect with YOLOv8 & Routing to Authority...
+                {t('submit.submitting')}
               </span>
             ) : (
               <>
                 <CheckCircle2 className="h-5 w-5" />
-                <span>Submit Road Damage Report & Run AI Detection</span>
+                <span>{t('submit.submitBtn')}</span>
               </>
             )}
           </button>

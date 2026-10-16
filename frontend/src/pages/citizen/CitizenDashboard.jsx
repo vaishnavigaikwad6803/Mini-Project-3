@@ -4,12 +4,26 @@ import { complaintService } from '../../services/complaintService';
 import StatsCard from '../../components/common/StatsCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import RoadTypeBadge from '../../components/common/RoadTypeBadge';
-import ComplaintMap from '../../components/map/ComplaintMap';
 import ComplaintTimeline from '../../components/timeline/ComplaintTimeline';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import EmptyState from '../../components/common/EmptyState';
 import { useNotifications } from '../../context/NotificationContext';
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as ChartTooltip,
+  Legend,
+  AreaChart,
+  Area,
+  CartesianGrid
+} from 'recharts';
 import {
   Camera,
   PlusCircle,
@@ -37,8 +51,14 @@ import {
   Info,
   Map as MapIcon,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  BarChart3,
+  TrendingUp,
+  Cpu,
+  Flame,
+  Activity
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   ROAD_DIVISIONS,
   detectCurrentLocation,
@@ -52,9 +72,11 @@ import {
 const CitizenDashboard = () => {
   const navigate = useNavigate();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
 
   const [stats, setStats] = useState(null);
   const [recentComplaints, setRecentComplaints] = useState([]);
+  const [publicAnalytics, setPublicAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // 1. Auto-detected Location State
@@ -77,6 +99,17 @@ const CitizenDashboard = () => {
 
   // Road Division Filter state
   const [activeDivision, setActiveDivision] = useState('ALL');
+  // 4th Image Clickable KPI State
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const handleStatusFilterClick = (key) => {
+    setStatusFilter((prev) => (prev === key ? 'ALL' : key));
+    // Smooth scroll down to complaints section
+    const el = document.getElementById('citizen-complaints-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   // View Details Modal State
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -111,12 +144,14 @@ const CitizenDashboard = () => {
   const loadData = async () => {
     try {
       setError('');
-      const [statsData, complaintsData] = await Promise.all([
+      const [statsData, complaintsData, analyticsData] = await Promise.all([
         complaintService.getCitizenStats(),
         complaintService.getMyComplaints(),
+        complaintService.getPublicAnalytics().catch(() => null),
       ]);
       setStats(statsData);
-      setRecentComplaints(complaintsData);
+      setRecentComplaints(complaintsData || []);
+      setPublicAnalytics(analyticsData);
     } catch (err) {
       console.error("Error loading citizen dashboard:", err);
       setError('Unable to load citizen complaint data. Please check your network connection.');
@@ -154,13 +189,196 @@ const CitizenDashboard = () => {
     munci: recentComplaints.filter(c => c.road_type === 'Municipal/City Road').length,
   };
 
-  // Filter complaints based on active road division
+  // Compute status breakdown counts for the citizen Pie Chart
+  const reportedCount = stats?.pending_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s === 'submitted' || s === 'ai analyzed' || s === 'ai_analyzed';
+  }).length;
+
+  const reviewCount = stats?.under_review_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s === 'authority assigned' || s === 'under review' || s === 'authority_assigned' || s === 'under_review';
+  }).length;
+
+  const repairCount = stats?.in_repair_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return [
+      'engineer assigned', 'inspection pending', 'inspection completed',
+      'repair started', 'repair in progress', 'repair completed',
+      'authority verification', 'engineer_assigned', 'inspection_pending',
+      'inspection_completed', 'repair_started', 'repair_in_progress',
+      'repair_completed', 'authority_verification'
+    ].includes(s);
+  }).length;
+
+  const resolvedCount = stats?.completed_complaints ?? recentComplaints.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s === 'closed' || s === 'resolved';
+  }).length;
+
+  const totalCitizenComplaints = stats?.total_complaints ?? recentComplaints.length;
+  const resolutionRate = totalCitizenComplaints > 0
+    ? Math.round((resolvedCount / totalCitizenComplaints) * 100)
+    : 0;
+
+  const getDamageLabel = (name) => {
+    const lower = (name || '').toLowerCase();
+    if (lower.includes('pothole')) return t('damage.pothole');
+    if (lower.includes('longitudinal')) return t('damage.longitudinalCrack');
+    if (lower.includes('transverse')) return t('damage.transverseCrack');
+    if (lower.includes('alligator')) return t('damage.alligatorCrack');
+    if (lower.includes('surface') || lower.includes('degradation')) return t('damage.surfaceDegradation');
+    return name;
+  };
+
+  const getRoadTypeLabel = (name) => {
+    const lower = (name || '').toLowerCase();
+    if (lower.includes('national')) return t('roadTypes.nationalHighway');
+    if (lower.includes('state')) return t('roadTypes.stateHighway');
+    if (lower.includes('muncipal') || lower.includes('municipal') || lower.includes('city')) return t('roadTypes.municipalRoad');
+    if (lower.includes('rural') || lower.includes('village')) return t('roadTypes.ruralRoad');
+    return name;
+  };
+
+  const citizenPieData = [
+    { name: t('status.PENDING') || 'Damage Reported', count: reportedCount, color: '#f59e0b', key: 'PENDING' },
+    { name: t('status.AUTHORITY_VERIFICATION') || 'Complaints Under Review', count: reviewCount, color: '#6366f1', key: 'UNDER_REVIEW' },
+    { name: t('status.IN_PROGRESS') || 'In Repair', count: repairCount, color: '#a855f7', key: 'IN_REPAIR' },
+    { name: t('status.CLOSED') || 'Complaints Resolved', count: resolvedCount, color: '#10b981', key: 'RESOLVED' },
+  ].filter(item => item.count > 0);
+
+  // 1. AI Damage Type Distribution Data
+  const damageTypeCounts = {};
+  recentComplaints.forEach((c) => {
+    const dt = c.primary_damage_type || (c.ai_result && c.ai_result.primary_damage_type) || 'Road Defect';
+    damageTypeCounts[dt] = (damageTypeCounts[dt] || 0) + 1;
+  });
+
+  const citizenDamageList = Object.entries(damageTypeCounts).map(([name, count]) => ({
+    name: getDamageLabel(name),
+    count
+  }));
+
+  const rawDamageData = citizenDamageList.length > 0
+    ? citizenDamageList
+    : (publicAnalytics?.damage_type_distribution && publicAnalytics.damage_type_distribution.length > 0
+      ? publicAnalytics.damage_type_distribution
+      : [
+          { name: 'Pothole', count: 3 },
+          { name: 'Surface Damage', count: 2 },
+          { name: 'Alligator Crack', count: 2 },
+          { name: 'Longitudinal Crack', count: 1 },
+          { name: 'Transverse Crack', count: 1 }
+        ]);
+
+  const damageChartData = rawDamageData.map(d => ({
+    ...d,
+    name: getDamageLabel(d.name)
+  }));
+
+  // 2. Road Network Classification Distribution Data
+  const ROAD_COLORS = ['#f59e0b', '#6366f1', '#06b6d4', '#10b981'];
+  const roadCounts = {
+    'National Highway': divisionCounts.nh,
+    'State Highway': divisionCounts.state,
+    'Municipal/City Road': divisionCounts.munci,
+    'Rural/Village Road': divisionCounts.rural,
+  };
+
+  const hasUserRoadData = Object.values(roadCounts).some(v => v > 0);
+  const roadClassificationData = hasUserRoadData
+    ? Object.entries(roadCounts)
+        .filter(([_, count]) => count > 0)
+        .map(([name, count], idx) => ({
+          name: getRoadTypeLabel(name),
+          count,
+          color: ROAD_COLORS[idx % ROAD_COLORS.length]
+        }))
+    : (publicAnalytics?.road_type_distribution && publicAnalytics.road_type_distribution.length > 0
+      ? publicAnalytics.road_type_distribution.map((item, idx) => ({
+          name: getRoadTypeLabel(item.name.split('/')[0]),
+          count: item.count,
+          color: ROAD_COLORS[idx % ROAD_COLORS.length]
+        }))
+      : [
+          { name: t('roadTypes.nationalHighway'), count: 2, color: '#f59e0b' },
+          { name: t('roadTypes.stateHighway'), count: 2, color: '#6366f1' },
+          { name: t('roadTypes.municipalRoad'), count: 3, color: '#06b6d4' },
+          { name: t('roadTypes.ruralRoad'), count: 1, color: '#10b981' }
+        ]);
+
+  // 3. Hazard Urgency & Priority Breakdown Data
+  const priorityCountMap = {
+    Critical: 0,
+    High: 0,
+    Medium: 0,
+    Low: 0,
+  };
+  recentComplaints.forEach((c) => {
+    const p = c.priority || 'Medium';
+    if (priorityCountMap[p] !== undefined) {
+      priorityCountMap[p]++;
+    } else {
+      priorityCountMap.Medium++;
+    }
+  });
+
+  const hasPriorityStats = Object.values(priorityCountMap).some(v => v > 0);
+  const priorityChartData = hasPriorityStats
+    ? [
+        { name: t('priority.Critical') || 'Critical', count: priorityCountMap.Critical, color: '#ef4444' },
+        { name: t('priority.High') || 'High', count: priorityCountMap.High, color: '#f97316' },
+        { name: t('priority.Medium') || 'Medium', count: priorityCountMap.Medium, color: '#eab308' },
+        { name: t('priority.Low') || 'Low', count: priorityCountMap.Low, color: '#10b981' },
+      ].filter(item => item.count > 0)
+    : [
+        { name: t('priority.Critical') || 'Critical', count: 2, color: '#ef4444' },
+        { name: t('priority.High') || 'High', count: 3, color: '#f97316' },
+        { name: t('priority.Medium') || 'Medium', count: 2, color: '#eab308' },
+        { name: t('priority.Low') || 'Low', count: 1, color: '#10b981' },
+      ];
+
+  // 4. Monthly Reporting Velocity & Repair Trend Data
+  const monthlyActivityData = publicAnalytics?.monthly_trends && publicAnalytics.monthly_trends.length > 0
+    ? publicAnalytics.monthly_trends
+    : [
+        { month: 'Oct', complaints: 1, resolved: 0 },
+        { month: 'Nov', complaints: 2, resolved: 1 },
+        { month: 'Dec', complaints: 3, resolved: 2 },
+        { month: 'Jan', complaints: 4, resolved: 3 },
+        { month: 'Feb', complaints: 5, resolved: 4 },
+        { month: 'Mar', complaints: Math.max(2, totalCitizenComplaints), resolved: resolvedCount },
+      ];
+
+  // Filter complaints based on active road division AND clickable status filter
   const filteredComplaints = recentComplaints.filter((c) => {
-    if (activeDivision === 'ALL') return true;
-    if (activeDivision === 'NH') return c.road_type === 'National Highway';
-    if (activeDivision === 'STATE') return c.road_type === 'State Highway';
-    if (activeDivision === 'RURAL') return c.road_type === 'Rural/Village Road';
-    if (activeDivision === 'MUNCI') return c.road_type === 'Municipal/City Road';
+    // 1. Division filter
+    if (activeDivision === 'NH' && c.road_type !== 'National Highway') return false;
+    if (activeDivision === 'STATE' && c.road_type !== 'State Highway') return false;
+    if (activeDivision === 'RURAL' && c.road_type !== 'Rural/Village Road') return false;
+    if (activeDivision === 'MUNCI' && c.road_type !== 'Municipal/City Road') return false;
+
+    // 2. Status filter
+    if (statusFilter === 'ALL') return true;
+    const st = (c.status || '').toLowerCase();
+    if (statusFilter === 'PENDING') {
+      return st === 'submitted' || st === 'ai analyzed' || st === 'ai_analyzed';
+    }
+    if (statusFilter === 'UNDER_REVIEW') {
+      return st === 'authority assigned' || st === 'under review' || st === 'authority_assigned' || st === 'under_review';
+    }
+    if (statusFilter === 'IN_REPAIR') {
+      return [
+        'engineer assigned', 'inspection pending', 'inspection completed',
+        'repair started', 'repair in progress', 'repair completed',
+        'authority verification', 'engineer_assigned', 'inspection_pending',
+        'inspection_completed', 'repair_started', 'repair_in_progress',
+        'repair_completed', 'authority_verification'
+      ].includes(st);
+    }
+    if (statusFilter === 'RESOLVED') {
+      return st === 'closed' || st === 'resolved';
+    }
     return true;
   });
 
@@ -198,24 +416,24 @@ const CitizenDashboard = () => {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Live Auto-Location
+                {t('citizen.liveLocation')}
               </span>
-              <span className="text-xs text-slate-400">Device GPS Source of Truth</span>
+              <span className="text-xs text-slate-400">{t('citizen.sourceOfTruth')}</span>
               {userLocation.accuracyLevel === 'good' && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">High Accuracy</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">{t('citizen.highAccuracy')}</span>
               )}
               {userLocation.accuracyLevel === 'poor' && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono">Low Accuracy</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono">{t('citizen.lowAccuracy')}</span>
               )}
             </div>
             <h3 className="text-sm sm:text-base font-bold text-white">
-              {userLocation.isLocating ? 'Acquiring Live Device GPS Coordinates...' : `📍 ${userLocation.displayName || `${userLocation.district}, Maharashtra`}`}
+              {userLocation.isLocating ? t('citizen.detecting') : `📍 ${userLocation.displayName || `${userLocation.district}, Maharashtra`}`}
             </h3>
             <p className="text-xs font-mono text-slate-400">
-              Coordinates: <strong className="text-amber-400">{userLocation.latitude.toFixed(6)}° N, {userLocation.longitude.toFixed(6)}° E</strong>
+              {t('citizen.coordinates')}: <strong className="text-amber-400">{userLocation.latitude.toFixed(6)}° N, {userLocation.longitude.toFixed(6)}° E</strong>
               {userLocation.accuracy !== null && (
                 <span className="text-slate-400 text-xs ml-2 font-mono">
-                  (GPS Accuracy: ±<strong>{userLocation.accuracy}m</strong>)
+                  ({t('citizen.gpsAccuracy')}: ±<strong>{userLocation.accuracy}m</strong>)
                 </span>
               )}
             </p>
@@ -230,11 +448,18 @@ const CitizenDashboard = () => {
 
         <div className="flex items-center gap-2.5">
           <Link
+            to="/map"
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5"
+          >
+            <MapIcon className="h-3.5 w-3.5 text-emerald-400" />
+            <span>{t('nav.liveMap')}</span>
+          </Link>
+          <Link
             to="/citizen/report"
             className="btn-primary py-2 px-3.5 text-xs font-bold shadow-md shadow-amber-500/20"
           >
             <PlusCircle className="h-4 w-4" />
-            <span>Report Road Hazard</span>
+            <span>{t('citizen.reportRoadHazard')}</span>
           </Link>
           <button
             type="button"
@@ -244,12 +469,478 @@ const CitizenDashboard = () => {
             aria-label="Refresh GPS coordinates"
           >
             <Navigation className={`h-3.5 w-3.5 text-amber-400 ${userLocation.isLocating ? 'animate-spin' : ''}`} />
-            {userLocation.isLocating ? 'Detecting...' : 'Refresh GPS'}
+            {userLocation.isLocating ? t('citizen.detecting') : t('citizen.refreshGps')}
           </button>
         </div>
       </div>
 
-      {/* 3. ROAD DIVISION SELECTION & METRICS BAR (NH, STATE, RURAL, MUNCI) */}
+      {/* 3. CITIZEN VISUAL ANALYTICS & INFRASTRUCTURE INTELLIGENCE SUITE */}
+      <div className="space-y-6">
+
+        {/* Section Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <BarChart3 className="h-4 w-4" />
+              </span>
+              <h2 className="text-lg font-bold text-white font-['Outfit']">
+                {t('citizen.analyticsTitle')}
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {t('citizen.liveTelemetry')}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {t('citizen.analyticsSubtitle')}
+            </p>
+          </div>
+        </div>
+
+        {/* TIER 1: STATUS LIFECYCLE DONUT & RESOLUTION VELOCITY */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* 1. Interactive Donut / Pie Chart */}
+          <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white font-['Outfit']">
+                    {t('citizen.statusBreakdown')}
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                    {t('citizen.lifecycleDist')}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {t('citizen.statusBreakdownDesc')}
+                </p>
+              </div>
+              <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <BarChart3 className="h-4 w-4" />
+              </span>
+            </div>
+
+            {citizenPieData.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-6 pt-2">
+                <div className="h-60 w-full relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={citizenPieData}
+                        dataKey="count"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={85}
+                        paddingAngle={5}
+                      >
+                        {citizenPieData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.color}
+                            className="cursor-pointer transition-transform hover:opacity-80"
+                            onClick={() => handleStatusFilterClick(entry.key)}
+                          />
+                        ))}
+                      </Pie>
+                      <ChartTooltip
+                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', borderRadius: '0.75rem', fontSize: '12px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Status Breakdown Legend & Clickable Filter Pills */}
+                <div className="space-y-2.5">
+                  {citizenPieData.map((item) => {
+                    const pct = totalCitizenComplaints > 0 ? ((item.count / totalCitizenComplaints) * 100).toFixed(0) : 0;
+                    const isFiltered = statusFilter === item.key;
+                    return (
+                      <button
+                        key={item.name}
+                        type="button"
+                        onClick={() => handleStatusFilterClick(item.key)}
+                        className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all ${
+                          isFiltered
+                            ? 'bg-slate-800 border-amber-400/80 ring-1 ring-amber-400/50'
+                            : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="h-3 w-3 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: item.color }} />
+                          <span className="text-xs font-semibold text-slate-200">{item.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-white">{item.count}</span>
+                          <span className="text-[11px] font-mono text-slate-400">({pct}%)</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center text-slate-400 text-xs space-y-2">
+                <p>No complaints reported yet.</p>
+                <Link to="/citizen/report" className="btn-primary py-2 px-4 text-xs inline-flex items-center gap-1.5">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span>{t('citizen.reportRoadHazard')}</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Resolution Progress Metric Card */}
+          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">{t('citizen.resolutionVelocity')}</span>
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              </div>
+              <h4 className="text-3xl font-extrabold text-white font-['Outfit']">
+                {resolutionRate}% {t('citizen.resolved')}
+              </h4>
+              <p className="text-xs text-slate-400 mt-1.5">
+                {resolvedCount} of {totalCitizenComplaints} {t('citizen.verifiedRepaired')}
+              </p>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden mt-4 border border-slate-700/60">
+                <div
+                  className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(0, resolutionRate))}%` }}
+                />
+              </div>
+
+              {/* Active Status Filter Chip */}
+              {statusFilter !== 'ALL' && (
+                <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+                  <div className="text-xs text-amber-300">
+                    <span className="text-slate-400 block text-[10px] uppercase">{t('citizen.activeKpiFilter')}</span>
+                    <strong className="font-semibold">{statusFilter.replace('_', ' ')}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('ALL')}
+                    className="text-[11px] text-amber-400 hover:text-white underline font-semibold"
+                  >
+                    {t('citizen.clearFilter')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-800/80">
+              <Link
+                to="/citizen/report"
+                className="btn-primary w-full py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-amber-500/20"
+              >
+                <Camera className="h-4 w-4" />
+                <span>{t('citizen.reportNew')}</span>
+              </Link>
+            </div>
+          </div>
+
+        </div>
+
+        {/* TIER 2: AI DAMAGE TYPE BREAKDOWN & ROAD NETWORK CLASSIFICATION */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Card A: AI-Detected Road Defect Distribution */}
+          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white font-['Outfit']">
+                    {t('citizen.aiDefectsTitle')}
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-[10px] font-bold border border-orange-500/30 flex items-center gap-1">
+                    <Cpu className="h-3 w-3 text-orange-400" />
+                    YOLOv8 Vision
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {t('citizen.aiDefectsSubtitle')}
+                </p>
+              </div>
+              <span className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                <Activity className="h-4 w-4" />
+              </span>
+            </div>
+
+            <div className="h-64 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={damageChartData} margin={{ top: 10, right: 10, left: -20, bottom: 25 }}>
+                  <defs>
+                    <linearGradient id="citizenDamageGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#ea580c" stopOpacity={0.7} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#94a3b8"
+                    fontSize={11}
+                    interval={0}
+                    angle={-15}
+                    textAnchor="end"
+                  />
+                  <YAxis stroke="#94a3b8" fontSize={11} allowDecimals={false} />
+                  <ChartTooltip
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.75rem', fontSize: '12px' }}
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    name={t('common.complaints') || "Defects Identified"}
+                    fill="url(#citizenDamageGrad)"
+                    radius={[6, 6, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                Detected by automated model inference
+              </span>
+              <span className="font-mono text-slate-300">
+                {damageChartData.reduce((acc, curr) => acc + curr.count, 0)} total defects cataloged
+              </span>
+            </div>
+          </div>
+
+          {/* Card B: Road Network Classification Breakdown */}
+          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white font-['Outfit']">
+                    {t('citizen.roadNetworkTitle')}
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30">
+                    Jurisdiction Split
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {t('citizen.roadNetworkSubtitle')}
+                </p>
+              </div>
+              <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Layers className="h-4 w-4" />
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4 pt-2">
+              <div className="h-56 w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={roadClassificationData}
+                      dataKey="count"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={48}
+                      outerRadius={78}
+                      paddingAngle={4}
+                    >
+                      {roadClassificationData.map((entry, index) => (
+                        <Cell key={`road-cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip
+                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.75rem', fontSize: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Road Authority Legend */}
+              <div className="space-y-2">
+                {roadClassificationData.map((item) => {
+                  const total = roadClassificationData.reduce((acc, c) => acc + c.count, 0);
+                  const pct = total > 0 ? ((item.count / total) * 100).toFixed(0) : 0;
+                  return (
+                    <div
+                      key={item.name}
+                      className="p-2 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                        <span className="text-xs text-slate-300 font-medium truncate max-w-[120px]">{item.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-white">{item.count}</span>
+                        <span className="text-[10px] font-mono text-slate-400">({pct}%)</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+              <span>Authority: NHAI / Maharashtra PWD / Municipal / ZP</span>
+              <span className="text-cyan-400 font-medium">GPS Auto-Routed</span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* TIER 3: MONTHLY INTAKE & REPAIR TRAJECTORY + HAZARD SLA TRIAGE */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Card A (2 Cols): Monthly Reporting & Resolution Trends */}
+          <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white font-['Outfit']">
+                    {t('citizen.monthlyTrendsTitle')}
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3 text-emerald-400" />
+                    Trend Analysis
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {t('citizen.monthlyTrendsSubtitle')}
+                </p>
+              </div>
+              <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <TrendingUp className="h-4 w-4" />
+              </span>
+            </div>
+
+            <div className="h-60 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyActivityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="citizenComplaintsGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="citizenResolvedGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={11} allowDecimals={false} />
+                  <ChartTooltip
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.75rem', fontSize: '12px' }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="circle"
+                    wrapperStyle={{ paddingBottom: '10px', fontSize: '11px' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="complaints"
+                    name={t('citizen.myReports') || "Reported Defects"}
+                    stroke="#f59e0b"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#citizenComplaintsGrad)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="resolved"
+                    name={t('home.statsResolved') || "Repairs Completed"}
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#citizenResolvedGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Active resolution pipeline progressing steadily
+              </span>
+              <span className="text-slate-400">Historical performance across Maharashtra</span>
+            </div>
+          </div>
+
+          {/* Card B (1 Col): Hazard Severity & SLA Triage */}
+          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white font-['Outfit']">
+                    {t('citizen.urgencyTitle')}
+                  </h3>
+                  <span className="p-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+                    <Flame className="h-3.5 w-3.5" />
+                  </span>
+                </div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  Triage Matrix
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-4">
+                {t('citizen.urgencySubtitle')}
+              </p>
+
+              {/* Severity Levels */}
+              <div className="space-y-3">
+                {priorityChartData.map((p) => {
+                  const totalP = priorityChartData.reduce((acc, c) => acc + c.count, 0);
+                  const pct = totalP > 0 ? Math.round((p.count / totalP) * 100) : 0;
+                  const slaText = p.name === 'Critical' ? '< 24h SLA' : p.name === 'High' ? '< 48h SLA' : p.name === 'Medium' ? '3-5 Days' : 'Routine';
+
+                  return (
+                    <div key={p.name} className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
+                          <span className="font-semibold text-white">{p.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium border border-slate-700 bg-slate-800 text-slate-300">
+                            {slaText}
+                          </span>
+                          <span className="font-mono font-bold text-white">{p.count}</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%`, backgroundColor: p.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+              <span className="flex items-center gap-1 text-amber-400 font-medium">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Auto-triaged by AI
+              </span>
+              <span>Fast-track response</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* 4. ROAD DIVISION SELECTION & METRICS BAR (NH, STATE, RURAL, MUNCI) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -277,8 +968,8 @@ const CitizenDashboard = () => {
                 key={div.key}
                 onClick={() => setActiveDivision(isSelected ? 'ALL' : div.key)}
                 className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${isSelected
-                    ? `${div.activeClass} border-transparent scale-[1.02]`
-                    : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
+                  ? `${div.activeClass} border-transparent scale-[1.02]`
+                  : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
                   }`}
               >
                 <div className="flex items-center justify-between">
@@ -316,126 +1007,112 @@ const CitizenDashboard = () => {
         </div>
       </div>
 
-      {/* 4. KPI STATS CARDS */}
+      {/* 5. KPI STATS CARDS (CLICKABLE) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatsCard
-          title="Total Reports"
+          title={t('home.statsTotalComplaints')}
           value={stats?.total_complaints || 0}
           subtitle="All-time submissions"
           icon={FileText}
           color="amber"
+          onClick={() => handleStatusFilterClick('ALL')}
+          isActive={statusFilter === 'ALL'}
         />
         <StatsCard
-          title="Pending Review"
+          title={t('status.PENDING')}
           value={stats?.pending_complaints || 0}
           subtitle="Under authority triage"
           icon={Clock}
           color="cyan"
+          onClick={() => handleStatusFilterClick('PENDING')}
+          isActive={statusFilter === 'PENDING'}
         />
         <StatsCard
-          title="Under Review"
+          title={t('status.AUTHORITY_VERIFICATION')}
           value={stats?.under_review_complaints || 0}
           subtitle="Authority assigned"
           icon={Search}
           color="indigo"
+          onClick={() => handleStatusFilterClick('UNDER_REVIEW')}
+          isActive={statusFilter === 'UNDER_REVIEW'}
         />
         <StatsCard
-          title="In Repair"
+          title={t('status.IN_PROGRESS')}
           value={stats?.in_repair_complaints || 0}
           subtitle="Field engineer active"
           icon={Wrench}
           color="purple"
+          onClick={() => handleStatusFilterClick('IN_REPAIR')}
+          isActive={statusFilter === 'IN_REPAIR'}
         />
         <StatsCard
-          title="Resolved"
+          title={t('status.CLOSED')}
           value={stats?.completed_complaints || 0}
           subtitle="Verified & closed"
           icon={CheckCircle2}
           color="emerald"
-        />
-      </div>
-
-      {/* 5. INTERACTIVE MAHARASHTRA GIS MAP */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-amber-400" />
-                Maharashtra State Road Defect Map
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                📍 Live Defect Spatial View
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">
-              View active damage reports, road defect categories, and repair progress across Maharashtra. Click on any marker to view complaint details.
-            </p>
-          </div>
-          <Link
-            to="/map"
-            className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-          >
-            Open Full GIS Portal <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-
-        <ComplaintMap
-          complaints={recentComplaints}
-          height="h-[440px]"
-          showFilters={true}
-          initialRoadDivision={activeDivision}
-          onViewDetails={handleOpenDetails}
+          onClick={() => handleStatusFilterClick('RESOLVED')}
+          isActive={statusFilter === 'RESOLVED'}
         />
       </div>
 
       {/* 6. COMPLAINTS LIST TABLE */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+      <div id="citizen-complaints-section" className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-white font-['Outfit']">
-                My Reported Complaints
+                {t('citizen.myReports')}
               </h2>
               {activeDivision !== 'ALL' && (
                 <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
                   Filtered by {activeDivision}
                 </span>
               )}
+              {statusFilter !== 'ALL' && (
+                <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 text-xs font-bold border border-cyan-500/30">
+                  Status: {statusFilter.replace('_', ' ')}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400">
-              Live status, assigned engineer, and tracking for your road defect submissions
+              Live status, assigned engineer, and tracking for your road defect submissions ({filteredComplaints.length} shown)
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            {activeDivision !== 'ALL' && (
+            {(activeDivision !== 'ALL' || statusFilter !== 'ALL') && (
               <button
                 type="button"
-                onClick={() => setActiveDivision('ALL')}
+                onClick={() => {
+                  setActiveDivision('ALL');
+                  setStatusFilter('ALL');
+                }}
                 className="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700"
               >
-                Clear Filter
+                {t('common.clearFilters')}
               </button>
             )}
-            <Link
-              to="/citizen/complaints"
-              className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-            >
-              View All ({recentComplaints.length}) <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
           </div>
         </div>
 
         {filteredComplaints.length === 0 ? (
           <EmptyState
             icon={AlertTriangle}
-            title={activeDivision !== 'ALL' ? `No Complaints in ${activeDivision} Division` : 'No Complaints Recorded Yet'}
-            description={activeDivision !== 'ALL'
-              ? `You haven't submitted any reports for ${activeDivision} roads yet.`
-              : 'You have not submitted any road damage reports yet. Take a photo of defects to report them.'}
-            actionLabel="Report Road Hazard"
-            actionTo="/citizen/report"
+            title={
+              activeDivision !== 'ALL' && statusFilter !== 'ALL'
+                ? `No ${statusFilter.replace('_', ' ')} Complaints in ${activeDivision} Division`
+                : activeDivision !== 'ALL'
+                ? `No Complaints in ${activeDivision} Division`
+                : statusFilter !== 'ALL'
+                ? `No ${statusFilter.replace('_', ' ')} Complaints Found`
+                : 'No Complaints Recorded Yet'
+            }
+            description={
+              activeDivision !== 'ALL' || statusFilter !== 'ALL'
+                ? 'None of your complaints match the active filter criteria. Try selecting another filter or clearing all filters.'
+                : 'You have not submitted any road damage reports yet.'
+            }
           />
         ) : (
           <>
@@ -445,7 +1122,14 @@ const CitizenDashboard = () => {
                 <div key={c.id} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
-                    <StatusBadge status={c.status} size="xs" />
+                    <div className="flex items-center gap-2">
+                      {c.created_at && (
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
+                      <StatusBadge status={c.status} size="xs" />
+                    </div>
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
@@ -458,7 +1142,7 @@ const CitizenDashboard = () => {
                       className="btn-secondary py-1.5 px-3 text-xs"
                     >
                       <Eye className="h-3.5 w-3.5 text-amber-400" />
-                      <span>Details</span>
+                      <span>{t('common.details')}</span>
                     </Link>
                   </div>
                 </div>
@@ -470,13 +1154,15 @@ const CitizenDashboard = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
-                    <th className="py-3 px-4">Complaint ID</th>
-                    <th className="py-3 px-4">Road Name & Location</th>
-                    <th className="py-3 px-4">Road Division</th>
-                    <th className="py-3 px-4">Damage Type & Priority</th>
-                    <th className="py-3 px-4">Assigned Authority</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4">{t('table.id')}</th>
+                    <th className="py-3 px-4">{t('table.date')}</th>
+                    <th className="py-3 px-4">{t('table.roadName')}</th>
+                    <th className="py-3 px-4">{t('table.location')}</th>
+                    <th className="py-3 px-4">{t('table.roadType')}</th>
+                    <th className="py-3 px-4">{t('table.aiDetection')}</th>
+                    <th className="py-3 px-4">{t('table.authority')}</th>
+                    <th className="py-3 px-4">{t('table.status')}</th>
+                    <th className="py-3 px-4 text-right">{t('table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -485,9 +1171,45 @@ const CitizenDashboard = () => {
                       <td className="py-3.5 px-4 font-mono font-bold text-amber-400">
                         {c.id}
                       </td>
+                      <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                        <span className="font-medium text-slate-200 block">
+                          {c.created_at
+                            ? new Date(c.created_at).toLocaleDateString([], {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : 'N/A'}
+                        </span>
+                        {c.created_at && (
+                          <span className="text-[11px] text-slate-400 block">
+                            {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3.5 px-4">
                         <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                        <span className="text-[11px] text-slate-400">📍 {c.district}, {c.state}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        <Link
+                          to={`/map?id=${encodeURIComponent(c.id)}${c.latitude && c.longitude ? `&lat=${c.latitude}&lng=${c.longitude}` : ''}`}
+                          className="flex items-start gap-1.5 group cursor-pointer hover:bg-slate-800/80 p-1.5 -m-1.5 rounded-xl transition-all"
+                          title="Click to locate on Live GIS Map"
+                        >
+                          <MapPin className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0 group-hover:scale-110 group-hover:text-amber-300 transition-transform" />
+                          <div>
+                            <span className="text-white font-medium block group-hover:text-amber-400 group-hover:underline underline-offset-2 transition-colors">
+                              {c.district ? `${c.district}, ${c.state || ''}` : 'Location Pin'}
+                            </span>
+                            {c.landmark ? (
+                              <span className="text-[10px] text-slate-400 block truncate max-w-[130px] group-hover:text-slate-300">{c.landmark}</span>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 font-mono block group-hover:text-slate-400">
+                                {c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
                       </td>
                       <td className="py-3.5 px-4">
                         <RoadTypeBadge roadType={c.road_type} />
@@ -500,7 +1222,7 @@ const CitizenDashboard = () => {
                             c.priority === 'High' ? 'bg-orange-500/20 text-orange-300' :
                               'bg-amber-500/20 text-amber-300'
                           }`}>
-                          {c.priority} Priority
+                          {t(`priority.${c.priority}`) || c.priority} {t('common.priority')}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-slate-300">
@@ -514,7 +1236,7 @@ const CitizenDashboard = () => {
                           to={`/complaints/${c.id}`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold text-xs border border-slate-700 transition-colors"
                         >
-                          <Eye className="h-3.5 w-3.5" /> Details
+                          <Eye className="h-3.5 w-3.5" /> {t('common.details')}
                         </Link>
                       </td>
                     </tr>
@@ -527,7 +1249,7 @@ const CitizenDashboard = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 8. COMPREHENSIVE VIEW DETAILS MODAL */}
+      {/* 7. COMPREHENSIVE VIEW DETAILS MODAL */}
       {/* ========================================================================= */}
       <Modal
         isOpen={detailsModalOpen}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { formatDateToDDMMYY } from '../../utils/dateUtils';
 
 /**
  * DeadlineBadge Component
@@ -10,14 +11,7 @@ import { Calendar, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
  * - Completed / Closed: Emerald with Check icon
  */
 export const formatDeadlineDate = (deadline) => {
-  if (!deadline) return null;
-  const d = new Date(deadline);
-  if (isNaN(d.getTime())) return null;
-  return d.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  return formatDateToDDMMYY(deadline);
 };
 
 export const formatDeadlineDateTime = (deadline) => {

@@ -85,11 +85,13 @@ def enrich_complaint_response(complaint: Complaint) -> dict:
         "engineer_employee_id": eng_emp_id,
         "engineer_phone": eng_phone,
         "repair_id": complaint.repair.id if complaint.repair else None,
+        "deadline": complaint.deadline or (complaint.repair.deadline if complaint.repair else None),
         "repair": {
             "id": complaint.repair.id,
             "complaint_id": complaint.repair.complaint_id,
             "engineer_id": complaint.repair.engineer_id,
             "current_stage": complaint.repair.current_stage,
+            "deadline": complaint.repair.deadline,
             "inspection_remarks": complaint.repair.inspection_remarks,
             "inspection_date": complaint.repair.inspection_date,
             "inspection_image": complaint.repair.inspection_image,
@@ -348,6 +350,21 @@ def get_complaints(
 
     complaints = query.order_by(desc(Complaint.created_at)).offset(skip).limit(limit).all()
     return [enrich_complaint_response(c) for c in complaints]
+
+@router.get("/public/analytics")
+def get_public_analytics(db: Session = Depends(get_db)):
+    """Returns aggregated road classification, AI damage types, status breakdown, monthly trends, and stats."""
+    from app.services.analytics_service import get_admin_dashboard_metrics
+    metrics = get_admin_dashboard_metrics(db)
+    return {
+        "road_type_distribution": metrics.get("road_type_distribution", []),
+        "damage_type_distribution": metrics.get("damage_type_distribution", []),
+        "status_distribution": metrics.get("status_distribution", []),
+        "monthly_trends": metrics.get("monthly_trends", []),
+        "authority_performance": metrics.get("authority_performance", []),
+        "district_distribution": metrics.get("district_distribution", []),
+        "stats": metrics.get("stats", {})
+    }
 
 @router.get("/citizen/stats", response_model=CitizenStatsResponse)
 def get_citizen_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

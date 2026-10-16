@@ -26,6 +26,7 @@ import {
   validatePhone,
   parseAuthError
 } from '../../utils/authValidation';
+import { useLanguage } from '../../context/LanguageContext';
 
 const DISTRICT_SUGGESTIONS = [
   'Mumbai Suburban',
@@ -42,6 +43,7 @@ const DISTRICT_SUGGESTIONS = [
 
 const Register = () => {
   const { register } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -209,10 +211,10 @@ const Register = () => {
             <UserPlus className="h-8 w-8 text-amber-400 stroke-[2.2]" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] tracking-tight">
-            Citizen Registration
+            {t('auth.registerTitle', 'Citizen Registration')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-            Join the civic network to report road hazards, verify AI detections, and track municipal repairs in real-time
+            {t('auth.registerSubtitle', 'Join the civic network to report road hazards, verify AI detections, and track municipal repairs in real-time')}
           </p>
         </div>
 
@@ -225,8 +227,8 @@ const Register = () => {
               <Sparkles className="h-4 w-4" />
             </div>
             <div>
-              <span className="font-semibold text-slate-200 block">Civic Citizen Account</span>
-              <span className="text-[11px]">Free access to report road defects and view verified GIS resolution logs</span>
+              <span className="font-semibold text-slate-200 block">{t('auth.roleCitizen', 'Civic Citizen Account')}</span>
+              <span className="text-[11px]">{t('auth.citizenPortalDesc', 'Free access to report road defects and view verified GIS resolution logs')}</span>
             </div>
           </div>
 
@@ -262,7 +264,7 @@ const Register = () => {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="register-full-name" className="block text-xs font-semibold text-slate-300">
-                  Full Name <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
+                  {t('auth.fullNameLabel', 'Full Name')} <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                 </label>
                 {touched.full_name && !errors.full_name && formData.full_name && (
                   <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
@@ -288,7 +290,7 @@ const Register = () => {
                   value={formData.full_name}
                   onChange={handleChange}
                   onBlur={() => handleBlur('full_name')}
-                  placeholder="e.g. Rahul Sharma"
+                  placeholder={t('auth.fullNamePlaceholder', 'e.g. Rahul Sharma')}
                   aria-required="true"
                   aria-invalid={!!(errors.full_name && touched.full_name)}
                   aria-describedby={errors.full_name && touched.full_name ? 'register-full-name-error' : undefined}
@@ -312,7 +314,7 @@ const Register = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label htmlFor="register-email" className="block text-xs font-semibold text-slate-300">
-                    Email Address <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
+                    {t('auth.emailLabel', 'Email Address')} <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                   </label>
                   {touched.email && !errors.email && formData.email && (
                     <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
@@ -338,7 +340,7 @@ const Register = () => {
                     value={formData.email}
                     onChange={handleChange}
                     onBlur={() => handleBlur('email')}
-                    placeholder="name@example.com"
+                    placeholder={t('auth.emailPlaceholder', 'name@example.com')}
                     aria-required="true"
                     aria-invalid={!!(errors.email && touched.email)}
                     aria-describedby={errors.email && touched.email ? 'register-email-error' : undefined}
@@ -359,7 +361,7 @@ const Register = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label htmlFor="register-phone" className="block text-xs font-semibold text-slate-300">
-                    Mobile Phone <span className="text-slate-500 font-normal">(Optional)</span>
+                    {t('auth.phoneLabel', 'Mobile Phone')}
                   </label>
                   {touched.phone && !errors.phone && formData.phone && (
                     <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
@@ -384,7 +386,7 @@ const Register = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     onBlur={() => handleBlur('phone')}
-                    placeholder="e.g. 9876543210"
+                    placeholder={t('auth.phonePlaceholder', 'e.g. 9876543210')}
                     aria-invalid={!!(errors.phone && touched.phone)}
                     aria-describedby={errors.phone && touched.phone ? 'register-phone-error' : undefined}
                     className="w-full bg-transparent pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none"
@@ -408,7 +410,7 @@ const Register = () => {
               {/* District Field with Quick Suggestions */}
               <div>
                 <label htmlFor="register-district" className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  District / City <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
+                  {t('auth.districtLabel', 'District / City')} <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                 </label>
 
                 <div
@@ -428,7 +430,7 @@ const Register = () => {
                     value={formData.district}
                     onChange={handleChange}
                     onBlur={() => handleBlur('district')}
-                    placeholder="e.g. Mumbai Suburban"
+                    placeholder={t('auth.districtPlaceholder', 'e.g. Mumbai Suburban')}
                     aria-required="true"
                     aria-invalid={!!(errors.district && touched.district)}
                     aria-describedby={errors.district && touched.district ? 'register-district-error' : undefined}
@@ -453,7 +455,7 @@ const Register = () => {
               {/* State Field */}
               <div>
                 <label htmlFor="register-state" className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  State / Region <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
+                  {t('auth.stateLabel', 'State / Region')} <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                 </label>
 
                 <div
@@ -472,7 +474,7 @@ const Register = () => {
                     value={formData.state}
                     onChange={handleChange}
                     onBlur={() => handleBlur('state')}
-                    placeholder="e.g. Maharashtra"
+                    placeholder={t('auth.statePlaceholder', 'e.g. Maharashtra')}
                     aria-required="true"
                     aria-invalid={!!(errors.state && touched.state)}
                     aria-describedby={errors.state && touched.state ? 'register-state-error' : undefined}
@@ -498,7 +500,7 @@ const Register = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label htmlFor="register-password" className="block text-xs font-semibold text-slate-300">
-                    Create Password <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
+                    {t('auth.passwordLabel', 'Create Password')} <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                   </label>
                   <span className="text-[11px] text-slate-400">
                     Min. 8 chars
@@ -596,7 +598,7 @@ const Register = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label htmlFor="register-confirm-password" className="block text-xs font-semibold text-slate-300">
-                    Confirm Password <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
+                    {t('auth.confirmPasswordLabel', 'Confirm Password')} <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                   </label>
                   {formData.confirm_password && formData.password === formData.confirm_password && (
                     <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
@@ -670,7 +672,7 @@ const Register = () => {
                   className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-500/20 focus:ring-offset-0 cursor-pointer"
                 />
                 <span className="text-[11px] text-slate-400 leading-relaxed">
-                  I agree to provide authentic and accurate road defect observations to support municipal infrastructure repairs and civic safety.
+                  {t('auth.termsText', 'I agree to provide authentic and accurate road defect observations to support municipal infrastructure repairs and civic safety.')}
                 </span>
               </label>
 
@@ -692,12 +694,12 @@ const Register = () => {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-slate-950" />
-                  <span>Creating Citizen Account...</span>
+                  <span>{t('auth.registering', 'Creating Citizen Account...')}</span>
                 </>
               ) : (
                 <>
                   <UserPlus className="h-4 w-4 text-slate-950" />
-                  <span>Create Citizen Account</span>
+                  <span>{t('auth.registerButton', 'Create Citizen Account')}</span>
                 </>
               )}
             </button>
@@ -706,12 +708,12 @@ const Register = () => {
 
           {/* Footer Navigation */}
           <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-            Already registered?{' '}
+            {t('auth.haveAccount', 'Already registered?')}{' '}
             <Link
               to="/login"
               className="text-amber-400 hover:text-amber-300 font-semibold focus:outline-none focus-visible:underline"
             >
-              Sign In Here
+              {t('nav.login', 'Sign In Here')}
             </Link>
           </div>
 

@@ -101,43 +101,103 @@ export const isValidCoordinate = (lat, lng) => {
   );
 };
 
-// Create custom colored marker icons
+// Create custom teardrop map pin marker icons — attractive redesign with black text
 const createStatusMarkerIcon = (status, divisionTag = '', isSelected = false) => {
   const statusInfo = getStatusMarkerInfo(status);
-  const size = isSelected ? 34 : 28;
-  const borderWidth = isSelected ? '3px' : '2px';
-  const borderColor = isSelected ? '#f59e0b' : '#ffffff';
-  const shadowGlow = isSelected
-    ? `0 0 16px #f59e0b, 0 0 8px ${statusInfo.glow}`
-    : `0 0 8px ${statusInfo.glow}`;
+  const width = isSelected ? 40 : 34;
+  const height = isSelected ? 52 : 44;
+  const pinColor = statusInfo.color;
+  const strokeColor = isSelected ? '#fbbf24' : 'rgba(255,255,255,0.9)';
+  const strokeWidth = isSelected ? 2.5 : 1.5;
+  const tagText = divisionTag && divisionTag !== '●' ? divisionTag : '';
+  const uid = (status + (isSelected ? '_s' : '_n')).replace(/\W/g, '_');
+
+  const svgHtml = `
+    <div style="
+      width: ${width}px;
+      height: ${height}px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      filter: ${isSelected
+        ? `drop-shadow(0 0 8px ${pinColor}) drop-shadow(0 0 18px ${pinColor}88) drop-shadow(0 8px 10px rgba(0,0,0,0.5))`
+        : 'drop-shadow(0 3px 5px rgba(0,0,0,0.3)) drop-shadow(0 6px 10px rgba(0,0,0,0.2))'};
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+      ${isSelected ? 'transform: scale(1.18); z-index: 1000;' : ''}
+    ">
+      <svg width="${width}" height="${height}" viewBox="0 0 34 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pg_${uid}" x1="5" y1="2" x2="30" y2="42" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="${pinColor}" stop-opacity="1"/>
+            <stop offset="60%"  stop-color="${pinColor}" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="${pinColor}" stop-opacity="0.72"/>
+          </linearGradient>
+          <radialGradient id="ps_${uid}" cx="32%" cy="26%" r="55%">
+            <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.52"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="bg_${uid}" cx="38%" cy="32%" r="65%">
+            <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#dde5f0" stop-opacity="0.96"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Soft ambient ground shadow -->
+        <ellipse cx="17" cy="43" rx="9" ry="2.4" fill="#000" fill-opacity="0.16"/>
+        <ellipse cx="17" cy="43" rx="5.5" ry="1.4" fill="#000" fill-opacity="0.12"/>
+
+        <!-- Pin body — gradient fill -->
+        <path
+          d="M17 2.5C9.5 2.5 3.5 8.5 3.5 16C3.5 26.5 15.2 37.8 16.4 38.8C16.7 39.1 17.3 39.1 17.6 38.8C18.8 37.8 30.5 26.5 30.5 16C30.5 8.5 24.5 2.5 17 2.5Z"
+          fill="url(#pg_${uid})"
+          stroke="${strokeColor}"
+          stroke-width="${strokeWidth}"
+          stroke-linejoin="round"
+        />
+
+        <!-- Specular highlight overlay -->
+        <path
+          d="M17 2.5C9.5 2.5 3.5 8.5 3.5 16C3.5 26.5 15.2 37.8 16.4 38.8C16.7 39.1 17.3 39.1 17.6 38.8C18.8 37.8 30.5 26.5 30.5 16C30.5 8.5 24.5 2.5 17 2.5Z"
+          fill="url(#ps_${uid})"
+        />
+
+        <!-- Glassy inner badge with colored ring -->
+        <circle cx="17" cy="16" r="7.5"
+          fill="url(#bg_${uid})"
+          stroke="${pinColor}"
+          stroke-width="1.4"
+          stroke-opacity="0.45"
+        />
+        <!-- Small lens flare highlight inside badge -->
+        <circle cx="14.2" cy="13.2" r="2.1" fill="#fff" fill-opacity="0.5"/>
+
+        ${tagText ? `
+          <!-- Division / status tag text — black for legibility -->
+          <text
+            x="17" y="19.6"
+            text-anchor="middle"
+            font-size="6.8"
+            font-weight="900"
+            font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+            fill="#111111"
+            letter-spacing="-0.2"
+          >${tagText}</text>
+        ` : `
+          <!-- Status dot when no tag -->
+          <circle cx="17" cy="16" r="3.4" fill="${pinColor}" fill-opacity="0.9"/>
+          <circle cx="17" cy="16" r="1.5" fill="#000" fill-opacity="0.6"/>
+        `}
+      </svg>
+    </div>
+  `;
 
   return new L.DivIcon({
-    className: 'custom-div-icon',
-    html: `
-      <div style="
-        background-color: ${statusInfo.color};
-        width: ${size}px;
-        height: ${size}px;
-        border-radius: 50%;
-        border: ${borderWidth} solid ${borderColor};
-        box-shadow: ${shadowGlow};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 800;
-        font-size: ${isSelected ? '11px' : '9.5px'};
-        font-family: monospace;
-        cursor: pointer;
-        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        ${isSelected ? 'transform: scale(1.15); z-index: 1000;' : ''}
-      ">
-        ${divisionTag || statusInfo.tag}
-      </div>
-    `,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2 - 4],
+    className: 'custom-pin-marker',
+    html: svgHtml,
+    iconSize: [width, height],
+    iconAnchor: [width / 2, height - 3],
+    popupAnchor: [0, -(height - 3)],
   });
 };
 
@@ -188,6 +248,8 @@ const ComplaintMap = ({
   showFilters = true,
   initialRoadDivision = 'ALL',
   startWithIndia = true,
+  initialComplaintId = null,
+  initialCoordinates = null,
   onMapClick = null,
   onViewDetails = null
 }) => {
@@ -205,9 +267,19 @@ const ComplaintMap = ({
   const [showListPanel, setShowListPanel] = useState(true);
 
   // Map View State
-  const [mapCenter, setMapCenter] = useState(startWithIndia ? INDIA_CENTER : MAHARASHTRA_CENTER);
-  const [mapZoom, setMapZoom] = useState(startWithIndia ? INDIA_DEFAULT_ZOOM : MAHARASHTRA_DEFAULT_ZOOM);
-  const [isZoomedIn, setIsZoomedIn] = useState(!startWithIndia);
+  const [mapCenter, setMapCenter] = useState(() => {
+    if (initialCoordinates && isValidCoordinate(initialCoordinates[0], initialCoordinates[1])) {
+      return initialCoordinates;
+    }
+    return startWithIndia ? INDIA_CENTER : MAHARASHTRA_CENTER;
+  });
+  const [mapZoom, setMapZoom] = useState(() => {
+    if (initialCoordinates && isValidCoordinate(initialCoordinates[0], initialCoordinates[1])) {
+      return 15;
+    }
+    return startWithIndia ? INDIA_DEFAULT_ZOOM : MAHARASHTRA_DEFAULT_ZOOM;
+  });
+  const [isZoomedIn, setIsZoomedIn] = useState(!startWithIndia || Boolean(initialCoordinates));
 
   // Safe extraction of complaint list
   const safeComplaintsList = useMemo(() => {
@@ -371,6 +443,20 @@ const ComplaintMap = ({
       setIsZoomedIn(true);
     }
   };
+
+  // Auto-focus complaint if initialComplaintId or initialCoordinates is passed
+  useEffect(() => {
+    if (initialComplaintId && validComplaints.length > 0) {
+      const match = validComplaints.find(c => String(c.id).toLowerCase() === String(initialComplaintId).toLowerCase());
+      if (match) {
+        handleSelectComplaint(match);
+      }
+    } else if (initialCoordinates && isValidCoordinate(initialCoordinates[0], initialCoordinates[1])) {
+      setMapCenter(initialCoordinates);
+      setMapZoom(15);
+      setIsZoomedIn(true);
+    }
+  }, [initialComplaintId, initialCoordinates, validComplaints]);
 
   // Reset all filters
   const handleResetFilters = () => {
@@ -713,6 +799,15 @@ const ComplaintMap = ({
                     key={c.id}
                     position={[c.latitude, c.longitude]}
                     icon={markerIcon}
+                    ref={(markerRef) => {
+                      if (isSelected && markerRef) {
+                        setTimeout(() => {
+                          if (markerRef && !markerRef.isPopupOpen()) {
+                            markerRef.openPopup();
+                          }
+                        }, 250);
+                      }
+                    }}
                     eventHandlers={{
                       click: () => {
                         handleSelectComplaint(c);
@@ -983,17 +1078,29 @@ const ComplaintMap = ({
           <span className="font-bold text-slate-200">Map Legend:</span>
 
           <span className="flex items-center gap-1.5 font-medium text-slate-200">
-            <span className="h-3 w-3 rounded-full bg-red-500 inline-block shadow-sm shadow-red-500/50 border border-white"></span>
+            <svg width="12" height="16" viewBox="0 0 17 22" fill="none" className="shrink-0">
+              <ellipse cx="8.5" cy="20" rx="5.5" ry="1.6" fill="#0f172a" fillOpacity="0.7" />
+              <path d="M 8.5 1.5 C 4.7 1.5 1.7 4.5 1.7 8.3 C 1.7 13.5 7.6 18.8 8.2 19.3 C 8.4 19.5 8.6 19.5 8.8 19.3 C 9.4 18.8 15.3 13.5 15.3 8.3 C 15.3 4.5 12.3 1.5 8.5 1.5 Z" fill="#ef4444" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="8.5" cy="8.3" r="2.8" fill="#ffffff" />
+            </svg>
             <span>Damage Reported</span>
           </span>
 
           <span className="flex items-center gap-1.5 font-medium text-slate-200">
-            <span className="h-3 w-3 rounded-full bg-orange-500 inline-block shadow-sm shadow-orange-500/50 border border-white"></span>
+            <svg width="12" height="16" viewBox="0 0 17 22" fill="none" className="shrink-0">
+              <ellipse cx="8.5" cy="20" rx="5.5" ry="1.6" fill="#0f172a" fillOpacity="0.7" />
+              <path d="M 8.5 1.5 C 4.7 1.5 1.7 4.5 1.7 8.3 C 1.7 13.5 7.6 18.8 8.2 19.3 C 8.4 19.5 8.6 19.5 8.8 19.3 C 9.4 18.8 15.3 13.5 15.3 8.3 C 15.3 4.5 12.3 1.5 8.5 1.5 Z" fill="#f97316" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="8.5" cy="8.3" r="2.8" fill="#ffffff" />
+            </svg>
             <span>In Repair</span>
           </span>
 
           <span className="flex items-center gap-1.5 font-medium text-slate-200">
-            <span className="h-3 w-3 rounded-full bg-emerald-500 inline-block shadow-sm shadow-emerald-500/50 border border-white"></span>
+            <svg width="12" height="16" viewBox="0 0 17 22" fill="none" className="shrink-0">
+              <ellipse cx="8.5" cy="20" rx="5.5" ry="1.6" fill="#0f172a" fillOpacity="0.7" />
+              <path d="M 8.5 1.5 C 4.7 1.5 1.7 4.5 1.7 8.3 C 1.7 13.5 7.6 18.8 8.2 19.3 C 8.4 19.5 8.6 19.5 8.8 19.3 C 9.4 18.8 15.3 13.5 15.3 8.3 C 15.3 4.5 12.3 1.5 8.5 1.5 Z" fill="#10b981" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="8.5" cy="8.3" r="2.8" fill="#ffffff" />
+            </svg>
             <span>Resolved</span>
           </span>
         </div>

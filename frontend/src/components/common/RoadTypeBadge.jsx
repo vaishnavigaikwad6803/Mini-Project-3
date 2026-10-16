@@ -1,33 +1,36 @@
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const RoadTypeBadge = ({ roadType, size = 'sm', showDivisionTag = true }) => {
+  const { t } = useLanguage();
+
   const getBadgeConfig = (rt) => {
     switch (rt) {
       case 'National Highway':
         return {
           tag: 'NH',
-          label: 'National Highway',
+          label: t('roadTypes.nationalHighway', 'National Highway (NHAI)'),
           classes: 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30',
           icon: '🛣️'
         };
       case 'State Highway':
         return {
           tag: 'State',
-          label: 'State Highway (PWD)',
+          label: t('roadTypes.stateHighway', 'State Highway (PWD)'),
           classes: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30',
           icon: '🛣️'
         };
       case 'Municipal/City Road':
         return {
           tag: 'Munci',
-          label: 'Municipal Road (City)',
+          label: t('roadTypes.municipalRoad', 'Municipal / City Road'),
           classes: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30',
           icon: '🏙️'
         };
       case 'Rural/Village Road':
         return {
           tag: 'Rural',
-          label: 'Rural Road (ZP/PMGSY)',
+          label: t('roadTypes.ruralRoad', 'Rural Road (PMGSY / ZP)'),
           classes: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30',
           icon: '🌾'
         };

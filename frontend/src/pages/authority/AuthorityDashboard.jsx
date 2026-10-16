@@ -28,13 +28,24 @@ import {
   ClipboardCheck,
   Check,
   X,
-  RefreshCw,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  Filter,
+  Calendar
 } from 'lucide-react';
+import {
+  formatDateToDDMMYY,
+  isoToDDMMYY,
+  ddmmyyToISO,
+  formatDDMMYYInput,
+  isValidDDMMYY
+} from '../../utils/dateUtils';
+import { useLanguage } from '../../context/LanguageContext';
 
 const AuthorityDashboard = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
 
   const [authority, setAuthority] = useState(null);
   const [stats, setStats] = useState(null);
@@ -43,11 +54,16 @@ const AuthorityDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Interactive KPI Filter & Search
+  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Assign Engineer Modal
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [activeComplaint, setActiveComplaint] = useState(null);
   const [selectedEngineerId, setSelectedEngineerId] = useState('');
   const [assignRemarks, setAssignRemarks] = useState('');
+  const [assignDeadline, setAssignDeadline] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   // Authority Repair Verification Modal
@@ -98,20 +114,28 @@ const AuthorityDashboard = () => {
   const openAssignModal = (complaint) => {
     setActiveComplaint(complaint);
     setAssignRemarks(`Assigned for urgent inspection & repair on ${complaint.road_name}.`);
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 7);
+    setAssignDeadline(formatDateToDDMMYY(defaultDate));
     setAssignModalOpen(true);
   };
 
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
     if (!activeComplaint || !selectedEngineerId) return;
+    if (assignDeadline && !isValidDDMMYY(assignDeadline)) {
+      showToast('Please enter a valid deadline in DD/MM/YY format (e.g. 21/10/26)', 'warning');
+      return;
+    }
     setActionLoading(true);
     try {
       await engineerService.assignEngineerToComplaint(
         activeComplaint.id,
         selectedEngineerId,
-        assignRemarks
+        assignRemarks,
+        assignDeadline
       );
-      showToast(`Engineer assigned to #${activeComplaint.id} successfully!`, 'success');
+      showToast(`Engineer assigned to #${activeComplaint.id} with deadline (${assignDeadline}) successfully!`, 'success');
       setAssignModalOpen(false);
       loadAuthorityData();
     } catch (err) {
@@ -167,6 +191,38 @@ const AuthorityDashboard = () => {
   const awaitingVerification = complaints.filter(
     (c) => c.status === 'Authority Verification' || c.status === 'Repair Completed'
   );
+  const resolvedComplaints = complaints.filter(
+    (c) => c.status === 'Closed' || c.status === 'Resolved'
+  );
+
+  // Compute complaints matching the selected KPI option
+  const getCategoryComplaints = () => {
+    switch (activeFilter) {
+      case 'ACTION_REQUIRED':
+        return pendingComplaints;
+      case 'ACTIVE_REPAIRS':
+        return activeRepairs;
+      case 'READY_FOR_SIGNOFF':
+        return awaitingVerification;
+      case 'RESOLVED':
+        return resolvedComplaints;
+      case 'ALL':
+      default:
+        return complaints;
+    }
+  };
+
+  const displayedComplaints = getCategoryComplaints().filter((c) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (c.id && c.id.toLowerCase().includes(term)) ||
+      (c.road_name && c.road_name.toLowerCase().includes(term)) ||
+      (c.district && c.district.toLowerCase().includes(term)) ||
+      (c.primary_damage_type && c.primary_damage_type.toLowerCase().includes(term)) ||
+      (c.engineer_name && c.engineer_name.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="space-y-8 pb-12">
@@ -224,342 +280,449 @@ const AuthorityDashboard = () => {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards (Clickable Filter Options) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <StatsCard
-          title="Assigned Complaints"
+          title={t('authority.roadComplaints')}
           value={stats?.total_complaints || complaints.length}
           subtitle="Total in jurisdiction"
           icon={FileText}
           color="indigo"
+          onClick={() => setActiveFilter('ALL')}
+          isActive={activeFilter === 'ALL'}
         />
         <StatsCard
-          title="Action Required"
+          title={t('status.PENDING')}
           value={pendingComplaints.length}
           subtitle="Needs engineer assignment"
           icon={AlertTriangle}
           color="amber"
+          onClick={() => setActiveFilter('ACTION_REQUIRED')}
+          isActive={activeFilter === 'ACTION_REQUIRED'}
         />
         <StatsCard
-          title="Active Repairs"
+          title={t('status.IN_PROGRESS')}
           value={activeRepairs.length}
           subtitle="Underway in field"
           icon={Wrench}
           color="purple"
+          onClick={() => setActiveFilter('ACTIVE_REPAIRS')}
+          isActive={activeFilter === 'ACTIVE_REPAIRS'}
         />
         <StatsCard
-          title="Ready for Sign-Off"
+          title={t('status.AUTHORITY_VERIFICATION')}
           value={awaitingVerification.length}
           subtitle="Repair photo proof submitted"
           icon={ClipboardCheck}
           color="cyan"
+          onClick={() => setActiveFilter('READY_FOR_SIGNOFF')}
+          isActive={activeFilter === 'READY_FOR_SIGNOFF'}
         />
         <StatsCard
-          title="Resolved Cases"
-          value={stats?.completed_complaints || 0}
+          title={t('status.CLOSED')}
+          value={stats?.completed_complaints || resolvedComplaints.length}
           subtitle="Verified & closed"
           icon={CheckCircle2}
           color="emerald"
+          onClick={() => setActiveFilter('RESOLVED')}
+          isActive={activeFilter === 'RESOLVED'}
         />
         <StatsCard
-          title="Field Engineers"
+          title={t('authority.fieldEngineers')}
           value={engineers.length}
           subtitle="Active maintenance staff"
           icon={HardHat}
           color="blue"
+          onClick={() => setActiveFilter('ENGINEERS')}
+          isActive={activeFilter === 'ENGINEERS'}
         />
       </div>
 
-      {/* Quality Verification & Final Sign-Off Section */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5 text-cyan-400" />
-              Pending Quality Verification & Sign-Off ({awaitingVerification.length})
-            </h2>
-            <p className="text-xs text-slate-400">
-              Completed repairs submitted by field engineers with photographic evidence awaiting authorized review before closure
-            </p>
-          </div>
-          {awaitingVerification.length > 0 && (
-            <span className="px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-bold border border-cyan-500/20">
-              {awaitingVerification.length} Pending Approval
-            </span>
-          )}
-        </div>
-
-        {awaitingVerification.length === 0 ? (
-          <div className="p-8 text-center bg-slate-950/40 rounded-2xl border border-slate-800/80">
-            <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
-            <p className="text-xs text-slate-300 font-semibold mt-2">All completed repairs have been verified!</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">No pending repair sign-offs in queue.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                  <tr>
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Road Name</th>
-                    <th className="py-3 px-4">Completed By</th>
-                    <th className="py-3 px-4">Repair Proof</th>
-                    <th className="py-3 px-4">Actual Cost</th>
-                    <th className="py-3 px-4 text-right">Verification Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {awaitingVerification.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
-                        <span className="text-[11px] text-slate-400">📍 {c.district}</span>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-300">
-                        <span className="font-semibold text-cyan-300 flex items-center gap-1.5">
-                          <HardHat className="h-3.5 w-3.5" />
-                          {c.engineer_name || 'Field Engineer'}
-                        </span>
-                        <span className="text-[10px] text-slate-400 block">{c.engineer_employee_id || ''}</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        {c.repair?.repair_after_image ? (
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={c.repair.repair_after_image}
-                              alt="Repair Proof"
-                              className="h-10 w-14 object-cover rounded-lg border border-emerald-500/40 shadow-sm"
-                            />
-                            <span className="text-[10px] text-emerald-400 font-semibold">Photo Attached</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500 text-xs italic">Pending Photo</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-200">
-                        {c.repair?.actual_cost ? `₹${c.repair.actual_cost.toLocaleString()}` : '—'}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            to={`/complaints/${c.id}`}
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors"
-                          >
-                            <Eye className="h-3.5 w-3.5 inline mr-1" /> View
-                          </Link>
-                          <button
-                            onClick={() => openVerifyModal(c)}
-                            className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-cyan-500/20 transition-all hover:scale-105"
-                          >
-                            <ClipboardCheck className="h-3.5 w-3.5" /> Review & Verify
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Dynamic View for Selected KPI Option */}
+      {activeFilter === 'ENGINEERS' ? (
+        /* Field Engineer Network & Active Workload */
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
+                  <HardHat className="h-5 w-5 text-blue-400" />
+                  Field Engineer Network & Active Workload ({engineers.length})
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold border border-blue-500/30">
+                  Active Engineers
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Workload distribution across maintenance engineers in your jurisdiction
+              </p>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveFilter('ALL')}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Back to Complaints
+              </button>
+              <Link
+                to="/authority/engineers"
+                className="px-3.5 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold text-xs shadow-md transition-colors flex items-center gap-1.5"
+              >
+                <span>Manage & Register Engineers</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
 
-            {/* Mobile Card View (sm:hidden) */}
-            <div className="sm:hidden space-y-3">
-              {awaitingVerification.map((c) => (
-                <div key={c.id} className="p-4 rounded-2xl bg-slate-950/80 border border-cyan-500/30 space-y-3 shadow-lg">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                      Repair Completed
+          {engineers.length === 0 ? (
+            <div className="p-8 text-center bg-slate-950/40 rounded-2xl border border-slate-800/80">
+              <HardHat className="h-8 w-8 text-slate-500 mx-auto" />
+              <p className="text-xs text-slate-300 font-semibold mt-2">No engineers registered under this authority yet</p>
+              <Link to="/authority/engineers" className="inline-block mt-3 px-4 py-1.5 rounded-xl bg-blue-500 text-slate-950 text-xs font-bold">
+                Register First Engineer
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {engineers.map((eng) => (
+                <div key={eng.id} className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition-all space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      {eng.employee_id}
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">
+                      {eng.status || 'ACTIVE'}
                     </span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
-                    <p className="text-xs text-slate-400">📍 {c.district} • By: {c.engineer_name || 'Engineer'}</p>
+                    <h4 className="text-sm font-bold text-white">{eng.full_name}</h4>
+                    <p className="text-xs text-slate-400">{eng.designation}</p>
+                    <p className="text-[11px] text-blue-300 mt-0.5">🛠️ {eng.specialization}</p>
                   </div>
-                  {c.repair?.repair_after_image && (
-                    <div className="rounded-xl overflow-hidden border border-emerald-500/40">
-                      <img src={c.repair.repair_after_image} alt="Repaired Surface" className="h-32 w-full object-cover" />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                    <Link
-                      to={`/complaints/${c.id}`}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-xs border border-slate-700"
-                    >
-                      View
-                    </Link>
-                    <button
-                      onClick={() => openVerifyModal(c)}
-                      className="px-3.5 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md"
-                    >
-                      <ClipboardCheck className="h-3.5 w-3.5" /> Verify
-                    </button>
+                  <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Active Workload:</span>
+                    <strong className="text-amber-400 text-sm">{eng.active_workload || 0} tasks</strong>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Action Required: Unassigned / Under Review Complaints */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-400" />
-              Incoming Complaints Requiring Engineer Assignment ({pendingComplaints.length})
-            </h2>
-            <p className="text-xs text-slate-400">
-              Complaints auto-routed by YOLOv8 damage triage ready for field engineer dispatch
-            </p>
-          </div>
+          )}
         </div>
+      ) : (
+        /* Dynamic Filtered Complaints Section */
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
+                  {activeFilter === 'ACTION_REQUIRED' && <AlertTriangle className="h-5 w-5 text-amber-400" />}
+                  {activeFilter === 'ACTIVE_REPAIRS' && <Wrench className="h-5 w-5 text-purple-400" />}
+                  {activeFilter === 'READY_FOR_SIGNOFF' && <ClipboardCheck className="h-5 w-5 text-cyan-400" />}
+                  {activeFilter === 'RESOLVED' && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
+                  {activeFilter === 'ALL' && <FileText className="h-5 w-5 text-indigo-400" />}
+                  
+                  {activeFilter === 'ALL' && `All Jurisdiction Complaints (${displayedComplaints.length})`}
+                  {activeFilter === 'ACTION_REQUIRED' && `Incoming Complaints Requiring Engineer Assignment (${displayedComplaints.length})`}
+                  {activeFilter === 'ACTIVE_REPAIRS' && `Active Field Repairs Underway (${displayedComplaints.length})`}
+                  {activeFilter === 'READY_FOR_SIGNOFF' && `Pending Quality Verification & Sign-Off (${displayedComplaints.length})`}
+                  {activeFilter === 'RESOLVED' && `Resolved & Closed Cases (${displayedComplaints.length})`}
+                </h2>
 
-        {pendingComplaints.length === 0 ? (
-          <div className="p-8 text-center bg-slate-950/40 rounded-2xl border border-slate-800/80">
-            <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
-            <p className="text-xs text-slate-300 font-semibold mt-2">All incoming complaints have been assigned!</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">No unassigned damage reports in queue.</p>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                  activeFilter === 'ACTION_REQUIRED' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
+                  activeFilter === 'ACTIVE_REPAIRS' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' :
+                  activeFilter === 'READY_FOR_SIGNOFF' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' :
+                  activeFilter === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                  'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                }`}>
+                  {activeFilter === 'ALL' && 'All Records'}
+                  {activeFilter === 'ACTION_REQUIRED' && 'Needs Assignment'}
+                  {activeFilter === 'ACTIVE_REPAIRS' && 'In Field'}
+                  {activeFilter === 'READY_FOR_SIGNOFF' && 'Awaiting Verification'}
+                  {activeFilter === 'RESOLVED' && 'Closed'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {activeFilter === 'ALL' && 'Complete overview of reported road hazards and infrastructure repair tasks in jurisdiction'}
+                {activeFilter === 'ACTION_REQUIRED' && 'Complaints auto-routed by YOLOv8 damage triage ready for field engineer dispatch'}
+                {activeFilter === 'ACTIVE_REPAIRS' && 'Complaints currently being inspected or actively repaired by assigned field engineers'}
+                {activeFilter === 'READY_FOR_SIGNOFF' && 'Completed repairs submitted by field engineers with photographic evidence awaiting authorized review before closure'}
+                {activeFilter === 'RESOLVED' && 'Historical complaints fully repaired, quality-verified, and officially closed'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="relative min-w-[200px] sm:min-w-[240px]">
+                <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search complaints, road, engineer..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input-field pl-9 py-1.5 text-xs w-full bg-slate-950/80 border-slate-800"
+                />
+              </div>
+
+              {activeFilter !== 'ALL' && (
+                <button
+                  type="button"
+                  onClick={() => { setActiveFilter('ALL'); setSearchTerm(''); }}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors flex items-center gap-1.5"
+                >
+                  <RotateCcw className="h-3 w-3" /> Show All
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                  <tr>
-                    <th className="py-3 px-4">ID</th>
-                    <th className="py-3 px-4">Road Name</th>
-                    <th className="py-3 px-4">Damage Classification</th>
-                    <th className="py-3 px-4">AI Severity</th>
-                    <th className="py-3 px-4">Location</th>
-                    <th className="py-3 px-4 text-right">Assign Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {pendingComplaints.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
-                      <td className="py-3.5 px-4 font-bold text-white max-w-xs truncate">{c.road_name}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-semibold text-slate-200">{c.primary_damage_type || 'Road Defect'}</span>
-                        {c.ai_confidence && (
-                          <span className="text-[10px] text-cyan-400 block">
-                            AI: {Math.round(c.ai_confidence * 100)}%
-                          </span>
+
+          {displayedComplaints.length === 0 ? (
+            <div className="p-8 text-center bg-slate-950/40 rounded-2xl border border-slate-800/80">
+              <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
+              <p className="text-xs text-slate-300 font-semibold mt-2">
+                {activeFilter === 'ACTION_REQUIRED' && 'All incoming complaints have been assigned!'}
+                {activeFilter === 'READY_FOR_SIGNOFF' && 'All completed repairs have been verified!'}
+                {activeFilter === 'ACTIVE_REPAIRS' && 'No active repairs currently in progress in the field.'}
+                {activeFilter === 'RESOLVED' && 'No resolved complaints recorded yet.'}
+                {activeFilter === 'ALL' && 'No complaints found matching your search or jurisdiction.'}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {activeFilter === 'ACTION_REQUIRED' && 'No unassigned damage reports in queue.'}
+                {activeFilter === 'READY_FOR_SIGNOFF' && 'No pending repair sign-offs in queue.'}
+                {activeFilter === 'ACTIVE_REPAIRS' && 'All assigned tasks have been concluded.'}
+                {activeFilter === 'RESOLVED' && 'Completed complaints will appear here.'}
+                {activeFilter === 'ALL' && 'New citizen reports will appear here automatically.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                    <tr>
+                      <th className="py-3 px-4">{t('table.id')}</th>
+                      <th className="py-3 px-4">{t('table.date')}</th>
+                      <th className="py-3 px-4">{t('table.roadName')}</th>
+                      <th className="py-3 px-4">{t('table.location')}</th>
+                      <th className="py-3 px-4">{t('table.aiDetection')}</th>
+                      <th className="py-3 px-4">{t('table.status')} & {t('common.deadline')}</th>
+                      <th className="py-3 px-4">{t('table.engineer')}</th>
+                      <th className="py-3 px-4">Proof / Cost</th>
+                      <th className="py-3 px-4 text-right">{t('table.actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {displayedComplaints.map((c) => {
+                      const needsAssignment = c.status === 'Authority Assigned' || c.status === 'Submitted' || c.status === 'AI Analyzed';
+                      const needsVerification = c.status === 'Authority Verification' || c.status === 'Repair Completed';
+
+                      return (
+                        <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-3.5 px-4 font-mono font-bold text-amber-400">{c.id}</td>
+                          <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                            <span className="font-medium text-slate-200 block">
+                              {c.created_at ? new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                            </span>
+                            {c.created_at && (
+                              <span className="text-[10px] text-slate-400 block">
+                                {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="font-bold text-white block max-w-xs truncate">{c.road_name}</span>
+                            {c.road_type && <RoadTypeBadge roadType={c.road_type} />}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-300">
+                            <Link
+                              to={`/map?id=${encodeURIComponent(c.id)}${c.latitude && c.longitude ? `&lat=${c.latitude}&lng=${c.longitude}` : ''}`}
+                              className="flex items-start gap-1.5 group cursor-pointer hover:bg-slate-800/80 p-1.5 -m-1.5 rounded-xl transition-all"
+                              title="Click to locate on Live GIS Map"
+                            >
+                              <MapPin className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0 group-hover:scale-110 group-hover:text-amber-300 transition-transform" />
+                              <div>
+                                <span className="text-white font-medium block group-hover:text-amber-400 group-hover:underline underline-offset-2 transition-colors">
+                                  {c.district ? `${c.district}, ${c.state || ''}` : 'Location Pin'}
+                                </span>
+                                {c.landmark ? (
+                                  <span className="text-[10px] text-slate-400 block truncate max-w-[150px] group-hover:text-slate-300">{c.landmark}</span>
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 font-mono block group-hover:text-slate-400">
+                                    {c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}
+                                  </span>
+                                )}
+                              </div>
+                            </Link>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="font-semibold text-slate-200">{c.primary_damage_type || 'Road Defect'}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                                c.ai_severity === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                                c.ai_severity === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                                'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                              }`}>
+                                {c.ai_severity || 'Medium'}
+                              </span>
+                              {c.ai_confidence && (
+                                <span className="text-[10px] text-cyan-400 font-mono">
+                                  {Math.round(c.ai_confidence * 100)}%
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <StatusBadge status={c.status} />
+                            {(c.deadline || c.repair?.deadline) && (
+                              <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400 font-medium">
+                                <Calendar className="h-3 w-3 shrink-0" />
+                                <span>Due: {formatDateToDDMMYY(c.deadline || c.repair?.deadline)}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-300">
+                            {c.engineer_name ? (
+                              <div>
+                                <span className="font-semibold text-cyan-300 flex items-center gap-1.5">
+                                  <HardHat className="h-3.5 w-3.5 text-blue-400" />
+                                  {c.engineer_name}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block font-mono">{c.engineer_employee_id || ''}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-amber-400/90 italic font-semibold">
+                                Unassigned
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {c.repair?.repair_after_image ? (
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={c.repair.repair_after_image}
+                                  alt="Repair Proof"
+                                  className="h-10 w-14 object-cover rounded-lg border border-emerald-500/40 shadow-sm"
+                                />
+                                {c.repair?.actual_cost && (
+                                  <span className="text-[11px] font-mono text-emerald-400">
+                                    ₹{c.repair.actual_cost.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            ) : c.image_url ? (
+                              <img
+                                src={c.image_url}
+                                alt="Reported Damage"
+                                className="h-10 w-14 object-cover rounded-lg border border-slate-700 shadow-sm"
+                              />
+                            ) : (
+                              <span className="text-slate-500 text-xs italic">—</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Link
+                                to={`/complaints/${c.id}`}
+                                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors"
+                              >
+                                <Eye className="h-3.5 w-3.5 inline mr-1" /> View
+                              </Link>
+                              
+                              {needsAssignment && (
+                                <button
+                                  type="button"
+                                  onClick={() => openAssignModal(c)}
+                                  className="px-3 py-1.5 rounded-lg btn-primary text-xs flex items-center gap-1 shadow-md shadow-amber-500/10"
+                                >
+                                  <HardHat className="h-3.5 w-3.5" /> Assign
+                                </button>
+                              )}
+
+                              {needsVerification && (
+                                <button
+                                  type="button"
+                                  onClick={() => openVerifyModal(c)}
+                                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-cyan-500/20 transition-all hover:scale-105"
+                                >
+                                  <ClipboardCheck className="h-3.5 w-3.5" /> Review & Verify
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View (sm:hidden) */}
+              <div className="sm:hidden space-y-3">
+                {displayedComplaints.map((c) => {
+                  const needsAssignment = c.status === 'Authority Assigned' || c.status === 'Submitted' || c.status === 'AI Analyzed';
+                  const needsVerification = c.status === 'Authority Verification' || c.status === 'Repair Completed';
+
+                  return (
+                    <div key={c.id} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3 shadow-lg">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
+                        <StatusBadge status={c.status} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
+                        <p className="text-xs text-slate-400">
+                          📍 {c.district} • {c.primary_damage_type || 'Road Defect'}
+                        </p>
+                        {c.engineer_name && (
+                          <p className="text-xs text-cyan-400 mt-1 flex items-center gap-1 font-semibold">
+                            <HardHat className="h-3.5 w-3.5 text-blue-400" /> Engineer: {c.engineer_name}
+                          </p>
                         )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${c.ai_severity === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                            c.ai_severity === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
-                              'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                          }`}>
-                          {c.ai_severity || 'Medium'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-300">📍 {c.district}</td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            to={`/complaints/${c.id}`}
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors"
-                          >
-                            <Eye className="h-3.5 w-3.5 inline mr-1" /> View
-                          </Link>
+                      </div>
+                      {(c.repair?.repair_after_image || c.image_url) && (
+                        <div className="rounded-xl overflow-hidden border border-slate-800">
+                          <img
+                            src={c.repair?.repair_after_image || c.image_url}
+                            alt="Road Damage"
+                            className="h-28 w-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                        <Link
+                          to={`/complaints/${c.id}`}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-xs border border-slate-700"
+                        >
+                          View
+                        </Link>
+                        {needsAssignment && (
                           <button
+                            type="button"
                             onClick={() => openAssignModal(c)}
-                            className="px-3 py-1.5 rounded-lg btn-primary text-xs flex items-center gap-1 shadow-md shadow-amber-500/10"
+                            className="px-3 py-1.5 rounded-lg btn-primary text-xs flex items-center gap-1 shadow-md"
                           >
                             <HardHat className="h-3.5 w-3.5" /> Assign
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        )}
+                        {needsVerification && (
+                          <button
+                            type="button"
+                            onClick={() => openVerifyModal(c)}
+                            className="px-3.5 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md"
+                          >
+                            <ClipboardCheck className="h-3.5 w-3.5" /> Verify
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-
-            {/* Mobile Card View (sm:hidden) */}
-            <div className="sm:hidden space-y-3">
-              {pendingComplaints.map((c) => (
-                <div key={c.id} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-                      c.ai_severity === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
-                      c.ai_severity === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
-                      'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                    }`}>
-                      {c.ai_severity || 'Medium'}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
-                    <p className="text-xs text-slate-400">📍 {c.district} • {c.primary_damage_type || 'Road Defect'}</p>
-                  </div>
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                    <Link
-                      to={`/complaints/${c.id}`}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700"
-                    >
-                      View
-                    </Link>
-                    <button
-                      onClick={() => openAssignModal(c)}
-                      className="px-3 py-1.5 rounded-lg btn-primary text-xs flex items-center gap-1 shadow-md"
-                    >
-                      <HardHat className="h-3.5 w-3.5" /> Assign
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Field Engineers Workload Table */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-white font-['Outfit'] flex items-center gap-2">
-              <HardHat className="h-5 w-5 text-indigo-400" />
-              Field Engineer Network & Active Workload
-            </h2>
-            <p className="text-xs text-slate-400">
-              Workload distribution across maintenance engineers
-            </p>
-          </div>
+          )}
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {engineers.map((eng) => (
-            <div key={eng.id} className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  {eng.employee_id}
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">
-                  {eng.status}
-                </span>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">{eng.full_name}</h4>
-                <p className="text-xs text-slate-400">{eng.designation}</p>
-                <p className="text-[11px] text-indigo-300 mt-0.5">🛠️ {eng.specialization}</p>
-              </div>
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
-                <span className="text-slate-400">Active Workload:</span>
-                <strong className="text-amber-400 text-sm">{eng.active_workload || 0} tasks</strong>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Interactive Map */}
       <div className="space-y-3">
@@ -567,18 +730,18 @@ const AuthorityDashboard = () => {
           <MapPin className="h-5 w-5 text-amber-500" />
           Jurisdiction GIS Heatmap & Incident Locations
         </h2>
-        <ComplaintMap complaints={complaints} height="h-[480px]" showFilters={false} />
+        <ComplaintMap complaints={activeFilter === 'ENGINEERS' ? complaints : displayedComplaints} height="h-[480px]" showFilters={false} />
       </div>
 
       {/* Assign Engineer Modal */}
       <Modal
         isOpen={assignModalOpen}
         onClose={() => setAssignModalOpen(false)}
-        title={`Assign Field Engineer: ${activeComplaint?.id}`}
+        title={`${t('authority.assignEngineer')}: ${activeComplaint?.id}`}
       >
         <form onSubmit={handleAssignSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-300 mb-1.5">Select Engineer</label>
+            <label className="block font-semibold text-slate-300 mb-1.5">{t('authority.selectEngineer')}</label>
             <select
               value={selectedEngineerId}
               onChange={(e) => setSelectedEngineerId(e.target.value)}
@@ -586,14 +749,14 @@ const AuthorityDashboard = () => {
             >
               {engineers.map((eng) => (
                 <option key={eng.id} value={eng.id}>
-                  {eng.full_name} ({eng.employee_id}) - {eng.designation} [Workload: {eng.active_workload}]
+                  {eng.full_name} ({eng.employee_id}) - {eng.designation} [{t('authority.workload')}: {eng.active_workload}]
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1.5">Special Instructions / Work Order</label>
+            <label className="block font-semibold text-slate-300 mb-1.5">{t('authority.remarksLabel')}</label>
             <textarea
               rows={3}
               value={assignRemarks}
@@ -602,20 +765,87 @@ const AuthorityDashboard = () => {
             />
           </div>
 
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block font-semibold text-slate-300">
+                {t('authority.completionDeadline')} <span className="text-amber-400">*</span>
+              </label>
+              <div className="flex items-center gap-1.5">
+                {[3, 7, 14, 30].map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => {
+                      const dt = new Date();
+                      dt.setDate(dt.getDate() + days);
+                      setAssignDeadline(formatDateToDDMMYY(dt));
+                    }}
+                    className="px-2 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition-colors"
+                  >
+                    +{days}d
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="DD/MM/YY (e.g. 21/10/26)"
+                value={assignDeadline}
+                onChange={(e) => setAssignDeadline(formatDDMMYYInput(e.target.value))}
+                className="input-field pr-24 font-mono text-xs tracking-wider"
+                required
+                maxLength={8}
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  DD/MM/YY
+                </span>
+                <label className="cursor-pointer p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors" title="Pick date from calendar">
+                  <Calendar className="h-4 w-4" />
+                  <input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={ddmmyyToISO(assignDeadline)}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setAssignDeadline(isoToDDMMYY(e.target.value));
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1.5">
+              <span>{t('authority.deadlineFormatHint')}</span>
+              {assignDeadline && isValidDDMMYY(assignDeadline) && (
+                <span className="text-emerald-400 font-mono font-semibold flex items-center gap-1">
+                  <Check className="h-3 w-3" /> {t('common.due')}: {assignDeadline}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Designated completion target in DD/MM/YY format for site inspection, material procurement, and road restoration.
+            </p>
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={() => setAssignModalOpen(false)}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={actionLoading}
               className="px-5 py-2 rounded-xl btn-primary text-xs shadow-md shadow-amber-500/20"
             >
-              {actionLoading ? 'Assigning...' : 'Dispatch Engineer'}
+              {actionLoading ? t('common.loading') : t('authority.assignBtn')}
             </button>
           </div>
         </form>

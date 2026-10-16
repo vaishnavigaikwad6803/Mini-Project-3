@@ -150,6 +150,20 @@ npm run dev
 5. **GIS Spatial Leaflet Heatmap (`ComplaintMap.jsx`)**:
    - OpenStreetMap coordinates with damage severity colored pins and instant detail modals.
 
+6. **🌐 Trilingual Multilingual Support (`LanguageContext.jsx` & `translations.js`)**:
+   - Native one-click reactive switching between **English (`en`)**, **Marathi (`mr` - मराठी)**, and **Hindi (`hi` - हिंदी)**.
+   - Comprehensive translation dictionaries covering all navigation menus, civic forms, authority dispatches, engineering milestones, table headers, and Recharts graph legends.
+   - Standardized civil authority terminology (NHAI, PWD, Municipal Corporation, PMGSY/Zilla Parishad) and AI defect classes across all three languages.
+
+7. **📊 Full-Role Interactive Visualization Suite**:
+   - **Citizen**: Real-time status breakdown, AI defect type distribution, jurisdiction road allocations, and monthly intake velocity.
+   - **Authority**: Division-wide complaint analytics, resolution velocity meters, and engineer workload distribution.
+   - **Engineer**: Work order milestones, material breakdown, and before/after repair image validations.
+   - **Admin**: Executive analytics hub, YOLOv8 confidence averages, authority compliance metrics, and one-click CSV audit export.
+
+8. **📅 Standardized Deadline Compliance (`DD/MM/YY`)**:
+   - Strict `DD/MM/YY` date picker and validation across authority assignment modals and public complaint tracking timelines.
+
 ---
 
 ## 🎓 6. College Mini-Project Presentation & Viva Q&A
@@ -162,6 +176,9 @@ npm run dev
 
 ### Q3: How is data security and role-based access enforced?
 > **Answer**: Endpoints are secured via HTTP Bearer JWT tokens. Passwords are salted and hashed using direct `bcrypt`. Fast-path Python decorators (`require_citizen`, `require_authority`, `require_engineer`, `require_admin`) ensure users cannot access unauthorized jurisdiction data.
+
+### Q4: How is multilingual reactivity handled?
+> **Answer**: The application utilizes a React Context-based localization engine (`LanguageContext`) paired with a granular translation dictionary (`translations.js`). When a user selects English, Marathi, or Hindi, state changes propagate reactively through all UI elements and charting props with zero page reload.
 
 ---
 
@@ -185,7 +202,8 @@ MINI 3/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/       # AI cards, Leaflet maps, timelines, modals
-│   │   ├── context/          # AuthContext & NotificationContext
+│   │   ├── context/          # AuthContext, NotificationContext, LanguageContext
+│   │   ├── i18n/             # translations.js (English, Marathi, Hindi)
 │   │   ├── layouts/          # MainLayout & DashboardLayout
 │   │   ├── pages/
 │   │   │   ├── public/       # Home, Login, Register, TrackComplaint, PublicMap
@@ -194,6 +212,7 @@ MINI 3/
 │   │   │   ├── engineer/     # EngineerDashboard, EngineerAssignments
 │   │   │   └── admin/        # AdminDashboard, ManageUsers, ManageAuthorities, ManageComplaints
 │   │   ├── services/         # Axios API clients
+│   │   ├── utils/            # dateUtils (DD/MM/YY), geoUtils, imageUtils
 │   │   ├── App.jsx           # Master route wiring
 │   │   └── main.jsx          # React DOM mounting
 │   ├── package.json

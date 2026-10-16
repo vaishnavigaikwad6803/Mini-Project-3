@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Camera, 
-  RefreshCw, 
-  X, 
-  Check, 
-  AlertTriangle, 
-  RotateCw, 
-  Video, 
-  Loader2, 
-  ShieldCheck, 
-  AlertOctagon, 
+import {
+  Camera,
+  RefreshCw,
+  X,
+  Check,
+  AlertTriangle,
+  RotateCw,
+  Video,
+  Loader2,
+  ShieldCheck,
+  AlertOctagon,
   CheckCircle2
 } from 'lucide-react';
 import { aiService } from '../../services/aiService';
@@ -19,9 +19,9 @@ import { aiService } from '../../services/aiService';
  * Exclusively provides live WebRTC camera capture.
  * Features: live camera stream, viewfinder crosshairs, flip camera, instant shutter capture, preview, retake, and AI road validation.
  */
-const CameraCapture = ({ 
-  capturedImage, 
-  onImageCapture, 
+const CameraCapture = ({
+  capturedImage,
+  onImageCapture,
   onImageClear,
   onValidationChange,
   label = "Road Damage Photo",
@@ -38,7 +38,7 @@ const CameraCapture = ({
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' (back) or 'user' (front)
   const [isStreaming, setIsStreaming] = useState(false);
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
-  
+
   // AI Validation State
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState(null); // { is_valid: bool, error_message: str }
@@ -78,7 +78,7 @@ const CameraCapture = ({
           const videoDevices = devices.filter(device => device.kind === 'videoinput');
           setHasMultipleCameras(videoDevices.length > 1);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, []);
 
@@ -238,13 +238,13 @@ const CameraCapture = ({
     canvas.height = height;
 
     const context = canvas.getContext('2d');
-    
+
     // If front camera, flip horizontally for mirror preview match
     if (facingMode === 'user') {
       context.translate(width, 0);
       context.scale(-1, 1);
     }
-    
+
     context.drawImage(video, 0, 0, width, height);
 
     canvas.toBlob((blob) => {
@@ -252,7 +252,7 @@ const CameraCapture = ({
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const file = new File([blob], `road_damage_${timestamp}.jpg`, { type: 'image/jpeg' });
         const objUrl = URL.createObjectURL(blob);
-        
+
         setPreviewUrl(objUrl);
         setCameraError('');
         stopCameraStream();
@@ -288,7 +288,7 @@ const CameraCapture = ({
 
   return (
     <div className="space-y-3">
-      
+
       {/* Hidden canvas for taking snapshot */}
       <canvas ref={canvasRef} className="hidden" />
 
@@ -338,7 +338,7 @@ const CameraCapture = ({
               alt="Road Damage Preview"
               className="w-full h-64 object-contain bg-slate-950"
             />
-            
+
             <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-slate-950/85 backdrop-blur-md text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
               <Camera className="h-3 w-3" />
               <span>Live Camera Capture</span>
@@ -407,10 +407,10 @@ const CameraCapture = ({
           )}
         </div>
       ) : isCameraActive ? (
-        
+
         /* 2. STATE: LIVE CAMERA VIEWFINDER */
         <div className="rounded-2xl bg-slate-950 border border-slate-800 p-4 space-y-4 shadow-xl">
-          
+
           <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping"></span>
@@ -496,7 +496,7 @@ const CameraCapture = ({
 
         /* 3. STATE: DEFAULT SINGLE TAKE LIVE PHOTO INTERFACE */
         <div className="rounded-2xl bg-slate-950/70 border border-slate-800 p-6 text-center space-y-4">
-          
+
           {cameraError && (
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start gap-2 text-left mb-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
@@ -510,7 +510,7 @@ const CameraCapture = ({
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shadow-inner">
               <Camera className="h-7 w-7" />
             </div>
-            
+
             <div>
               <h4 className="text-sm font-bold text-white font-['Outfit']">
                 {capturePrompt}

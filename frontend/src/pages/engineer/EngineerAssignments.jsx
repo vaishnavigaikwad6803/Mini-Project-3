@@ -10,6 +10,7 @@ import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import CameraCapture from '../../components/common/CameraCapture';
 import { calculateDistance, detectCurrentLocation } from '../../utils/geoUtils';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   HardHat,
   Wrench,
@@ -36,6 +37,7 @@ const REPAIR_STAGES = [
 const EngineerAssignments = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
+  const { t } = useLanguage();
 
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -172,13 +174,13 @@ const EngineerAssignments = () => {
       {/* Header */}
       <div>
         <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
-          Work Orders
+          {t('engineer.assignmentsBadge', 'Work Orders')}
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit'] mt-1">
-          Assigned Road Maintenance Tasks
+          {t('engineer.assignmentsTitle', 'Assigned Road Maintenance Tasks')}
         </h1>
         <p className="text-xs text-slate-400 mt-1">
-          Conduct field assessments, progress repair milestones, and upload completion proofs to resolve damage.
+          {t('engineer.assignmentsSubtitle', 'Conduct field assessments, progress repair milestones, and upload completion proofs to resolve damage.')}
         </p>
       </div>
 
@@ -187,8 +189,12 @@ const EngineerAssignments = () => {
       ) : assignments.length === 0 ? (
         <div className="p-12 text-center bg-slate-900 rounded-3xl border border-slate-800">
           <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
-          <h3 className="text-sm font-semibold text-slate-300 mt-3">No active assignments</h3>
-          <p className="text-xs text-slate-500 mt-1">All road maintenance tasks are completed.</p>
+          <h3 className="text-sm font-semibold text-slate-300 mt-3">
+            {t('engineer.noAssignmentsTitle', 'No active assignments')}
+          </h3>
+          <p className="text-xs text-slate-500 mt-1">
+            {t('engineer.noAssignmentsDesc', 'All road maintenance tasks are completed.')}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -247,13 +253,13 @@ const EngineerAssignments = () => {
                     to={`/complaints/${c.id}`}
                     className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors flex items-center gap-1.5"
                   >
-                    <Eye className="h-3.5 w-3.5" /> Details
+                    <Eye className="h-3.5 w-3.5" /> {t('common.details', 'Details')}
                   </Link>
 
                   {['Repair Completed', 'Authority Verification', 'Closed'].includes(c.status) ? (
                     <div className="flex items-center gap-2">
                       <span className="px-3.5 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/30">
-                        Repair Completed
+                        {t('status.REPAIR_COMPLETED', 'Repair Completed')}
                       </span>
                     </div>
                   ) : (
@@ -262,7 +268,7 @@ const EngineerAssignments = () => {
                         onClick={() => openUpdateModal(c)}
                         className="px-3.5 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
                       >
-                        <Wrench className="h-3.5 w-3.5" /> Update Stage
+                        <Wrench className="h-3.5 w-3.5" /> {t('engineer.updateStage', 'Update Stage')}
                       </button>
 
                       {canDirectResolve && (
@@ -270,7 +276,7 @@ const EngineerAssignments = () => {
                           onClick={() => openUpdateModal(c, 'Repair Completed')}
                           className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Resolve Damage
+                          <CheckCircle2 className="h-3.5 w-3.5" /> {t('engineer.directResolve', 'Resolve Damage')}
                         </button>
                       )}
                     </div>

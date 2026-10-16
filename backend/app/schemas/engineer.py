@@ -51,3 +51,4 @@ class EngineerResponse(EngineerBase):
 class EngineerAssignmentRequest(BaseModel):
     engineer_id: int
     remarks: Optional[str] = None
+    deadline: Optional[str] = None

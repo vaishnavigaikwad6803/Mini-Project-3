@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import { complaintService } from '../../services/complaintService';
 import StatsCard from '../../components/common/StatsCard';
+import StatusBadge from '../../components/common/StatusBadge';
+import RoadTypeBadge from '../../components/common/RoadTypeBadge';
 import Loader from '../../components/common/Loader';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   ResponsiveContainer,
   PieChart,
@@ -34,21 +37,32 @@ import {
   ArrowRight,
   Download,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Eye
 } from 'lucide-react';
 
 const COLORS = ['#f59e0b', '#6366f1', '#06b6d4', '#10b981', '#a855f7', '#ef4444'];
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
+  const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('ALL');
 
   const loadData = () => {
     setError('');
-    adminService.getDashboardData()
-      .then((res) => setData(res))
+    Promise.all([
+      adminService.getDashboardData(),
+      complaintService.getComplaints().catch(() => [])
+    ])
+      .then(([dashData, complaintsData]) => {
+        setData(dashData);
+        setComplaints(complaintsData || []);
+      })
       .catch((err) => {
         console.error("Error loading admin dashboard:", err);
         setError('Unable to aggregate analytics from backend services. Please check connection.');
@@ -104,6 +118,38 @@ const AdminDashboard = () => {
 
   const stats = data?.stats || {};
 
+  const activeComplaints = complaints.filter((c) =>
+    ['Repair In Progress', 'Repair Started', 'Inspection Completed', 'Inspection Pending', 'Engineer Assigned', 'Authority Verification', 'Under Review'].includes(c.status)
+  );
+
+  const resolvedComplaints = complaints.filter((c) =>
+    ['Closed', 'Repair Completed', 'Resolved'].includes(c.status)
+  );
+
+  const aiComplaints = complaints.filter((c) =>
+    (c.ai_confidence && c.ai_confidence >= 0.85) || c.status === 'AI Analyzed'
+  );
+
+  const getFilteredComplaints = () => {
+    switch (activeFilter) {
+      case 'ACTIVE':
+        return activeComplaints;
+      case 'RESOLVED':
+        return resolvedComplaints;
+      case 'AI':
+        return aiComplaints;
+      case 'ALL':
+      default:
+        return complaints;
+    }
+  };
+
+  const displayedComplaints = getFilteredComplaints();
+  const totalComplaintsCount = stats.total_complaints || complaints.length || 0;
+  const activeRepairsCount = stats.active_repairs || activeComplaints.length || 0;
+  const completedRepairsCount = stats.completed_repairs || resolvedComplaints.length || 0;
+  const aiAvgConfidence = `${Math.round((stats.avg_ai_confidence || 0.88) * 100)}%`;
+
   return (
     <div className="space-y-8 pb-12">
 
@@ -129,15 +175,15 @@ const AdminDashboard = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30">
-                System Administrator
+                {t('auth.roleAdmin')}
               </span>
               <span className="text-xs text-slate-400">RoadGuard AI Core v1.0</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-['Outfit']">
-              Executive Analytics & Infrastructure Hub
+              {t('admin.hubTitle')}
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Real-time monitoring across road authorities, YOLOv8 computer vision triage, and lifecycle resolution rates.
+              {t('admin.hubSubtitle')}
             </p>
           </div>
 
@@ -149,63 +195,31 @@ const AdminDashboard = () => {
               title="Export all complaints to CSV"
             >
               <Download className="h-3.5 w-3.5" />
-              {exporting ? 'Exporting...' : 'Export CSV Audit'}
+              {exporting ? t('admin.exporting') : t('admin.exportCsv')}
             </button>
             <Link
               to="/admin/authorities"
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-colors"
             >
-              Authorities ({stats.total_authorities})
+              {t('common.authorities')} ({stats.total_authorities})
             </Link>
             <Link
               to="/admin/users"
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-colors"
             >
-              Users ({stats.total_users})
+              {t('common.users')} ({stats.total_users})
             </Link>
             <Link
               to="/admin/complaints"
               className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-colors"
             >
-              All Complaints
+              {t('admin.allComplaints')}
             </Link>
           </div>
         </div>
       </div>
 
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total Road Complaints"
-          value={stats.total_complaints || 0}
-          subtitle="System-wide reports"
-          icon={FileText}
-          color="amber"
-        />
-        <StatsCard
-          title="Active Repairs"
-          value={stats.active_repairs || 0}
-          subtitle="In-progress field operations"
-          icon={Wrench}
-          color="purple"
-        />
-        <StatsCard
-          title="Resolved & Closed"
-          value={stats.completed_repairs || 0}
-          subtitle="Quality verified"
-          icon={CheckCircle2}
-          color="emerald"
-        />
-        <StatsCard
-          title="AI Confidence Avg"
-          value={`${Math.round((stats.avg_ai_confidence || 0.88) * 100)}%`}
-          subtitle="YOLOv8 Neural Detection"
-          icon={Cpu}
-          color="cyan"
-        />
-      </div>
-
-      {/* Primary Analytics Charts Grid */}
+      {/* ── 1. Data Visualizations Grid (Swapped to Top) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* 1. Road Type Distribution Donut Chart */}
@@ -213,9 +227,9 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-white font-['Outfit']">
-                Complaints by Road Classification
+                {t('admin.complaintsByRoad')}
               </h3>
-              <p className="text-xs text-slate-400">Jurisdiction distribution across highways & streets</p>
+              <p className="text-xs text-slate-400">{t('admin.roadJurisdictionDist')}</p>
             </div>
             <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
               <BarChart3 className="h-4 w-4" />
@@ -253,9 +267,9 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-white font-['Outfit']">
-                AI Detected Road Damage Types
+                {t('admin.aiDamageTypes')}
               </h3>
-              <p className="text-xs text-slate-400">Potholes, cracks & surface degradation</p>
+              <p className="text-xs text-slate-400">{t('admin.potholesCracksDesc')}</p>
             </div>
             <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
               <Cpu className="h-4 w-4" />
@@ -280,9 +294,9 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-white font-['Outfit']">
-                Monthly Intake vs Resolution Rate
+                {t('admin.monthlyIntakeVelocity')}
               </h3>
-              <p className="text-xs text-slate-400">Trend velocity of reported vs repaired road defects</p>
+              <p className="text-xs text-slate-400">{t('admin.monthlyVelocityDesc')}</p>
             </div>
             <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
               <TrendingUp className="h-4 w-4" />
@@ -307,8 +321,8 @@ const AdminDashboard = () => {
                 <YAxis stroke="#94a3b8" fontSize={11} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#475569', borderRadius: '0.75rem', fontSize: '12px' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                <Area type="monotone" dataKey="complaints" name="Complaints Logged" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorComplaints)" />
-                <Area type="monotone" dataKey="resolved" name="Repairs Verified & Closed" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorResolved)" />
+                <Area type="monotone" dataKey="complaints" name={t('admin.complaintsLogged')} stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorComplaints)" />
+                <Area type="monotone" dataKey="resolved" name={t('admin.repairsVerifiedClosed')} stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorResolved)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -316,20 +330,167 @@ const AdminDashboard = () => {
 
       </div>
 
+      {/* ── 2. Clickable KPI Stats Grid (Swapped Below Visualizations) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title={t('admin.roadComplaints')}
+          value={totalComplaintsCount}
+          subtitle={t('admin.systemWideReports')}
+          icon={FileText}
+          color="amber"
+          onClick={() => setActiveFilter('ALL')}
+          isActive={activeFilter === 'ALL'}
+        />
+        <StatsCard
+          title={t('admin.activeRepairs')}
+          value={activeRepairsCount}
+          subtitle={t('admin.fieldOperations')}
+          icon={Wrench}
+          color="purple"
+          onClick={() => setActiveFilter(activeFilter === 'ACTIVE' ? 'ALL' : 'ACTIVE')}
+          isActive={activeFilter === 'ACTIVE'}
+        />
+        <StatsCard
+          title={t('admin.resolvedClosed')}
+          value={completedRepairsCount}
+          subtitle={t('admin.qualityVerified')}
+          icon={CheckCircle2}
+          color="emerald"
+          onClick={() => setActiveFilter(activeFilter === 'RESOLVED' ? 'ALL' : 'RESOLVED')}
+          isActive={activeFilter === 'RESOLVED'}
+        />
+        <StatsCard
+          title={t('admin.aiConfidenceAvg')}
+          value={aiAvgConfidence}
+          subtitle={t('admin.neuralDetection')}
+          icon={Cpu}
+          color="cyan"
+          onClick={() => setActiveFilter(activeFilter === 'AI' ? 'ALL' : 'AI')}
+          isActive={activeFilter === 'AI'}
+        />
+      </div>
+
+      {/* ── 3. Interactive Filtered Complaints Register ── */}
+      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700">
+                {activeFilter === 'ACTIVE'
+                  ? t('admin.filterActive')
+                  : activeFilter === 'RESOLVED'
+                  ? t('admin.filterResolved')
+                  : activeFilter === 'AI'
+                  ? t('admin.filterAi')
+                  : t('admin.filterAll')}
+              </span>
+              <span className="text-xs text-slate-400">
+                {displayedComplaints.length} {t('common.complaints')}
+              </span>
+            </div>
+            <h3 className="text-base font-bold text-white font-['Outfit'] mt-1">
+              {activeFilter === 'ACTIVE'
+                ? t('admin.filterActive')
+                : activeFilter === 'RESOLVED'
+                ? t('admin.filterResolved')
+                : activeFilter === 'AI'
+                ? t('admin.filterAi')
+                : t('admin.filterAll')}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              to={
+                activeFilter === 'ACTIVE'
+                  ? '/admin/complaints?status=Repair%20In%20Progress'
+                  : activeFilter === 'RESOLVED'
+                  ? '/admin/complaints?status=Closed'
+                  : '/admin/complaints'
+              }
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition-colors flex items-center gap-1.5"
+            >
+              {t('admin.openInHub')} <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {displayedComplaints.length === 0 ? (
+          <div className="py-8 text-center text-xs text-slate-500">
+            {t('table.noRecords')}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                <tr>
+                  <th className="py-3 px-4">{t('table.id')}</th>
+                  <th className="py-3 px-4">{t('table.roadName')}</th>
+                  <th className="py-3 px-4">{t('table.roadType')}</th>
+                  <th className="py-3 px-4">{t('table.aiDetection')}</th>
+                  <th className="py-3 px-4">{t('table.authority')}</th>
+                  <th className="py-3 px-4">{t('table.status')}</th>
+                  <th className="py-3 px-4 text-right">{t('table.actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {displayedComplaints.slice(0, 6).map((c) => (
+                  <tr key={c.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-amber-400">
+                      #{c.id.slice(0, 8)}
+                    </td>
+                    <td className="py-3 px-4 font-semibold text-white max-w-[200px] truncate">
+                      {c.road_name}
+                    </td>
+                    <td className="py-3 px-4">
+                      <RoadTypeBadge type={c.road_type} />
+                    </td>
+                    <td className="py-3 px-4 text-slate-300">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">{c.primary_damage_type || 'Road Defect'}</span>
+                        {c.ai_confidence && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono font-semibold">
+                            {Math.round(c.ai_confidence * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-400 max-w-[150px] truncate">
+                      {c.authority_name || 'Unassigned'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <StatusBadge status={c.status} />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <Link
+                        to={`/citizen/complaint/${c.id}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
+                      >
+                        <Eye className="h-3.5 w-3.5 text-amber-400" /> {t('table.view')}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Authority Performance Breakdown Table */}
       <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-white font-['Outfit']">
-              Authority Resolution Performance
+              {t('admin.authorityPerformance')}
             </h3>
-            <p className="text-xs text-slate-400">Jurisdiction compliance and repair turnaround speed</p>
+            <p className="text-xs text-slate-400">{t('admin.authorityPerfSubtitle')}</p>
           </div>
           <Link
             to="/admin/authorities"
             className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
           >
-            Configure Authorities <ArrowRight className="h-3.5 w-3.5" />
+            {t('admin.configureAuthorities')} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
@@ -337,12 +498,12 @@ const AdminDashboard = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
               <tr>
-                <th className="py-3 px-4">Authority Name</th>
-                <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4">Total Assigned</th>
-                <th className="py-3 px-4">In Progress</th>
-                <th className="py-3 px-4">Resolved</th>
-                <th className="py-3 px-4">Avg Resolution (Days)</th>
+                <th className="py-3 px-4">{t('admin.authorityName')}</th>
+                <th className="py-3 px-4">{t('admin.type')}</th>
+                <th className="py-3 px-4">{t('admin.totalAssigned')}</th>
+                <th className="py-3 px-4">{t('admin.inProgress')}</th>
+                <th className="py-3 px-4">{t('admin.resolved')}</th>
+                <th className="py-3 px-4">{t('admin.avgResolutionDays')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -353,7 +514,7 @@ const AdminDashboard = () => {
                   <td className="py-3.5 px-4 font-bold text-amber-400">{ap.total_assigned}</td>
                   <td className="py-3.5 px-4 text-purple-400 font-semibold">{ap.in_progress}</td>
                   <td className="py-3.5 px-4 text-emerald-400 font-bold">{ap.completed}</td>
-                  <td className="py-3.5 px-4 text-cyan-400">{ap.avg_resolution_days} days</td>
+                  <td className="py-3.5 px-4 text-cyan-400">{ap.avg_resolution_days} {t('admin.days')}</td>
                 </tr>
               ))}
             </tbody>
@@ -370,21 +531,21 @@ const AdminDashboard = () => {
               </div>
               <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
                 <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Total</span>
+                  <span className="text-[10px] text-slate-500 block">{t('admin.totalAssigned')}</span>
                   <strong className="text-amber-400 font-bold">{ap.total_assigned}</strong>
                 </div>
                 <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Active</span>
+                  <span className="text-[10px] text-slate-500 block">{t('admin.inProgress')}</span>
                   <strong className="text-purple-400 font-bold">{ap.in_progress}</strong>
                 </div>
                 <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Closed</span>
+                  <span className="text-[10px] text-slate-500 block">{t('admin.resolved')}</span>
                   <strong className="text-emerald-400 font-bold">{ap.completed}</strong>
                 </div>
               </div>
               <div className="text-[11px] text-slate-400 pt-1 flex justify-between">
-                <span>Avg. Resolution Speed:</span>
-                <span className="text-cyan-400 font-semibold">{ap.avg_resolution_days} days</span>
+                <span>{t('admin.avgResolutionDays')}:</span>
+                <span className="text-cyan-400 font-semibold">{ap.avg_resolution_days} {t('admin.days')}</span>
               </div>
             </div>
           ))}

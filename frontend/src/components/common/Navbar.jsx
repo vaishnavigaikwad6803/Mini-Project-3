@@ -20,9 +20,12 @@ import {
   ChevronDown
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import LanguageSelector from './LanguageSelector';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, isCitizen, isAuthority, isEngineer, isAdmin } = useAuth();
+  const { t } = useLanguage();
   const { notifications, unreadCount, markAsRead } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
@@ -114,10 +117,9 @@ const Navbar = () => {
   };
 
   const getNavLinkClass = (isActive) =>
-    `px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-      isActive
-        ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30 shadow-sm shadow-amber-500/10'
-        : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent active:scale-95'
+    `px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${isActive
+      ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30 shadow-sm shadow-amber-500/10'
+      : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent active:scale-95'
     }`;
 
   return (
@@ -154,7 +156,7 @@ const Navbar = () => {
               className={getNavLinkClass(isActiveRoute('/'))}
             >
               <Home className="h-4 w-4" />
-              <span>Home</span>
+              <span>{t('nav.home')}</span>
             </Link>
 
             <Link
@@ -162,7 +164,7 @@ const Navbar = () => {
               className={getNavLinkClass(isActiveRoute('/map'))}
             >
               <MapPin className="h-4 w-4 text-amber-500" />
-              <span>Live Map</span>
+              <span>{t('nav.liveMap')}</span>
             </Link>
 
             <Link
@@ -170,7 +172,7 @@ const Navbar = () => {
               className={getNavLinkClass(isActiveRoute('/track'))}
             >
               <Search className="h-4 w-4 text-cyan-400" />
-              <span>Track Complaint</span>
+              <span>{t('nav.trackComplaint')}</span>
             </Link>
 
             {isAuthenticated && (
@@ -179,25 +181,30 @@ const Navbar = () => {
                 className={getNavLinkClass(isActiveRoute('dashboard'))}
               >
                 <LayoutDashboard className="h-4 w-4 text-indigo-400" />
-                <span>Dashboard</span>
+                <span>{t('nav.dashboard')}</span>
               </Link>
             )}
           </div>
 
           {/* 3. RIGHT ACTIONS & USER MENU */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+
+            {/* Multilingual Language Switcher (EN / MR / HI) */}
+            <LanguageSelector />
 
             {/* Dark / Light Mode Theme Toggle */}
             <ThemeToggle />
 
-            {/* Quick "Report Damage" CTA Button */}
-            <Link
-              to="/citizen/report"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Report Damage</span>
-            </Link>
+            {/* Quick "Report Damage" CTA Button — Citizen only */}
+            {isCitizen && (
+              <Link
+                to="/citizen/report"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>{t('nav.reportDamage')}</span>
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <>
@@ -209,9 +216,8 @@ const Navbar = () => {
                       setShowNotifications((prev) => !prev);
                       setShowUserMenu(false);
                     }}
-                    className={`p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 relative transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-                      showNotifications ? 'bg-slate-800 text-amber-400' : ''
-                    }`}
+                    className={`p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 relative transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${showNotifications ? 'bg-slate-800 text-amber-400' : ''
+                      }`}
                     aria-label="Open notifications"
                     aria-expanded={showNotifications}
                   >
@@ -229,7 +235,7 @@ const Navbar = () => {
                       <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-800/60">
                         <div className="flex items-center gap-2">
                           <Bell className="h-4 w-4 text-amber-500" />
-                          <span className="font-bold text-sm text-white font-['Outfit']">Notifications</span>
+                          <span className="font-bold text-sm text-white font-['Outfit']">{t('nav.notifications')}</span>
                           {unreadCount > 0 && (
                             <span className="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full font-semibold border border-amber-500/30">
                               {unreadCount} new
@@ -242,7 +248,7 @@ const Navbar = () => {
                             onClick={() => markAsRead(null, true)}
                             className="text-xs text-amber-400 hover:text-amber-300 font-semibold focus:outline-none focus-visible:underline"
                           >
-                            Mark all read
+                            {t('nav.markAllRead')}
                           </button>
                         )}
                       </div>
@@ -250,7 +256,7 @@ const Navbar = () => {
                       <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/60">
                         {notifications.length === 0 ? (
                           <div className="py-8 text-center text-slate-400 text-xs">
-                            No notifications yet.
+                            {t('nav.noNotifications')}
                           </div>
                         ) : (
                           notifications.slice(0, 8).map((notif) => (
@@ -274,9 +280,8 @@ const Navbar = () => {
                                   setShowNotifications(false);
                                 }
                               }}
-                              className={`p-3 text-left hover:bg-slate-800/60 cursor-pointer transition-colors focus:outline-none focus:bg-slate-800/60 ${
-                                !notif.is_read ? 'bg-amber-500/5' : ''
-                              }`}
+                              className={`p-3 text-left hover:bg-slate-800/60 cursor-pointer transition-colors focus:outline-none focus:bg-slate-800/60 ${!notif.is_read ? 'bg-amber-500/5' : ''
+                                }`}
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <span className={`text-xs font-semibold ${!notif.is_read ? 'text-amber-300' : 'text-slate-200'}`}>
@@ -305,9 +310,8 @@ const Navbar = () => {
                       setShowUserMenu((prev) => !prev);
                       setShowNotifications(false);
                     }}
-                    className={`flex items-center gap-2 p-1.5 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-                      showUserMenu ? 'ring-2 ring-amber-500/50 border-amber-500/50' : ''
-                    }`}
+                    className={`flex items-center gap-2 p-1.5 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${showUserMenu ? 'ring-2 ring-amber-500/50 border-amber-500/50' : ''
+                      }`}
                     aria-label="User account menu"
                     aria-expanded={showUserMenu}
                   >
@@ -342,7 +346,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus-visible:bg-slate-800"
                       >
                         <LayoutDashboard className="h-4 w-4 text-amber-400" />
-                        <span>Portal Dashboard</span>
+                        <span>{t('nav.portalDashboard')}</span>
                       </Link>
 
                       <button
@@ -351,7 +355,7 @@ const Navbar = () => {
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors mt-1 focus:outline-none focus-visible:bg-rose-500/10"
                       >
                         <LogOut className="h-4 w-4" />
-                        <span>Sign Out</span>
+                        <span>{t('nav.logout')}</span>
                       </button>
                     </div>
                   )}
@@ -363,13 +367,13 @@ const Navbar = () => {
                   to="/login"
                   className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 active:scale-95"
                 >
-                  Log In
+                  {t('nav.login')}
                 </Link>
                 <Link
                   to="/register"
                   className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-500/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 active:scale-95"
                 >
-                  Sign Up
+                  {t('nav.register')}
                 </Link>
               </div>
             )}
@@ -392,66 +396,70 @@ const Navbar = () => {
       {/* 4. RESPONSIVE MOBILE MENU DROPDOWN */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-slate-900/95 border-b border-slate-800 px-4 pt-3 pb-5 space-y-2 backdrop-blur-xl animate-in slide-in-from-top-2 duration-150 shadow-2xl">
-          
+
           {/* Navigation Links */}
           <div className="space-y-1">
             <Link
               to="/"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                isActiveRoute('/') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('/') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                }`}
             >
               <Home className="h-4 w-4" />
-              <span>Home</span>
+              <span>{t('nav.home')}</span>
             </Link>
 
             <Link
               to="/map"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                isActiveRoute('/map') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('/map') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                }`}
             >
               <MapPin className="h-4 w-4 text-amber-500" />
-              <span>Live Map</span>
+              <span>{t('nav.liveMap')}</span>
             </Link>
 
             <Link
               to="/track"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                isActiveRoute('/track') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('/track') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                }`}
             >
               <Search className="h-4 w-4 text-cyan-400" />
-              <span>Track Complaint</span>
+              <span>{t('nav.trackComplaint')}</span>
             </Link>
 
             {isAuthenticated && (
               <Link
                 to={getDashboardPath()}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                  isActiveRoute('dashboard') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
-                }`}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${isActiveRoute('dashboard') ? 'text-amber-400 bg-amber-500/10 border border-amber-500/30' : 'text-slate-200 hover:bg-slate-800'
+                  }`}
               >
                 <LayoutDashboard className="h-4 w-4 text-indigo-400" />
-                <span>Portal Dashboard</span>
+                <span>{t('nav.portalDashboard')}</span>
               </Link>
             )}
           </div>
 
-          {/* Prominent Action Button: Report Road Damage */}
-          <div className="pt-2">
-            <Link
-              to="/citizen/report"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-md shadow-amber-500/20 active:scale-95 transition-all text-center"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Report Road Damage</span>
-            </Link>
+          {/* Prominent Action Button: Report Road Damage — Citizen only */}
+          {isCitizen && (
+            <div className="pt-2">
+              <Link
+                to="/citizen/report"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-md shadow-amber-500/20 active:scale-95 transition-all text-center"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>{t('nav.reportDamage')}</span>
+              </Link>
+            </div>
+          )}
+
+          {/* Multilingual Selection Row on Mobile */}
+          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5 mt-2">
+            <span className="text-xs font-semibold text-slate-300 block">{t('nav.language')} / भाषा</span>
+            <LanguageSelector variant="segmented" className="w-full justify-between" />
           </div>
 
           {/* Theme & Appearance Row */}
@@ -476,7 +484,7 @@ const Navbar = () => {
                 className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-semibold text-xs border border-rose-500/20 transition-colors"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                <span>Sign Out</span>
+                <span>{t('nav.logout')}</span>
               </button>
             </div>
           ) : (
@@ -486,14 +494,14 @@ const Navbar = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="py-2 px-3 rounded-xl text-center text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
               >
-                Log In
+                {t('nav.login')}
               </Link>
               <Link
                 to="/register"
                 onClick={() => setMobileMenuOpen(false)}
                 className="py-2 px-3 rounded-xl text-center text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition-colors shadow-sm"
               >
-                Sign Up
+                {t('nav.register')}
               </Link>
             </div>
           )}

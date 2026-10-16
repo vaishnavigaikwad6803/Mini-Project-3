@@ -1,9 +1,12 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
+import { useLanguage } from '../context/LanguageContext';
 import { ShieldAlert, Heart, Github, Sparkles } from 'lucide-react';
 
 const MainLayout = () => {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans">
       <Navbar />
@@ -32,50 +35,50 @@ const MainLayout = () => {
 
             <div>
               <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">
-                Covered Road Authorities
+                {t('footer.coveredAuthorities')}
               </h4>
               <ul className="space-y-2 text-xs text-slate-400">
-                <li>• National Highways (NHAI)</li>
-                <li>• State Highways / PWD</li>
-                <li>• Municipal Corporations (City Roads)</li>
-                <li>• Rural Road Networks (PMGSY)</li>
+                <li>• {t('footer.nhai')}</li>
+                <li>• {t('footer.statePwd')}</li>
+                <li>• {t('footer.municipalCorp')}</li>
+                <li>• {t('footer.ruralRoads')}</li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">
-                Supported AI Damage Classes
+                {t('footer.supportedAiClasses')}
               </h4>
               <ul className="space-y-2 text-xs text-slate-400">
-                <li>• Potholes & Pit Formations</li>
-                <li>• Longitudinal Surface Cracks</li>
-                <li>• Transverse Thermal Cracks</li>
-                <li>• Alligator Fatigue Cracking</li>
-                <li>• General Pavement Degradation</li>
+                <li>• {t('damage.pothole')}</li>
+                <li>• {t('damage.longitudinalCrack')}</li>
+                <li>• {t('damage.transverseCrack')}</li>
+                <li>• {t('damage.alligatorCrack')}</li>
+                <li>• {t('damage.surfaceDegradation')}</li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">
-                Project System Info
+                {t('footer.systemInfo')}
               </h4>
               <div className="space-y-2 text-xs text-slate-400">
                 <p>Computer Vision: <strong className="text-amber-400">YOLOv8 + OpenCV</strong></p>
                 <p>Backend: <strong className="text-cyan-400">FastAPI & Python</strong></p>
                 <p>Frontend: <strong className="text-emerald-400">React + Leaflet GIS</strong></p>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[11px] font-semibold mt-2">
-                  <Sparkles className="h-3 w-3" /> College Mini-Project System
+                  <Sparkles className="h-3 w-3" /> {t('footer.collegeProject')}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-            <p>© {new Date().getFullYear()} RoadGuard AI System. Developed for Academic Project.</p>
+            <p>© {new Date().getFullYear()} {t('footer.allRightsReserved')}</p>
             <div className="flex items-center gap-4">
-              <Link to="/map" className="hover:text-amber-400 transition-colors">Public Map</Link>
-              <Link to="/track" className="hover:text-amber-400 transition-colors">Track Status</Link>
-              <Link to="/login?type=authority" className="hover:text-amber-400 transition-colors">Staff Login</Link>
+              <Link to="/map" className="hover:text-amber-400 transition-colors">{t('nav.liveMap')}</Link>
+              <Link to="/track" className="hover:text-amber-400 transition-colors">{t('nav.trackComplaint')}</Link>
+              <Link to="/login?type=authority" className="hover:text-amber-400 transition-colors">{t('nav.login')}</Link>
             </div>
           </div>
         </div>
