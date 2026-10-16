@@ -476,7 +476,7 @@ const CitizenDashboard = () => {
       </div>
 
       {/* Citizen Safety & Community Impact Gauge */}
-      <CitizenSafetyImpactBadge complaints={complaints} />
+      <CitizenSafetyImpactBadge complaints={recentComplaints} />
 
       {/* 3. CITIZEN VISUAL ANALYTICS & INFRASTRUCTURE INTELLIGENCE SUITE */}
       <div className="space-y-6">

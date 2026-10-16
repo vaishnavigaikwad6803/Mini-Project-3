@@ -5,6 +5,7 @@ import Sidebar from '../components/common/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import Loader from '../components/common/Loader';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 import { PanelLeft, Shield, Building2, Wrench, Car } from 'lucide-react';
 
 const DashboardLayout = ({ allowedRoles = [] }) => {
@@ -65,7 +66,9 @@ const DashboardLayout = ({ allowedRoles = [] }) => {
         <Sidebar mobileOpen={mobileSidebarOpen} onCloseMobile={() => setMobileSidebarOpen(false)} />
         <main className="flex-1 overflow-y-auto bg-slate-950 p-3 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>
