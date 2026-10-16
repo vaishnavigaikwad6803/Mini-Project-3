@@ -211,7 +211,7 @@ def register_user(
         district=request.district.strip() if request.district else None,
         state=request.state.strip() if request.state else None,
         is_active=True,
-        is_verified=False
+        is_verified=True
     )
     db.add(user)
     db.commit()
@@ -229,39 +229,13 @@ def register_user(
         db.add(engineer)
         db.commit()
 
-    # Generate secure random 6-digit OTP
-    otp_code = generate_otp(6)
-    otp_h = hash_token(otp_code)
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRE_MINUTES)
-
-    verification = EmailVerification(
-        user_id=user.id,
-        email=normalized_email,
-        otp_hash=otp_h,
-        expires_at=expires_at,
-        attempts=0,
-        resend_count=0,
-        last_sent_at=datetime.utcnow(),
-        is_used=False
-    )
-    db.add(verification)
-    db.commit()
-
-    # Send verification email via SMTP
-    send_verification_otp_email(
-        to_email=user.email,
-        full_name=user.full_name,
-        otp_code=otp_code,
-        expiry_minutes=settings.OTP_EXPIRE_MINUTES
-    )
-
     return RegisterResponse(
-        message=f"Registration successful! A 6-digit verification code has been sent to {user.email}.",
+        message="Registration successful! You can now log in with your credentials.",
         user_id=user.id,
         email=user.email,
         full_name=user.full_name,
-        is_verified=False,
-        requires_email_verification=True
+        is_verified=True,
+        requires_email_verification=False
     )
 
 
@@ -479,37 +453,6 @@ def login_user(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account has been deactivated. Please contact the administrator."
-        )
-
-    if not user.is_verified:
-        # User credentials are correct, but email is not verified
-        # Send fresh OTP if needed and return clear instruction
-        latest = (
-            db.query(EmailVerification)
-            .filter(EmailVerification.user_id == user.id, EmailVerification.is_used == False)
-            .first()
-        )
-        if not latest or datetime.utcnow() > latest.expires_at:
-            otp_code = generate_otp(6)
-            otp_h = hash_token(otp_code)
-            expires_at = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRE_MINUTES)
-            new_v = EmailVerification(
-                user_id=user.id,
-                email=user.email,
-                otp_hash=otp_h,
-                expires_at=expires_at,
-                attempts=0,
-                resend_count=0,
-                last_sent_at=datetime.utcnow(),
-                is_used=False
-            )
-            db.add(new_v)
-            db.commit()
-            send_verification_otp_email(user.email, user.full_name, otp_code, settings.OTP_EXPIRE_MINUTES)
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Email verification required: Your account is not yet verified. A verification code has been dispatched to {user.email}."
         )
 
     # Successful login: reset failed login attempts

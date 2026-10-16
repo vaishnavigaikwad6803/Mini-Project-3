@@ -185,8 +185,10 @@ const Register = () => {
         role: 'CITIZEN',
       });
 
-      // On successful registration, redirect to verify-email
-      navigate(`/verify-email?email=${encodeURIComponent(formData.email.trim())}&registered=true`);
+      // On successful registration, redirect to login
+      navigate('/login', {
+        state: { message: 'Account registered successfully! You can now log in with your credentials.' }
+      });
     } catch (err) {
       const parsed = parseAuthError(err, 'Registration failed. Please check your details and try again.');
       setServerError(parsed);

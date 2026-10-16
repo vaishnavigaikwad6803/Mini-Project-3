@@ -147,7 +147,6 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState('');
-  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
   const [flashMessage, setFlashMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
@@ -316,20 +315,6 @@ const Login = () => {
         else navigate('/citizen');
       }
     } catch (err) {
-      const errDetail = err.response?.data?.detail;
-      const detailStr = typeof errDetail === 'string' ? errDetail : JSON.stringify(errDetail || '');
-      const isUnverified = 
-        detailStr.toLowerCase().includes('verification') || 
-        detailStr.toLowerCase().includes('not verified') || 
-        detailStr.toLowerCase().includes('unverified') ||
-        (typeof errDetail === 'object' && errDetail?.code === 'EMAIL_NOT_VERIFIED');
-
-      if (isUnverified) {
-        setUnverifiedEmail(email.trim());
-      } else {
-        setUnverifiedEmail(null);
-      }
-
       const parsed = parseAuthError(err, 'Invalid email or password. Please try again.');
       setServerError(parsed);
     } finally {
@@ -717,26 +702,11 @@ const Login = () => {
                     <div>
                       <p className="font-semibold text-rose-200">Authentication Failed</p>
                       <p className="mt-0.5 leading-relaxed">{serverError}</p>
-                      {unverifiedEmail && (
-                        <div className="mt-2.5 pt-2 border-t border-rose-500/20">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`)}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 px-3 py-1.5 rounded-lg border border-amber-400/30 transition-colors"
-                          >
-                            <span>Verify Email Address Now</span>
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setServerError('');
-                      setUnverifiedEmail(null);
-                    }}
+                    onClick={() => setServerError('')}
                     className="text-rose-400 hover:text-rose-200 p-1 rounded-lg focus:outline-none focus-visible:ring-1 focus-visible:ring-rose-400"
                     aria-label="Dismiss error"
                   >

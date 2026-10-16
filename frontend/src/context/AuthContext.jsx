@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     loading,
-    isAuthenticated: !!token && !!user?.is_verified,
+    isAuthenticated: !!token,
     isVerified: !!user?.is_verified,
     isCitizen: user?.role === 'CITIZEN',
     isAuthority: user?.role === 'AUTHORITY',
