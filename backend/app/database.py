@@ -62,3 +62,39 @@ def close_db_connection():
         logger.info("Database connection pool disposed gracefully.")
     except Exception as e:
         logger.error(f"Error closing database pool: {str(e)}")
+
+def ensure_schema_migrations():
+    """Ensures schema changes and newly added columns exist across all teammate environments."""
+    from sqlalchemy import inspect
+    try:
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+
+        with engine.connect() as conn:
+            # 1. Ensure deadline column in complaints table
+            if "complaints" in existing_tables:
+                comp_cols = [c["name"] for c in inspector.get_columns("complaints")]
+                if "deadline" not in comp_cols:
+                    conn.execute(text("ALTER TABLE complaints ADD COLUMN deadline DATETIME"))
+                    conn.commit()
+                    logger.info("Auto-migrated: Added 'deadline' column to complaints table.")
+
+            # 2. Ensure deadline column in repairs table
+            if "repairs" in existing_tables:
+                repair_cols = [c["name"] for c in inspector.get_columns("repairs")]
+                if "deadline" not in repair_cols:
+                    conn.execute(text("ALTER TABLE repairs ADD COLUMN deadline DATETIME"))
+                    conn.commit()
+                    logger.info("Auto-migrated: Added 'deadline' column to repairs table.")
+
+            # 3. Ensure is_verified column in users table
+            if "users" in existing_tables:
+                user_cols = [c["name"] for c in inspector.get_columns("users")]
+                if "is_verified" not in user_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
+                    conn.commit()
+                    logger.info("Auto-migrated: Added 'is_verified' column to users table.")
+
+    except Exception as e:
+        logger.warning(f"Schema auto-migration notice: {str(e)}")
+

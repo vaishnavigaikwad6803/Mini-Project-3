@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import engine, Base, check_db_connection, close_db_connection
+from app.database import engine, Base, check_db_connection, close_db_connection, ensure_schema_migrations
 import app.models  # Ensures all models are registered with Base
 
 logger = logging.getLogger("roadguard.main")
@@ -16,6 +16,7 @@ logger = logging.getLogger("roadguard.main")
 async def lifespan(app: FastAPI):
     # Startup: Ensure tables exist & verify connection
     Base.metadata.create_all(bind=engine)
+    ensure_schema_migrations()
     db_connected, db_msg = check_db_connection()
     if db_connected:
         logger.info(f"Connected to database ({engine.dialect.name}): {db_msg}")
