@@ -9,6 +9,9 @@ import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/public/Home';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
+import VerifyEmail from './pages/public/VerifyEmail';
+import ForgotPassword from './pages/public/ForgotPassword';
+import ResetPassword from './pages/public/ResetPassword';
 import TrackComplaint from './pages/public/TrackComplaint';
 import PublicMap from './pages/public/PublicMap';
 import NotFound from './pages/NotFound';
@@ -43,6 +46,9 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/track" element={<TrackComplaint />} />
         <Route path="/map" element={<PublicMap />} />
         <Route path="/complaints/:id" element={<ComplaintDetails />} />

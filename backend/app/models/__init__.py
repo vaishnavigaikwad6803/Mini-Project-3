@@ -6,6 +6,7 @@ from app.models.ai_result import AIResult, DamageClass, SeverityLevel
 from app.models.repair import Repair, RepairStage
 from app.models.status_history import StatusHistory
 from app.models.notification import Notification, NotificationType
+from app.models.auth_tokens import EmailVerification, PasswordReset, RefreshToken, LoginAttempt
 
 __all__ = [
     "User",
@@ -26,4 +27,8 @@ __all__ = [
     "StatusHistory",
     "Notification",
     "NotificationType",
+    "EmailVerification",
+    "PasswordReset",
+    "RefreshToken",
+    "LoginAttempt",
 ]

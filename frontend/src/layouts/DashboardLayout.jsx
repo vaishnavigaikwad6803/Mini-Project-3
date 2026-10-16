@@ -20,6 +20,9 @@ const DashboardLayout = ({ allowedRoles = [] }) => {
   }
 
   if (!isAuthenticated) {
+    if (user && !user.is_verified) {
+      return <Navigate to={`/verify-email?email=${encodeURIComponent(user.email)}`} replace />;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -88,10 +88,11 @@ const Register = () => {
         if (!value || !value.trim()) return 'State is required.';
         return null;
 
-      case 'password':
-        if (!value) return 'Password is required.';
-        if (value.length < 6) return 'Password must be at least 6 characters.';
+      case 'password': {
+        const evalRes = evaluatePassword(value);
+        if (evalRes.error) return evalRes.error;
         return null;
+      }
 
       case 'confirm_password':
         if (!value) return 'Please confirm your password.';
@@ -176,13 +177,14 @@ const Register = () => {
         email: formData.email.trim(),
         phone: formData.phone.trim() || null,
         password: formData.password,
+        confirm_password: formData.confirm_password,
         district: formData.district.trim(),
         state: formData.state.trim(),
         role: 'CITIZEN',
       });
 
-      // On successful registration, redirect to citizen dashboard
-      navigate('/citizen');
+      // On successful registration, redirect to verify-email
+      navigate(`/verify-email?email=${encodeURIComponent(formData.email.trim())}&registered=true`);
     } catch (err) {
       const parsed = parseAuthError(err, 'Registration failed. Please check your details and try again.');
       setServerError(parsed);
@@ -499,7 +501,7 @@ const Register = () => {
                     Create Password <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                   </label>
                   <span className="text-[11px] text-slate-400">
-                    Min. 6 chars
+                    Min. 8 chars
                   </span>
                 </div>
 
@@ -558,11 +560,33 @@ const Register = () => {
                         {passwordEval.label}
                       </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-1 h-1.5 rounded-full overflow-hidden bg-slate-800">
-                      <div className={`h-full rounded-full transition-colors ${passwordEval.score >= 1 ? passwordEval.color.split(' ')[0] : 'bg-slate-800'}`} />
-                      <div className={`h-full rounded-full transition-colors ${passwordEval.score >= 2 ? passwordEval.color.split(' ')[0] : 'bg-slate-800'}`} />
-                      <div className={`h-full rounded-full transition-colors ${passwordEval.score >= 3 ? passwordEval.color.split(' ')[0] : 'bg-slate-800'}`} />
-                      <div className={`h-full rounded-full transition-colors ${passwordEval.score >= 4 ? passwordEval.color.split(' ')[0] : 'bg-slate-800'}`} />
+                    <div className="grid grid-cols-5 gap-1 h-1.5 rounded-full overflow-hidden bg-slate-800">
+                      {[1, 2, 3, 4, 5].map((lvl) => (
+                        <div
+                          key={lvl}
+                          className={`h-full rounded-full transition-colors ${
+                            passwordEval.score >= lvl ? passwordEval.color.split(' ')[0] : 'bg-slate-800'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1 pt-1 text-[10px] text-slate-400">
+                      <span className={`flex items-center gap-1 ${passwordEval.rules.minLength ? 'text-emerald-400' : ''}`}>
+                        {passwordEval.rules.minLength ? '✓' : '•'} 8+ chars
+                      </span>
+                      <span className={`flex items-center gap-1 ${passwordEval.rules.hasUpper ? 'text-emerald-400' : ''}`}>
+                        {passwordEval.rules.hasUpper ? '✓' : '•'} Uppercase
+                      </span>
+                      <span className={`flex items-center gap-1 ${passwordEval.rules.hasLower ? 'text-emerald-400' : ''}`}>
+                        {passwordEval.rules.hasLower ? '✓' : '•'} Lowercase
+                      </span>
+                      <span className={`flex items-center gap-1 ${passwordEval.rules.hasNumber ? 'text-emerald-400' : ''}`}>
+                        {passwordEval.rules.hasNumber ? '✓' : '•'} Number
+                      </span>
+                      <span className={`col-span-2 flex items-center gap-1 ${passwordEval.rules.hasSpecial ? 'text-emerald-400' : ''}`}>
+                        {passwordEval.rules.hasSpecial ? '✓' : '•'} Symbol (!@#$% etc.)
+                      </span>
                     </div>
                   </div>
                 )}

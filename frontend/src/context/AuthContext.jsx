@@ -14,18 +14,29 @@ export const AuthProvider = ({ children }) => {
 
     if (storedToken && storedUser) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      // Refresh profile in background
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        setUser(null);
+      }
+      // Refresh profile in background to get latest verification and role status
       authService.getProfile()
         .then((profileData) => {
           setUser((prev) => ({ ...prev, ...profileData }));
           localStorage.setItem('roadguard_user', JSON.stringify({ ...JSON.parse(storedUser), ...profileData }));
         })
         .catch(() => {
-          // If token invalid, logout
-          authService.logout();
-          setUser(null);
-          setToken(null);
+          // Attempt silent refresh before logging out
+          authService.refreshToken()
+            .then((refreshedData) => {
+              setToken(refreshedData.access_token);
+              setUser(refreshedData);
+            })
+            .catch(() => {
+              authService.logout();
+              setUser(null);
+              setToken(null);
+            });
         })
         .finally(() => setLoading(false));
     } else {
@@ -42,13 +53,30 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const data = await authService.register(userData);
+    return data;
+  };
+
+  const verifyEmail = async (email, otp) => {
+    const data = await authService.verifyEmail(email, otp);
     setToken(data.access_token);
     setUser(data);
     return data;
   };
 
-  const logout = () => {
-    authService.logout();
+  const resendOtp = async (email) => {
+    return await authService.resendOtp(email);
+  };
+
+  const forgotPassword = async (email) => {
+    return await authService.forgotPassword(email);
+  };
+
+  const resetPassword = async (payload) => {
+    return await authService.resetPassword(payload);
+  };
+
+  const logout = async () => {
+    await authService.logout();
     setToken(null);
     setUser(null);
   };
@@ -66,13 +94,18 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     loading,
-    isAuthenticated: !!token,
+    isAuthenticated: !!token && !!user?.is_verified,
+    isVerified: !!user?.is_verified,
     isCitizen: user?.role === 'CITIZEN',
     isAuthority: user?.role === 'AUTHORITY',
     isEngineer: user?.role === 'ENGINEER',
     isAdmin: user?.role === 'ADMIN',
     login,
     register,
+    verifyEmail,
+    resendOtp,
+    forgotPassword,
+    resetPassword,
     logout,
     refreshProfile,
   };

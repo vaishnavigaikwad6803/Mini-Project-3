@@ -106,6 +106,8 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
+  const [flashMessage, setFlashMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
   const from = location.state?.from?.pathname || '/';
@@ -262,6 +264,20 @@ const Login = () => {
         else navigate('/citizen');
       }
     } catch (err) {
+      const errDetail = err.response?.data?.detail;
+      const detailStr = typeof errDetail === 'string' ? errDetail : JSON.stringify(errDetail || '');
+      const isUnverified = 
+        detailStr.toLowerCase().includes('verification') || 
+        detailStr.toLowerCase().includes('not verified') || 
+        detailStr.toLowerCase().includes('unverified') ||
+        (typeof errDetail === 'object' && errDetail?.code === 'EMAIL_NOT_VERIFIED');
+
+      if (isUnverified) {
+        setUnverifiedEmail(email.trim());
+      } else {
+        setUnverifiedEmail(null);
+      }
+
       const parsed = parseAuthError(err, 'Invalid email or password. Please try again.');
       setServerError(parsed);
     } finally {
@@ -411,6 +427,27 @@ const Login = () => {
             </div>
           )}
 
+          {/* FLASH SUCCESS BANNER */}
+          {flashMessage && (
+            <div
+              role="status"
+              className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-start justify-between gap-2.5 text-xs text-emerald-300 animate-in fade-in duration-200"
+            >
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                <p className="leading-relaxed font-medium">{flashMessage}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFlashMessage('')}
+                className="text-emerald-400 hover:text-emerald-200 p-1 rounded-lg"
+                aria-label="Dismiss message"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* SERVER ERROR ALERT BANNER */}
           {serverError && (
             <div
@@ -421,13 +458,28 @@ const Login = () => {
               <div className="flex items-start gap-2.5">
                 <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-rose-200">Authentication Failed</p>
+                  <p className="font-semibold text-rose-200">Authentication Notice</p>
                   <p className="mt-0.5 leading-relaxed">{serverError}</p>
+                  {unverifiedEmail && (
+                    <div className="mt-2.5 pt-2 border-t border-rose-500/20">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 px-3 py-1.5 rounded-lg border border-amber-400/30 transition-colors"
+                      >
+                        <span>Verify Email Address Now</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setServerError('')}
+                onClick={() => {
+                  setServerError('');
+                  setUnverifiedEmail(null);
+                }}
                 className="text-rose-400 hover:text-rose-200 p-1 rounded-lg focus:outline-none focus-visible:ring-1 focus-visible:ring-rose-400"
                 aria-label="Dismiss error"
               >
@@ -509,9 +561,12 @@ const Login = () => {
                   Password
                   <span className="text-amber-400 ml-1" aria-hidden="true">*</span>
                 </label>
-                <span className="text-[11px] text-slate-400">
-                  Min. 6 characters
-                </span>
+                <Link
+                  to="/forgot-password"
+                  className="text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
               </div>
 
               <div

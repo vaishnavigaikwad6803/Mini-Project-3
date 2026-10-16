@@ -1,15 +1,29 @@
 import os
+import logging
 from pathlib import Path
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import engine, Base
+from app.database import engine, Base, check_db_connection, close_db_connection
 import app.models  # Ensures all models are registered with Base
 
-# Create all database tables
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger("roadguard.main")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Ensure tables exist & verify connection
+    Base.metadata.create_all(bind=engine)
+    db_connected, db_msg = check_db_connection()
+    if db_connected:
+        logger.info(f"Connected to database ({engine.dialect.name}): {db_msg}")
+    else:
+        logger.warning(f"Database connection issue on startup: {db_msg}")
+    yield
+    # Shutdown: Cleanly dispose connection pool
+    close_db_connection()
 
 # Initialize FastAPI App
 app = FastAPI(
@@ -17,7 +31,8 @@ app = FastAPI(
     version=settings.VERSION,
     description="AI-Based Road Damage Detection and Road Authority Management System",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS Middleware configuration
@@ -69,4 +84,22 @@ def root():
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "service": "RoadGuard AI Backend"}
+    db_ok, db_msg = check_db_connection()
+    return {
+        "status": "healthy" if db_ok else "degraded",
+        "service": "RoadGuard AI Backend",
+        "database": {
+            "status": "connected" if db_ok else "disconnected",
+            "dialect": engine.dialect.name,
+            "message": db_msg
+        }
+    }
+
+@app.get("/api/health/db")
+def db_health():
+    db_ok, db_msg = check_db_connection()
+    return {
+        "connected": db_ok,
+        "dialect": engine.dialect.name,
+        "detail": db_msg
+    }
