@@ -52,6 +52,8 @@ class ComplaintResponse(ComplaintBase):
     citizen_name: Optional[str] = None
     citizen_email: Optional[str] = None
     authority_name: Optional[str] = None
+    authority_type: Optional[str] = None
+    authority_code: Optional[str] = None
     primary_damage_type: Optional[str] = None
     ai_confidence: Optional[float] = None
     ai_severity: Optional[str] = None

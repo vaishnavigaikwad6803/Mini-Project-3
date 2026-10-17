@@ -60,6 +60,74 @@ const TrackComplaint = () => {
     }
   };
 
+  const getAuthorityDetails = (item) => {
+    if (!item) {
+      return {
+        fullName: 'Pending Assignment',
+        division: 'Awaiting routing',
+        department: 'Road Transport Department',
+        badge: 'Pending',
+        badgeColor: 'bg-slate-700/40 text-slate-300 border-slate-600'
+      };
+    }
+
+    const rawName = item.authority_name || '';
+    const rawType = item.authority_type || '';
+    const rawCode = item.authority_code || '';
+    const rawRoad = item.road_type || '';
+    const combined = `${rawName} ${rawType} ${rawCode} ${rawRoad}`.toUpperCase();
+
+    if (combined.includes('NHAI') || combined.includes('NATIONAL HIGHWAY')) {
+      return {
+        fullName: 'National Highways Authority of India (NHAI)',
+        division: 'Regional Office Mumbai (RO Mumbai)',
+        department: 'National Highway Authority',
+        badge: 'NHAI',
+        badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+      };
+    }
+
+    if (combined.includes('PWD') || combined.includes('STATE HIGHWAY')) {
+      return {
+        fullName: 'Maharashtra Public Works Department (PWD)',
+        division: 'Pune Highway Division',
+        department: 'State Highway Department (PWD)',
+        badge: 'State PWD',
+        badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+      };
+    }
+
+    if (combined.includes('BMC') || combined.includes('MCGM') || combined.includes('MUNICIPAL')) {
+      return {
+        fullName: 'Brihanmumbai Municipal Corporation (BMC)',
+        division: 'Roads & Traffic Department',
+        department: 'Municipal Corporation (BMC)',
+        badge: 'BMC',
+        badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+      };
+    }
+
+    if (combined.includes('PMGSY') || combined.includes('RURAL') || combined.includes('ZILLA')) {
+      return {
+        fullName: 'Pradhan Mantri Gram Sadak Yojana (PMGSY)',
+        division: 'Thane Zilla Parishad Rural Roads',
+        department: 'Rural Road Department (PMGSY)',
+        badge: 'PMGSY',
+        badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+      };
+    }
+
+    return {
+      fullName: rawName || 'Road Transport Authority',
+      division: item.district ? `${item.district} Division` : 'Regional Office',
+      department: rawType || 'Roads Department',
+      badge: rawCode || 'Authority',
+      badgeColor: 'bg-slate-700/40 text-slate-300 border-slate-600'
+    };
+  };
+
+  const authDetails = complaint ? getAuthorityDetails(complaint) : null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
 
@@ -185,44 +253,134 @@ const TrackComplaint = () => {
 
             {/* Meta details grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  {t('track.submittedBy', 'Submitted By (Citizen)')}
-                </span>
-                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5 truncate" title={complaint.citizen_name || complaint.citizen?.full_name || 'Citizen'}>
-                  <User className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span className="truncate">{complaint.citizen_name || complaint.citizen?.full_name || 'Citizen'}</span>
-                </p>
+              {/* 1. Citizen Name (Submitted the Report) */}
+              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      {t('track.submittedBy', 'Submitted By (Citizen)')}
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border bg-emerald-500/10 text-emerald-300 border-emerald-500/30 shrink-0">
+                      Citizen
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-start gap-2">
+                    <User className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white leading-tight break-words" title={complaint.citizen_name || complaint.citizen?.full_name || 'Citizen'}>
+                        {complaint.citizen_name || complaint.citizen?.full_name || 'Citizen'}
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-1">
+                        Public Citizen Reporter
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-[11px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold shrink-0">Reported By:</span>
+                  <span className="truncate text-slate-300">Public Citizen</span>
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  {t('track.assignedAuthority', 'Assigned Authority')}
-                </span>
-                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5 truncate" title={complaint.authority_name || 'Pending Assignment'}>
-                  <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
-                  <span className="truncate">{complaint.authority_name || 'Pending Assignment'}</span>
-                </p>
+              {/* 2. Assigned Authority: Proper Name of Authority, and their Department */}
+              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      {t('track.assignedAuthority', 'Assigned Authority')}
+                    </span>
+                    {authDetails && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-extrabold border shrink-0 ${authDetails.badgeColor}`}>
+                        {authDetails.badge}
+                      </span>
+                    )}
+                  </div>
+                  {/* Proper Authority Full Name & Division */}
+                  <div className="mt-1 flex items-start gap-2">
+                    <Building2 className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white leading-tight break-words" title={authDetails ? authDetails.fullName : (complaint.authority_name || 'Pending Assignment')}>
+                        {authDetails ? authDetails.fullName : (complaint.authority_name || 'Pending Assignment')}
+                      </p>
+                      {authDetails?.division && (
+                        <p className="text-[11px] text-slate-400 font-medium mt-1">
+                          {authDetails.division}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {/* Department */}
+                {authDetails && (
+                  <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-[11px] text-amber-300/90 font-medium">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold shrink-0">Department:</span>
+                    <span className="truncate font-semibold text-amber-200" title={authDetails.department}>{authDetails.department}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  {t('track.fieldEngineer', 'Field Engineer')}
-                </span>
-                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5 truncate" title={complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}>
-                  <HardHat className="h-4 w-4 text-cyan-400 shrink-0" />
-                  <span className="truncate">{complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}</span>
-                </p>
+              {/* 3. Field Engineer */}
+              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      {t('track.fieldEngineer', 'Field Engineer')}
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border bg-cyan-500/10 text-cyan-300 border-cyan-500/30 shrink-0">
+                      Field Ops
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-start gap-2">
+                    <HardHat className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white leading-tight break-words" title={complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}>
+                        {complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}
+                      </p>
+                      {complaint.repair?.engineer_employee_id ? (
+                        <p className="text-[11px] text-slate-400 font-medium mt-1">
+                          ID: {complaint.repair.engineer_employee_id}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-slate-500 font-medium mt-1">
+                          Awaiting Allocation
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-[11px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold shrink-0">Status:</span>
+                  <span className="truncate text-cyan-300 font-semibold">{complaint.repair?.engineer_name ? 'Engineer Dispatched' : 'Pending Dispatch'}</span>
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  {t('citizen.coordinates', 'GPS Coordinates')}
-                </span>
-                <p className="text-sm font-bold text-white mt-1 font-mono flex items-center gap-1.5 truncate" title={`${complaint.latitude}, ${complaint.longitude}`}>
-                  <MapPin className="h-4 w-4 text-purple-400 shrink-0" />
-                  <span className="truncate">{complaint.latitude}, {complaint.longitude}</span>
-                </p>
+              {/* 4. GPS Coordinates */}
+              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      {t('citizen.coordinates', 'GPS Coordinates')}
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border bg-purple-500/10 text-purple-300 border-purple-500/30 shrink-0">
+                      Geotag
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white font-mono leading-tight break-words" title={`${complaint.latitude}, ${complaint.longitude}`}>
+                        {complaint.latitude}, {complaint.longitude}
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
+                        {complaint.landmark ? `Near ${complaint.landmark}` : 'Site Geotagged'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-[11px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold shrink-0">Region:</span>
+                  <span className="truncate text-slate-300 font-semibold">{complaint.district || 'Verified Site'}</span>
+                </div>
               </div>
             </div>
 

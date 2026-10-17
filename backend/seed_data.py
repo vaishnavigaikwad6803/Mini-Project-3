@@ -266,7 +266,7 @@ def seed_database():
         # 2. Create Authorities
         auth_nhai = Authority(
             code="NHAI-RO-MUM",
-            name="National Highways Authority of India (NHAI RO Mumbai)",
+            name="National Highways Authority of India (NHAI)",
             authority_type=AuthorityType.NATIONAL_HIGHWAY,
             road_type_coverage="National Highway",
             state="Maharashtra",
@@ -279,7 +279,7 @@ def seed_database():
         )
         auth_pwd = Authority(
             code="PWD-PUNE-01",
-            name="Maharashtra State Highway & PWD Authority (Pune Division)",
+            name="Maharashtra Public Works Department (PWD)",
             authority_type=AuthorityType.STATE_HIGHWAY,
             road_type_coverage="State Highway",
             state="Maharashtra",
@@ -292,7 +292,7 @@ def seed_database():
         )
         auth_bmc = Authority(
             code="MCGM-RDS-MUM",
-            name="Brihanmumbai Municipal Corporation - Roads & Traffic Dept",
+            name="Brihanmumbai Municipal Corporation (BMC)",
             authority_type=AuthorityType.MUNICIPAL,
             road_type_coverage="Municipal/City Road",
             state="Maharashtra",
@@ -305,7 +305,7 @@ def seed_database():
         )
         auth_pmgsy = Authority(
             code="PMGSY-ZP-THN",
-            name="Thane Zilla Parishad Rural Roads Division (PMGSY)",
+            name="Pradhan Mantri Gram Sadak Yojana (PMGSY)",
             authority_type=AuthorityType.RURAL_ROAD,
             road_type_coverage="Rural/Village Road",
             state="Maharashtra",
