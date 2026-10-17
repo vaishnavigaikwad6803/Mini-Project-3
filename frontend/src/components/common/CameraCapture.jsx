@@ -315,14 +315,16 @@ const CameraCapture = ({
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Hidden file input for fallback upload */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileInputChange}
-      />
+      {allowFileUpload && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleFileInputChange}
+        />
+      )}
 
       {/* 1. STATE: IMAGE PREVIEW (AFTER PHOTO IS TAKEN) */}
       {previewUrl ? (

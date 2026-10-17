@@ -139,7 +139,7 @@ const EngineerDashboard = () => {
     }
 
     if (repairData.stage === 'Repair Completed' && !completionImage && !selectedComplaint.repair?.repair_after_image && !imagePreview) {
-      showToast('Mandatory: You must upload an image of the completed repair before resolving!', 'error');
+      showToast('Mandatory: You must capture a live photo of the completed repair before resolving!', 'error');
       return;
     }
 
@@ -271,7 +271,7 @@ const EngineerDashboard = () => {
           {t('engineer.workstationTitle')}
         </h1>
         <p className="text-xs text-slate-400">
-          Execute site inspections, update repair milestones, and upload photo proof to resolve road damage.
+          Execute site inspections, update repair milestones, and capture live photo proof to resolve road damage.
         </p>
       </div>
 
@@ -705,29 +705,30 @@ const EngineerDashboard = () => {
               <label className={`block font-bold flex items-center gap-1.5 text-xs ${
                 isResolvedStage ? 'text-emerald-400' : 'text-purple-300'
               }`}>
-                📸 {isResolvedStage ? 'Upload Repaired Road Image Proof *' : `Click Photo for Current Stage: ${repairData.stage}`}
+                📸 {isResolvedStage ? 'Take Live Photo of Repaired Road *' : `Take Live Photo for Current Stage: ${repairData.stage}`}
               </label>
               <span className={`text-[10px] px-2 py-0.5 rounded font-extrabold border ${
                 isResolvedStage
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                   : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
               }`}>
-                {isResolvedStage ? 'MANDATORY FOR RESOLUTION' : 'PHOTO PROOF OPTION'}
+                {isResolvedStage ? 'MANDATORY FOR RESOLUTION' : 'LIVE PHOTO PROOF'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
               {isResolvedStage
-                ? 'When damage repair is completed, you must upload photographic evidence of the repaired road surface. The Resolved button will be displayed once the photo is attached.'
-                : `Capture a live photo using the camera or select an image file to document on-site status for stage "${repairData.stage}".`}
+                ? 'When damage repair is completed, you must capture a live photo of the repaired road surface as proof. The Resolved button will be displayed once the photo is captured.'
+                : `Capture a live photo using the device camera to document on-site status for stage "${repairData.stage}".`}
             </p>
 
             <div className="space-y-2">
               {!completionImage && !imagePreview && (
                 <CameraCapture
                   enableAiValidation={false}
+                  allowFileUpload={false}
                   title={`${repairData.stage} Photo Proof`}
                   subtitle={`Field evidence for stage: ${repairData.stage}`}
-                  capturePrompt={`Click Photo for ${repairData.stage}`}
+                  capturePrompt={`Take Live Photo for ${repairData.stage}`}
                   captureDescription={`Take a live photo of the road site to document milestone: ${repairData.stage}`}
                   onImageCapture={(file) => {
                     setCompletionImage(file);
@@ -756,7 +757,7 @@ const EngineerDashboard = () => {
                     }}
                     className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-rose-500/90 hover:bg-rose-500 text-white text-[10px] font-bold shadow-md"
                   >
-                    Retake / Change Photo
+                    Retake Live Photo
                   </button>
                 </div>
               )}
@@ -787,7 +788,7 @@ const EngineerDashboard = () => {
                 ) : (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-medium">
                     <AlertCircle className="h-4 w-4 text-amber-400 shrink-0 animate-pulse" />
-                    <span>Upload image above to display <strong>Resolved</strong> button</span>
+                    <span>Capture live photo above to display <strong>Resolved</strong> button</span>
                   </div>
                 )
               ) : (

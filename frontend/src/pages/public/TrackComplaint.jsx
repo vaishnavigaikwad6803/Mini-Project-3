@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  FileText
+  FileText,
+  User
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -183,14 +184,24 @@ const TrackComplaint = () => {
             </div>
 
             {/* Meta details grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  {t('track.submittedBy', 'Submitted By (Citizen)')}
+                </span>
+                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5 truncate" title={complaint.citizen_name || complaint.citizen?.full_name || 'Citizen'}>
+                  <User className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span className="truncate">{complaint.citizen_name || complaint.citizen?.full_name || 'Citizen'}</span>
+                </p>
+              </div>
+
               <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                   {t('track.assignedAuthority', 'Assigned Authority')}
                 </span>
-                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4 text-amber-400" />
-                  {complaint.authority_name || 'Pending Assignment'}
+                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5 truncate" title={complaint.authority_name || 'Pending Assignment'}>
+                  <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span className="truncate">{complaint.authority_name || 'Pending Assignment'}</span>
                 </p>
               </div>
 
@@ -198,9 +209,9 @@ const TrackComplaint = () => {
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                   {t('track.fieldEngineer', 'Field Engineer')}
                 </span>
-                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
-                  <HardHat className="h-4 w-4 text-cyan-400" />
-                  {complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}
+                <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5 truncate" title={complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}>
+                  <HardHat className="h-4 w-4 text-cyan-400 shrink-0" />
+                  <span className="truncate">{complaint.repair?.engineer_name || 'Pending Engineer Dispatch'}</span>
                 </p>
               </div>
 
@@ -208,8 +219,9 @@ const TrackComplaint = () => {
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                   {t('citizen.coordinates', 'GPS Coordinates')}
                 </span>
-                <p className="text-sm font-bold text-white mt-1 font-mono">
-                  {complaint.latitude}, {complaint.longitude}
+                <p className="text-sm font-bold text-white mt-1 font-mono flex items-center gap-1.5 truncate" title={`${complaint.latitude}, ${complaint.longitude}`}>
+                  <MapPin className="h-4 w-4 text-purple-400 shrink-0" />
+                  <span className="truncate">{complaint.latitude}, {complaint.longitude}</span>
                 </p>
               </div>
             </div>
