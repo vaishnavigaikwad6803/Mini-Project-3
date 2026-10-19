@@ -38,7 +38,8 @@ import {
   Download,
   AlertCircle,
   RefreshCw,
-  Eye
+  Eye,
+  User
 } from 'lucide-react';
 
 const COLORS = ['#f59e0b', '#6366f1', '#06b6d4', '#10b981', '#a855f7', '#ef4444'];
@@ -82,13 +83,14 @@ const AdminDashboard = () => {
         alert("No complaints available to export.");
         return;
       }
-      const headers = ["ID", "Road Name", "Road Type", "District", "State", "Status", "Priority", "AI Defect", "AI Confidence", "Authority", "Engineer Name", "Created At"];
+      const headers = ["ID", "Road Name", "Road Type", "District", "State", "Raised By", "Status", "Priority", "AI Defect", "AI Confidence", "Authority", "Engineer Name", "Created At"];
       const rows = complaints.map((c) => [
         c.id,
         `"${(c.road_name || '').replace(/"/g, '""')}"`,
         c.road_type || 'N/A',
         c.district || 'N/A',
         c.state || 'N/A',
+        `"${(c.citizen_name || 'Citizen').replace(/"/g, '""')} (${c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})"`,
         c.status || 'N/A',
         c.priority || 'N/A',
         c.primary_damage_type || 'N/A',
@@ -424,13 +426,14 @@ const AdminDashboard = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                 <tr>
-                  <th className="py-3 px-4">{t('table.id')}</th>
-                  <th className="py-3 px-4">{t('table.roadName')}</th>
-                  <th className="py-3 px-4">{t('table.roadType')}</th>
-                  <th className="py-3 px-4">{t('table.aiDetection')}</th>
-                  <th className="py-3 px-4">{t('table.authority')}</th>
-                  <th className="py-3 px-4">{t('table.status')}</th>
-                  <th className="py-3 px-4 text-right">{t('table.actions')}</th>
+                  <th className="py-3 px-4">{t('table.id', 'ID')}</th>
+                  <th className="py-3 px-4">{t('table.roadName', 'Road Name')}</th>
+                  <th className="py-3 px-4">{t('table.raisedBy', 'Raised By')}</th>
+                  <th className="py-3 px-4">{t('table.roadType', 'Road Type')}</th>
+                  <th className="py-3 px-4">{t('table.aiDetection', 'AI Defect')}</th>
+                  <th className="py-3 px-4">{t('table.authority', 'Authority')}</th>
+                  <th className="py-3 px-4">{t('table.status', 'Status')}</th>
+                  <th className="py-3 px-4 text-right">{t('table.actions', 'Actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -441,6 +444,17 @@ const AdminDashboard = () => {
                     </td>
                     <td className="py-3 px-4 font-semibold text-white max-w-[200px] truncate">
                       {c.road_name}
+                    </td>
+                    <td className="py-3 px-4 text-slate-300">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                          <span className="font-medium text-slate-200">{c.citizen_name || 'Citizen'}</span>
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-medium ml-5">
+                          ({c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3 px-4">
                       <RoadTypeBadge type={c.road_type} />
@@ -463,10 +477,10 @@ const AdminDashboard = () => {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <Link
-                        to={`/citizen/complaint/${c.id}`}
+                        to={`/complaints/${c.id}`}
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
                       >
-                        <Eye className="h-3.5 w-3.5 text-amber-400" /> {t('table.view')}
+                        <Eye className="h-3.5 w-3.5 text-amber-400" /> {t('table.view', 'View')}
                       </Link>
                     </td>
                   </tr>

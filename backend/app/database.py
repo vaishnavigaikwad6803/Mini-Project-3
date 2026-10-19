@@ -94,6 +94,8 @@ def ensure_schema_migrations():
                     conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
                     conn.commit()
                     logger.info("Auto-migrated: Added 'is_verified' column to users table.")
+                conn.execute(text("UPDATE users SET is_verified = 1 WHERE is_verified = 0 OR is_verified IS NULL"))
+                conn.commit()
 
             # 4. Ensure image_url column in status_history table
             if "status_history" in existing_tables:

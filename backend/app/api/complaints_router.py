@@ -76,6 +76,8 @@ def enrich_complaint_response(complaint: Complaint) -> dict:
         "updated_at": complaint.updated_at,
         "citizen_name": complaint.citizen.full_name if complaint.citizen else "Citizen",
         "citizen_email": complaint.citizen.email if complaint.citizen else None,
+        "citizen_role": (complaint.citizen.role.value.capitalize() if (complaint.citizen and complaint.citizen.role) else "Citizen"),
+        "citizen_designation": "Citizen",
         "authority_name": complaint.authority.name if complaint.authority else "Unassigned",
         "authority_type": complaint.authority.authority_type.value if (complaint.authority and complaint.authority.authority_type) else None,
         "authority_code": complaint.authority.code if complaint.authority else None,

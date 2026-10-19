@@ -36,6 +36,7 @@ import {
   Calendar,
   TrendingUp,
   Activity,
+  User,
   X,
 } from 'lucide-react';
 
@@ -454,15 +455,16 @@ const EngineerDashboard = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-800/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
-                    <th className="py-3 px-4">{t('table.id')}</th>
-                    <th className="py-3 px-4">{t('table.date')}</th>
-                    <th className="py-3 px-4">{t('table.roadName')}</th>
-                    <th className="py-3 px-4">{t('table.location')}</th>
-                    <th className="py-3 px-4">{t('table.roadType')}</th>
-                    <th className="py-3 px-4">{t('table.aiDetection')}</th>
-                    <th className="py-3 px-4">{t('table.priority')}</th>
-                    <th className="py-3 px-4">{t('table.status')} & {t('common.deadline')}</th>
-                    <th className="py-3 px-4 text-right">{t('table.actions')}</th>
+                    <th className="py-3 px-4">{t('table.id', 'ID')}</th>
+                    <th className="py-3 px-4">{t('table.date', 'Date')}</th>
+                    <th className="py-3 px-4">{t('table.roadName', 'Road Name')}</th>
+                    <th className="py-3 px-4">{t('table.location', 'Location')}</th>
+                    <th className="py-3 px-4">{t('table.raisedBy', 'Raised By')}</th>
+                    <th className="py-3 px-4">{t('table.roadType', 'Road Type')}</th>
+                    <th className="py-3 px-4">{t('table.aiDetection', 'AI Defect')}</th>
+                    <th className="py-3 px-4">{t('table.priority', 'Priority')}</th>
+                    <th className="py-3 px-4">{t('table.status', 'Status')} & {t('common.deadline', 'Deadline')}</th>
+                    <th className="py-3 px-4 text-right">{t('table.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -506,6 +508,17 @@ const EngineerDashboard = () => {
                               )}
                             </div>
                           </Link>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-300">
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                              <span className="font-semibold text-slate-200">{c.citizen_name || 'Citizen'}</span>
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-medium ml-5">
+                              ({c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3.5 px-4">
                           <RoadTypeBadge roadType={c.road_type} />
@@ -581,6 +594,12 @@ const EngineerDashboard = () => {
                     <div>
                       <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
                       <p className="text-xs text-slate-400 mt-0.5">📍 {c.district} • {c.primary_damage_type || 'Defect'}</p>
+                      <p className="text-xs text-slate-300 mt-1 flex items-center gap-1 font-medium">
+                        <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                        <span className="text-slate-400">Raised By:</span>
+                        <span className="text-white font-semibold">{c.citizen_name || 'Citizen'}</span>
+                        <span className="text-slate-400 text-[11px]">({c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})</span>
+                      </p>
                     </div>
                     <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
                       {isDamageCompleted ? (

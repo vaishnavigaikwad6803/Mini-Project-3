@@ -33,7 +33,7 @@ def run_tests():
     # 2. Login as Admin
     code, res = make_request("/auth/login", method="POST", data={
         "email": "admin@roadguard.ai",
-        "password": "AdminPassword123"
+        "password": "password123"
     })
     print(f"2. Admin Login Response: Code {code}, Body: {res}")
     assert code == 200 and "access_token" in res, f"Admin login failed: {res}"
@@ -42,7 +42,7 @@ def run_tests():
     # 3. Login as NHAI Authority
     code, res = make_request("/auth/login", method="POST", data={
         "email": "nhai.officer@roadguard.ai",
-        "password": "AuthorityPass123"
+        "password": "password123"
     })
     print(f"3. Authority Login: Status {code} => User: {res['email']} (Auth ID: {res['authority_id']})")
     assert code == 200, "Authority login failed"
@@ -52,7 +52,7 @@ def run_tests():
     # 4. Login as Field Engineer
     code, res = make_request("/auth/login", method="POST", data={
         "email": "engineer.rajesh@roadguard.ai",
-        "password": "EngineerPass123"
+        "password": "password123"
     })
     print(f"4. Engineer Login: Status {code} => User: {res['email']} (Eng ID: {res['engineer_id']})")
     assert code == 200, "Engineer login failed"
@@ -87,11 +87,17 @@ def run_tests():
     import mimetypes
     from urllib.parse import urlencode
 
-    # Create dummy image in memory
+    # Create valid synthetic asphalt road with pothole
     import numpy as np
     import cv2
-    img_arr = np.full((300, 400, 3), (70, 75, 80), dtype=np.uint8)
-    cv2.circle(img_arr, (200, 150), 45, (25, 25, 30), -1) # synthetic pothole
+    np.random.seed(42)
+    h, w = 600, 800
+    img_arr = np.full((h, w, 3), (70, 75, 78), dtype=np.uint8)
+    noise = np.random.normal(0, 10, (h, w, 3)).astype(np.int16)
+    img_arr = np.clip(img_arr.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    cv2.ellipse(img_arr, (400, 360), (120, 80), 0, 0, 360, (20, 22, 24), -1)
+    cv2.ellipse(img_arr, (400, 360), (120, 80), 0, 0, 360, (140, 145, 150), 3)
+    cv2.circle(img_arr, (380, 350), 40, (12, 14, 15), -1)
     _, img_bytes = cv2.imencode('.jpg', img_arr)
     
     boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
@@ -129,13 +135,17 @@ def run_tests():
         method="POST"
     )
 
-    with urllib.request.urlopen(req) as res:
-        new_complaint = json.loads(res.read().decode("utf-8"))
-        print(f"10. Live AI Complaint Upload: Status {res.getcode()} => Created ID: {new_complaint['id']}")
-        print(f"    AI Detected: {new_complaint['ai_result']['primary_damage_type']} (Confidence: {new_complaint['ai_result']['confidence_score']})")
-        print(f"    Auto-Routed Authority: {new_complaint['authority_name']}")
-        assert new_complaint["status"] == "Authority Assigned", "Routing failed"
-        assert new_complaint["ai_result"]["annotated_image_url"] is not None, "Annotated image missing"
+    try:
+        with urllib.request.urlopen(req) as res:
+            new_complaint = json.loads(res.read().decode("utf-8"))
+            print(f"10. Live AI Complaint Upload: Status {res.getcode()} => Created ID: {new_complaint['id']}")
+            print(f"    AI Detected: {new_complaint['ai_result']['primary_damage_type']} (Confidence: {new_complaint['ai_result']['confidence_score']})")
+            print(f"    Auto-Routed Authority: {new_complaint['authority_name']}")
+            assert new_complaint["status"] == "Authority Assigned", "Routing failed"
+            assert new_complaint["ai_result"]["annotated_image_url"] is not None, "Annotated image missing"
+    except urllib.error.HTTPError as e:
+        print(f"10. Upload Failed: HTTP {e.code} => {e.read().decode('utf-8')}")
+        raise
 
     print("=" * 60)
     print("✅ ALL 10 END-TO-END SYSTEM VERIFICATION TESTS PASSED PERFECTLY!")

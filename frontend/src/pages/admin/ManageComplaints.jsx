@@ -17,7 +17,8 @@ import {
   Download,
   AlertCircle,
   HardHat,
-  Trash2
+  Trash2,
+  User
 } from 'lucide-react';
 
 const ManageComplaints = () => {
@@ -84,13 +85,14 @@ const ManageComplaints = () => {
 
   const exportCSV = () => {
     if (complaints.length === 0) return;
-    const headers = ["ID", "Road Name", "Road Type", "District", "State", "Status", "Priority", "AI Damage", "AI Confidence", "Authority", "Engineer Name", "Created At"];
+    const headers = ["ID", "Road Name", "Road Type", "District", "State", "Raised By", "Status", "Priority", "AI Damage", "AI Confidence", "Authority", "Engineer Name", "Created At"];
     const rows = complaints.map((c) => [
       c.id,
       `"${c.road_name.replace(/"/g, '""')}"`,
       c.road_type,
       c.district,
       c.state,
+      `"${(c.citizen_name || 'Citizen').replace(/"/g, '""')} (${c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})"`,
       c.status,
       c.priority,
       c.primary_damage_type || "N/A",
@@ -119,6 +121,7 @@ const ManageComplaints = () => {
         c.id.toLowerCase().includes(term) ||
         c.road_name.toLowerCase().includes(term) ||
         c.district.toLowerCase().includes(term) ||
+        (c.citizen_name && c.citizen_name.toLowerCase().includes(term)) ||
         (c.authority_name && c.authority_name.toLowerCase().includes(term)) ||
         (c.engineer_name && c.engineer_name.toLowerCase().includes(term))
       );
@@ -226,6 +229,7 @@ const ManageComplaints = () => {
                     <th className="py-3 px-4">{t('common.date', 'Date')}</th>
                     <th className="py-3 px-4">{t('table.road', 'Road Name')}</th>
                     <th className="py-3 px-4">{t('table.location', 'Location')}</th>
+                    <th className="py-3 px-4">{t('table.raisedBy', 'Raised By')}</th>
                     <th className="py-3 px-4">{t('table.roadType', 'Road Type')}</th>
                     <th className="py-3 px-4">{t('table.damageType', 'AI Defect & Severity')}</th>
                     <th className="py-3 px-4">{t('common.assignedTo', 'Engineer Name')}</th>
@@ -271,6 +275,17 @@ const ManageComplaints = () => {
                             )}
                           </div>
                         </Link>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                            <span className="font-semibold text-slate-200">{c.citizen_name || 'Citizen'}</span>
+                          </div>
+                          <span className="text-[11px] text-slate-400 font-medium ml-5">
+                            ({c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4">
                         <RoadTypeBadge roadType={c.road_type} />
@@ -337,6 +352,12 @@ const ManageComplaints = () => {
                 <div>
                   <h4 className="text-sm font-bold text-white line-clamp-1">{c.road_name}</h4>
                   <p className="text-xs text-slate-400 mt-0.5">📍 {c.district} • {c.primary_damage_type || 'Road Defect'}</p>
+                  <p className="text-xs text-slate-300 mt-1 flex items-center gap-1 font-medium">
+                    <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    <span className="text-slate-400">Raised By:</span>
+                    <span className="text-white font-semibold">{c.citizen_name || 'Citizen'}</span>
+                    <span className="text-slate-400 text-[11px]">({c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})</span>
+                  </p>
                 </div>
                 <div className="flex items-center justify-between gap-2 text-xs pt-1 border-t border-slate-800">
                   <span className="text-slate-400">Engineer:</span>

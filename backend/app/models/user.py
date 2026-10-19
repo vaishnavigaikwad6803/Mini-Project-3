@@ -20,7 +20,7 @@ class User(Base):
     phone = Column(String(20), nullable=True)
     role = Column(Enum(UserRole), default=UserRole.CITIZEN, nullable=False, index=True)
     is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False, nullable=False, index=True)
+    is_verified = Column(Boolean, default=True, nullable=False, index=True)
     district = Column(String(100), nullable=True)
     state = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -387,76 +387,112 @@ const ComplaintDetails = () => {
             </p>
           </div>
 
-          <div className="text-right">
-            <span className="text-[11px] text-slate-400 uppercase tracking-wider block">{t('details.submittedBy')}</span>
-            <span className="text-xs font-semibold text-white">
-              {complaint.citizen_name || t('details.citizen')}
+          <div className="text-left sm:text-right">
+            <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-semibold">
+              {t('table.raisedBy', 'Raised By')}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5">
+            <div className="flex items-center sm:justify-end gap-1.5 mt-0.5">
+              <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <span className="text-sm font-bold text-white">
+                {complaint.citizen_name || 'Citizen'}
+              </span>
+            </div>
+            <span className="text-xs text-amber-400 font-medium block">
+              ({complaint.citizen_role ? (complaint.citizen_role.charAt(0).toUpperCase() + complaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'})
+            </span>
+            <span className="text-[11px] text-slate-500 block mt-1">
               {new Date(complaint.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
             </span>
           </div>
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              {t('details.responsibleAuthority')}
-            </span>
-            <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
-              <Building2 className="h-4 w-4 text-amber-400" />
-              {complaint.authority_name || t('details.pendingAssignment')}
-            </p>
-            {complaint.routing_notes && (
-              <p className="text-[11px] text-slate-400 mt-1">
-                {complaint.routing_notes}
-              </p>
-            )}
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              {t('details.assignedEngineer')}
-            </span>
-            <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
-              <HardHat className="h-4 w-4 text-cyan-400" />
-              {complaint.repair?.engineer_name || t('details.pendingDispatch')}
-            </p>
-            {complaint.repair?.engineer_employee_id && (
-              <p className="text-[11px] text-slate-400 mt-1">
-                {t('details.badge')} {complaint.repair.engineer_employee_id}
-              </p>
-            )}
-            {(complaint.deadline || complaint.repair?.deadline) && (
-              <p className="text-[11px] text-amber-400 font-semibold mt-1.5 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 shrink-0" />
-                {t('common.targetDeadline')}: {formatDateToDDMMYY(complaint.deadline || complaint.repair?.deadline)}
-              </p>
-            )}
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              {t('common.priority')} & GPS
-            </span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${complaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
-                complaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
-                  'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                }`}>
-                {complaint.priority}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                {t('table.raisedBy', 'Raised By')}
               </span>
+              <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
+                <User className="h-4 w-4 text-amber-400 shrink-0" />
+                <span className="truncate">{complaint.citizen_name || 'Citizen'}</span>
+              </p>
+              <p className="text-xs text-slate-300 font-medium mt-1">
+                Designation: <span className="text-amber-400 font-semibold">{complaint.citizen_role ? (complaint.citizen_role.charAt(0).toUpperCase() + complaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'}</span>
+              </p>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 font-mono">
-              {t('details.coords')} {complaint.latitude}, {complaint.longitude}
+            {complaint.citizen_email && (
+              <p className="text-[11px] text-slate-500 truncate mt-2 pt-2 border-t border-slate-800/80">
+                {complaint.citizen_email}
+              </p>
+            )}
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                {t('details.responsibleAuthority', 'Responsible Authority')}
+              </span>
+              <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
+                <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
+                <span className="truncate">{complaint.authority_name || t('details.pendingAssignment', 'Pending Assignment')}</span>
+              </p>
+              {complaint.routing_notes && (
+                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">
+                  {complaint.routing_notes}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                {t('details.assignedEngineer', 'Assigned Engineer')}
+              </span>
+              <p className="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
+                <HardHat className="h-4 w-4 text-cyan-400 shrink-0" />
+                <span className="truncate">{complaint.repair?.engineer_name || t('details.pendingDispatch', 'Pending Dispatch')}</span>
+              </p>
+              {complaint.repair?.engineer_employee_id && (
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {t('details.badge', 'Employee ID:')} {complaint.repair.engineer_employee_id}
+                </p>
+              )}
+            </div>
+            {(complaint.deadline || complaint.repair?.deadline) && (
+              <p className="text-[11px] text-amber-400 font-semibold mt-2 pt-2 border-t border-slate-800/80 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                {t('common.targetDeadline', 'Target Deadline')}: {formatDateToDDMMYY(complaint.deadline || complaint.repair?.deadline)}
+              </p>
+            )}
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                {t('common.priority', 'Priority')} & GPS
+              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${complaint.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
+                  complaint.priority === 'High' ? 'bg-orange-500/20 text-orange-300 border-orange-500/40' :
+                    'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  }`}>
+                  {complaint.priority}
+                </span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-2 pt-2 border-t border-slate-800/80 font-mono">
+              {t('details.coords', 'GPS:')} {complaint.latitude}, {complaint.longitude}
             </p>
           </div>
         </div>
 
         {complaint.description && (
           <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300">
-            <strong className="text-slate-200">{t('details.citizenDesc')} </strong>
+            <strong className="text-slate-200">
+              Reported by {complaint.citizen_name || 'Citizen'} ({complaint.citizen_role ? (complaint.citizen_role.charAt(0).toUpperCase() + complaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'}):{' '}
+            </strong>
             {complaint.description}
           </div>
         )}
@@ -508,7 +544,7 @@ const ComplaintDetails = () => {
           {complaint.image_url && (
             <div className="pt-2">
               <span className="text-[11px] font-bold text-amber-400 block mb-2 flex items-center gap-1.5">
-                📸 Citizen Captured Road Damage Photo
+                📸 Road Damage Photo Captured by {complaint.citizen_name || 'Citizen'} ({complaint.citizen_role ? (complaint.citizen_role.charAt(0).toUpperCase() + complaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'})
               </span>
               <div className="rounded-2xl overflow-hidden border border-slate-700 bg-black max-h-72 flex items-center justify-center">
                 <img src={complaint.image_url} alt="Citizen Road Damage" className="w-full h-64 object-cover" />

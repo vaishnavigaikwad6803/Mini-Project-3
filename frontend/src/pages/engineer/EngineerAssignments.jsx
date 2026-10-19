@@ -23,7 +23,8 @@ import {
   FileText,
   DollarSign,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  User
 } from 'lucide-react';
 
 const REPAIR_STAGES = [
@@ -233,6 +234,13 @@ const EngineerAssignments = () => {
                     </p>
                   </div>
 
+                  <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                    <User className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    <span className="text-slate-400">Raised By:</span>
+                    <span className="font-semibold text-white">{c.citizen_name || 'Citizen'}</span>
+                    <span className="text-slate-400 text-[11px]">({c.citizen_role ? (c.citizen_role.charAt(0).toUpperCase() + c.citizen_role.slice(1).toLowerCase()) : 'Citizen'})</span>
+                  </div>
+
                   <div className="flex flex-wrap items-center gap-2">
                     <RoadTypeBadge roadType={c.road_type} />
                     <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">
@@ -315,6 +323,9 @@ const EngineerAssignments = () => {
               <span className="text-slate-400 text-[11px]">📍 {selectedComplaint?.district}</span>
             </div>
             <h4 className="font-bold text-white text-sm">{selectedComplaint?.road_name}</h4>
+            <p className="text-[11px] text-slate-400">
+              Raised by: <strong className="text-white">{selectedComplaint?.citizen_name || 'Citizen'}</strong> <span className="text-slate-400">({selectedComplaint?.citizen_role ? (selectedComplaint.citizen_role.charAt(0).toUpperCase() + selectedComplaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'})</span>
+            </p>
             <p className="text-[11px] text-slate-400">
               Defect: <strong className="text-slate-300">{selectedComplaint?.primary_damage_type || 'Road Defect'}</strong>
             </p>

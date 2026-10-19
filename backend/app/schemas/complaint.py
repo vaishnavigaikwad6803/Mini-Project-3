@@ -51,6 +51,8 @@ class ComplaintResponse(ComplaintBase):
     # Enriched fields
     citizen_name: Optional[str] = None
     citizen_email: Optional[str] = None
+    citizen_role: Optional[str] = "Citizen"
+    citizen_designation: Optional[str] = "Citizen"
     authority_name: Optional[str] = None
     authority_type: Optional[str] = None
     authority_code: Optional[str] = None

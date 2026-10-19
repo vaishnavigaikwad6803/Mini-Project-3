@@ -258,10 +258,10 @@ const TrackComplaint = () => {
                 <div>
                   <div className="flex items-center justify-between gap-1.5 mb-1.5">
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                      {t('track.submittedBy', 'Submitted By (Citizen)')}
+                      {t('table.raisedBy', 'Raised By')}
                     </span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border bg-emerald-500/10 text-emerald-300 border-emerald-500/30 shrink-0">
-                      Citizen
+                      {complaint.citizen_role ? (complaint.citizen_role.charAt(0).toUpperCase() + complaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'}
                     </span>
                   </div>
                   <div className="mt-1 flex items-start gap-2">
@@ -271,14 +271,14 @@ const TrackComplaint = () => {
                         {complaint.citizen_name || complaint.citizen?.full_name || 'Citizen'}
                       </p>
                       <p className="text-[11px] text-slate-400 font-medium mt-1">
-                        Public Citizen Reporter
+                        Designation: <span className="text-emerald-300 font-semibold">{complaint.citizen_role ? (complaint.citizen_role.charAt(0).toUpperCase() + complaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'}</span>
                       </p>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-[11px] text-slate-400 font-medium">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold shrink-0">Reported By:</span>
-                  <span className="truncate text-slate-300">Public Citizen</span>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold shrink-0">Raised By:</span>
+                  <span className="truncate text-slate-300">{complaint.citizen_name || 'Citizen'} ({complaint.citizen_role ? (complaint.citizen_role.charAt(0).toUpperCase() + complaint.citizen_role.slice(1).toLowerCase()) : 'Citizen'})</span>
                 </div>
               </div>
 
