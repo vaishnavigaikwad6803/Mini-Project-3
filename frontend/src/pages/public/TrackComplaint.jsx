@@ -107,10 +107,11 @@ const TrackComplaint = () => {
       };
     }
 
-    if (combined.includes('PMGSY') || combined.includes('RURAL') || combined.includes('ZILLA')) {
+    if (combined.includes('PMGSY') || combined.includes('RURAL') || combined.includes('ZILLA') || combined.includes('JILHA')) {
+      const dist = item.district || 'Kolhapur';
       return {
-        fullName: 'Pradhan Mantri Gram Sadak Yojana (PMGSY)',
-        division: 'Thane Zilla Parishad Rural Roads',
+        fullName: rawName || `${dist} Zilla Parishad (PMGSY Rural Roads)`,
+        division: `${dist} Zilla Parishad Rural Roads`,
         department: 'Rural Road Department (PMGSY)',
         badge: 'PMGSY',
         badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'

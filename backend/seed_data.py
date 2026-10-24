@@ -198,7 +198,7 @@ def seed_database():
             full_name="Manohar Patil (Rural PMGSY Officer)",
             phone="+91 97650 44556",
             role=UserRole.AUTHORITY,
-            district="Thane",
+            district="Kolhapur",
             state="Maharashtra",
             is_active=True
         )
@@ -208,7 +208,7 @@ def seed_database():
             full_name="Manohar Patil (Rural PMGSY Officer)",
             phone="+91 97650 44556",
             role=UserRole.AUTHORITY,
-            district="Thane",
+            district="Kolhapur",
             state="Maharashtra",
             is_active=True
         )
@@ -304,15 +304,15 @@ def seed_database():
             created_by_admin_id=admin_user.id
         )
         auth_pmgsy = Authority(
-            code="PMGSY-ZP-THN",
-            name="Pradhan Mantri Gram Sadak Yojana (PMGSY)",
+            code="PMGSY-ZP-KOL",
+            name="Kolhapur Zilla Parishad (PMGSY Rural Roads)",
             authority_type=AuthorityType.RURAL_ROAD,
             road_type_coverage="Rural/Village Road",
             state="Maharashtra",
-            district="Thane",
-            jurisdiction_area="Murbad, Shahapur & Kalyan Rural Village Road Network",
-            contact_email="ruralroads.thane@roadguard.ai",
-            contact_phone="022-25341234",
+            district="Kolhapur",
+            jurisdiction_area="Karveer, Hatkanangale, Panhala, Shirol & Kolhapur Rural Village Road Network",
+            contact_email="ruralroads.kolhapur@roadguard.ai",
+            contact_phone="0231-2651234",
             is_active=True,
             created_by_admin_id=admin_user.id
         )
@@ -509,24 +509,24 @@ def seed_database():
         db.add(rep_3)
 
         # Complaint 4: Rural - Submitted / AI Analyzed
-        img_url_4 = generate_sample_image("rural_murbad.jpg", "Surface Damage")
-        ann_url_4 = generate_sample_image("ann_rural_murbad.jpg", "Surface Damage", is_annotated=True)
+        img_url_4 = generate_sample_image("rural_kolhapur.jpg", "Surface Damage")
+        ann_url_4 = generate_sample_image("ann_rural_kolhapur.jpg", "Surface Damage", is_annotated=True)
         c4 = Complaint(
             id="RGD-2026-1004",
             citizen_id=citizen2.id,
             authority_id=auth_pmgsy.id,
-            road_name="Murbad-Mhasa Village Connector Road",
+            road_name="Panhala-Gaganbawda Rural Road",
             road_type=RoadType.RURAL_ROAD,
             description="Washed out gravel edge and surface pitting after heavy monsoon runoff.",
-            latitude=19.2520,
-            longitude=73.3980,
-            district="Thane",
+            latitude=16.7821,
+            longitude=74.0892,
+            district="Kolhapur",
             state="Maharashtra",
             landmark="Near Gram Panchayat Office",
             image_url=img_url_4,
             status=ComplaintStatus.AUTHORITY_ASSIGNED,
             priority=PriorityLevel.MEDIUM,
-            routing_notes="Auto-routed to Thane PMGSY Rural Roads Division.",
+            routing_notes="Auto-routed to regional Kolhapur Zilla Parishad (PMGSY Rural Roads) for Kolhapur, Maharashtra (Rural/Village Road)",
             created_at=datetime.utcnow() - timedelta(hours=8)
         )
         db.add(c4)
